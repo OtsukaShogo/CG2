@@ -1,5 +1,7 @@
 #include<Windows.h>
 #include<cstdint>
+#include<string>
+#include<format>
 
 // ウィンドウプロシージャ
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -16,8 +18,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+//デバッグ出力ウィンドウに文字列を出力する関数
+void Log(const std::string& message);
+
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
+    int enemyHP = 100;
+
+	//デバッグ出力ウィンドウに文字列を出力する
+    Log(std::format("Enemy HP: {}\n", enemyHP));
+
     WNDCLASS wc{};
 
     // ウィンドウプロシージャ
@@ -80,4 +91,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     }
 
 	return 0;
+}
+
+void Log(const std::string& message) {
+    OutputDebugStringA(message.c_str());
 }
