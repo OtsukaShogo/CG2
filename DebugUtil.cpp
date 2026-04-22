@@ -6,10 +6,10 @@
 
 #include "DebugUtil.h"
 
-std::ofstream DebugUtil::logStream;
+std::ofstream DebugUtil::logStream_;
 
 void DebugUtil::Log(const std::string& message) {
-	logStream << message << std::endl;
+	logStream_ << message << std::endl;
 	OutputDebugStringA(message.c_str());
 }
 
@@ -34,5 +34,5 @@ void DebugUtil::CreateLogFile() {
 	std::string logFilePath = std::string("logs/") + dateString + ".log";
 
 	// ファイルを作って書き込み準備
-    logStream.open(logFilePath);
+    logStream_.open(logFilePath);
 }
