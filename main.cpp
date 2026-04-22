@@ -3,7 +3,9 @@
 #include<format>
 #include<iostream>
 #include"DebugUtil.h"
-
+#include<d3d12.h>
+#include<dxgi1_6.h>
+#include<cassert>
 
 // ウィンドウプロシージャ
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
