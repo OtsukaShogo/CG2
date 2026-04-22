@@ -11,5 +11,5 @@ public:
 	static void CreateLogFile();
 
 private:
-	static std::ofstream logStream;
+	static std::ofstream logStream_;
 };
