@@ -29,6 +29,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
+	//誰も捕捉しなかった場合に捕捉する関数を登録
+	SetUnhandledExceptionFilter(DebugUtil::ExportDump);
+
 	DebugUtil::CreateLogFile();
 
 	WNDCLASS wc{};
@@ -139,6 +142,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// デバイスの生成がうまくいかなかったので起動できない
 	assert(device != nullptr);
 	DebugUtil::Log(("Complete create D3D12Device!!!\n")); // 初期化完了のログをだす
+
+	uint32_t* p = nullptr;
+	*p = 100;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
