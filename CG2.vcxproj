@@ -98,11 +98,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConvertString.cpp" />
+    <ClCompile Include="D3D12_Util.cpp" />
     <ClCompile Include="DebugUtil.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConvertString.h" />
+    <ClInclude Include="D3D12_Util.h" />
     <ClInclude Include="DebugUtil.h" />
     <ClInclude Include="Vector4.h" />
   </ItemGroup>
