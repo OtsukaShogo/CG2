@@ -101,11 +101,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="D3D12_Util.cpp" />
     <ClCompile Include="DebugUtil.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Matrix4x4.cpp" />
+    <ClCompile Include="TransformMatrix.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConvertString.h" />
     <ClInclude Include="D3D12_Util.h" />
     <ClInclude Include="DebugUtil.h" />
+    <ClInclude Include="Matrix4x4.h" />
+    <ClInclude Include="WorldTransform.h" />
+    <ClInclude Include="TransformMatrix.h" />
+    <ClInclude Include="Vector3.h" />
     <ClInclude Include="Vector4.h" />
   </ItemGroup>
   <ItemGroup>
