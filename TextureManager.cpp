@@ -21,7 +21,7 @@ DirectX::ScratchImage TextureManager::LoadTexture(const std::string& filePath) {
 	return mipImages;
 }
 
-void TextureManager::UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImages){
+/*void TextureManager::UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImages){
     // Meta情報を取得
     const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
     // 全MipMapについて
@@ -38,4 +38,4 @@ void TextureManager::UploadTextureData(ID3D12Resource* texture, const DirectX::S
         );
         assert(SUCCEEDED(hr));
     }
-}
+}*/

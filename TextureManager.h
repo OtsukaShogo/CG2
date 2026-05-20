@@ -12,6 +12,6 @@ public:
 
 	static DirectX::ScratchImage LoadTexture(const std::string& filePath);
 
-	static void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImages);
+	//static void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mipImages);
 };
 
