@@ -1,19 +1,19 @@
-#include<Windows.h>
-#include<cstdint>
-#include<format>
-#include<iostream>
-#include"DebugUtil.h"
-#include<d3d12.h>
-#include<dxgi1_6.h>
-#include<cassert>
 #include"ConvertString.h"
-#include<dxgidebug.h>
-#include<dxcapi.h>
-#include"Vector4.h"
 #include"D3D12_Util.h"
+#include"DebugUtil.h"
 #include"Matrix4x4.h"
-#include"WorldTransform.h"
 #include"TransformMatrix.h"
+#include"Vector4.h"
+#include"WorldTransform.h"
+#include<cassert>
+#include<cmath>
+#include<cstdint>
+#include<d3d12.h>
+#include<dxcapi.h>
+#include<dxgi1_6.h>
+#include<dxgidebug.h>
+#include<format>
+#include<Windows.h>
 #ifdef USE_IMGUI
 #include"externals/imgui/imgui.h"
 #include"externals/imgui/imgui_impl_dx12.h"
@@ -21,6 +21,7 @@
 #endif
 #include"TextureManager.h"
 #include"VertexData.h"
+#include<numbers>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -468,9 +469,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
 
+
+	//カメラの初期化
+	WorldTransform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
+
 	// === 三角形のVertexResource ==============================================================
 
-	//BufferResource
+	/*//BufferResource
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
 
 	//頂点バッファビューを作成する
@@ -504,7 +509,93 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexData[4].texcoord = { 0.5f,0.0f };
 	//右下2
 	vertexData[5].position = { 0.5f,-0.5f,-0.5f,1.0f };
-	vertexData[5].texcoord = { 1.0f,1.0f };
+	vertexData[5].texcoord = { 1.0f,1.0f };*/
+
+	// === 球を描画する ============================================================================================
+
+	//分割数
+	const uint32_t kSubdivision = 16;
+
+	//BufferResource
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kSubdivision * kSubdivision * 6);
+
+	//頂点バッファビューを作成する
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	//リソースの先頭のアドレスから使う
+	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+	//使用するリソースのサイズは頂点3つ分のサイズ
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * kSubdivision * kSubdivision * 6;
+	//1頂点あたりのサイズ
+	vertexBufferView.StrideInBytes = sizeof(VertexData);
+
+	//頂点リソースにデータを書き込む
+	VertexData* vertexData = nullptr;
+	//書き込むためのアドレスを取得
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+
+	// 経度分割1つ分の角度
+	const float kLonEvery = std::numbers::pi_v<float> *2.0f / float(kSubdivision);
+	// 緯度分割1つ分の角度
+	const float kLatEvery = std::numbers::pi_v<float> / float(kSubdivision);
+	// 緯度の方向に分割
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+		float lat = -std::numbers::pi_v<float> / 2.0f + kLatEvery * latIndex;
+		// 経度の方向に分割しながら線を描く
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
+			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+			float lon = lonIndex * kLonEvery;
+
+			float startU = float(lonIndex) / float(kSubdivision);
+			float startV = 1.0f - float(latIndex) / float(kSubdivision);
+
+			float nextU = float(lonIndex + 1) / float(kSubdivision);
+			float nextV = 1.0f - float(latIndex + 1) / float(kSubdivision);
+
+			// 頂点にデータを入力する。基準点a
+			vertexData[start].position.x = std::cos(lat) * std::cos(lon);
+			vertexData[start].position.y = std::sin(lat);
+			vertexData[start].position.z = std::cos(lat) * std::sin(lon);
+			vertexData[start].position.w = 1.0f;
+			vertexData[start].texcoord = { startU,startV };
+
+			//頂点b
+			vertexData[start + 1].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[start + 1].position.y = std::sin(lat + kLatEvery);
+			vertexData[start + 1].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[start + 1].position.w = 1.0f;
+			vertexData[start + 1].texcoord = { startU,nextV };
+
+			//頂点c
+			vertexData[start + 2].position.x = std::cos(lat) * std::cos(lon + kLonEvery);
+			vertexData[start + 2].position.y = std::sin(lat);
+			vertexData[start + 2].position.z = std::cos(lat) * std::sin(lon + kLonEvery);
+			vertexData[start + 2].position.w = 1.0f;
+			vertexData[start + 2].texcoord = { nextU,startV };
+
+
+
+			//頂点d
+			vertexData[start + 3].position.x = std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery);
+			vertexData[start + 3].position.y = std::sin(lat + kLatEvery);
+			vertexData[start + 3].position.z = std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery);
+			vertexData[start + 3].position.w = 1.0f;
+			vertexData[start + 3].texcoord = { nextU,nextV };
+
+			//頂点c
+			vertexData[start + 4].position.x = std::cos(lat) * std::cos(lon + kLonEvery);
+			vertexData[start + 4].position.y = std::sin(lat);
+			vertexData[start + 4].position.z = std::cos(lat) * std::sin(lon + kLonEvery);
+			vertexData[start + 4].position.w = 1.0f;
+			vertexData[start + 4].texcoord = { nextU,startV };
+
+			//頂点b
+			vertexData[start + 5].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[start + 5].position.y = std::sin(lat + kLatEvery);
+			vertexData[start + 5].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[start + 5].position.w = 1.0f;
+			vertexData[start + 5].texcoord = { startU,nextV };
+		}
+	}
 
 	// === スプライトのVertexResource ==============================================================
 
@@ -572,6 +663,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//CPUで動かす用のTransformを作る
 	WorldTransform transformSprite{ {1.0f,1.0f,1.0f} ,{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
 
 	//ビューポート
 	D3D12_VIEWPORT viewport{};
@@ -653,6 +745,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			ImGui::Begin("Debug");
 
+			ImGui::DragFloat3("translate Camera", &cameraTransform.translate.x, 0.1f);
+			ImGui::DragFloat3("rotate Camera", &cameraTransform.rotate.x, 0.01f);
+
 			ImGui::ColorEdit4("color Sprite", &materialData->x);
 			ImGui::DragFloat3("translate Sprite", &transformSprite.translate.x, 1.0f);
 
@@ -673,7 +768,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
 			//カメラ
-			WorldTransform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 			Matrix4x4 worldMatrix = MakeAffineMatrix(worldTransform.scale, worldTransform.rotate, worldTransform.translate);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -740,7 +834,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//wvp用のCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 			// 描画! (DrawCall/ドローコール)。3頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(6, 1, 0, 0);
+			commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 
 			// Spriteの描画。変更が必要なものだけ変更する
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);    // VBVを設定
