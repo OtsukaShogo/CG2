@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 struct Matrix4x4;
 struct Vector3;
 
