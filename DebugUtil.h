@@ -1,10 +1,7 @@
 #pragma once
+#include <Windows.h>
 #include<string>
 #include<fstream>
-
-//デバッグ用
-#include<dbghelp.h>
-#pragma comment(lib, "Dbghelp.lib")
 
 class DebugUtil {
 public:

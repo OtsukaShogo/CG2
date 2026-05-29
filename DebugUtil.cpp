@@ -1,4 +1,6 @@
 #include<Windows.h>
+#include<dbghelp.h>
+#pragma comment(lib, "Dbghelp.lib")
 #include<fstream>
 #include<chrono>
 #include<format>
