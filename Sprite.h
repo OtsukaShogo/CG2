@@ -32,7 +32,7 @@ private:
 
 	Mesh     mesh_;
 	Material material_;
-	WorldTransform worldTransform_ = { { 1.0f, 1.0f, 1.0f } ,{ 0.0f, 0.0f, 0.0f } ,{ 100.0f, 100.0f, 0.0f } };
+	WorldTransform worldTransform_ = { { 1.0f, 1.0f, 1.0f } ,{ 0.0f, 0.0f, 0.0f } ,{ 0.0f, 0.0f, 0.0f } };
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource_;
 	Matrix4x4* wvpData_ = nullptr;

@@ -26,6 +26,10 @@ public:
     ID3D12GraphicsCommandList* GetCommandList() const { return commandList_.Get(); }
     ID3D12DescriptorHeap* GetSrvDescriptorHeap() const { return srvDescriptorHeap_.Get(); }
 
+    uint32_t GetDescriptorSizeSRV() const { return descriptorSizeSRV_; }
+    uint32_t GetDescriptorSizeRTV() const { return descriptorSizeRTV_; }
+    uint32_t GetDescriptorSizeDSV() const { return descriptorSizeDSV_; }
+
 private:
     DirectXCommon() = default;
     ~DirectXCommon() = default;
@@ -62,6 +66,10 @@ private:
     HANDLE fenceEvent_ = nullptr;
 
     uint32_t backBufferIndex_ = 0;
+
+    uint32_t descriptorSizeSRV_ = 0;
+    uint32_t descriptorSizeRTV_ = 0;
+    uint32_t descriptorSizeDSV_ = 0;
 
     D3D12_VIEWPORT viewport_{};
     D3D12_RECT scissorRect_{};

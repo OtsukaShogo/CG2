@@ -41,13 +41,10 @@ TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
 
     // 5. SRV の空きスロットを自動割り当て
     uint32_t index = srvIndex_++;
-    UINT increment = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    uint32_t descriptorSize = dx->GetDescriptorSizeSRV();
 
-    handle.cpuHandle = srvHeap->GetCPUDescriptorHandleForHeapStart();
-    handle.cpuHandle.ptr += increment * index;
-
-    handle.gpuHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
-    handle.gpuHandle.ptr += increment * index;
+    handle.cpuHandle = GetCPUDescriptorHandle(srvHeap, descriptorSize, index);
+    handle.gpuHandle = GetGPUDescriptorHandle(srvHeap, descriptorSize, index);
 
     // 6. SRV 作成
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};

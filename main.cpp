@@ -124,17 +124,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// === テクスチャ ======================================================================================
 
 	TextureHandle tex = texMgr->LoadTexture("resources/uvChecker.png");
+	TextureHandle tex2 = texMgr->LoadTexture("resources/monsterBall.png");
 	dx->FlushCommands();
 
 	// === モデル / スプライト / オブジェクト =============================================================
 
 	auto sphereModel = std::unique_ptr<Model>(Model::CreateSphere());
-	sphereModel->SetTextureHandle(tex.gpuHandle);
+	sphereModel->SetTextureHandle(tex2.gpuHandle);
 
 	auto sprite = std::unique_ptr<Sprite>(Sprite::Create(640.0f, 360.0f));
 	sprite->SetTextureHandle(tex.gpuHandle);
 
 	// === メインループ ====================================================================================
+
+	bool useMonsterBall = true;
 
 	MSG msg{};
 	while (true) {
@@ -152,8 +155,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui::Begin("Debug");
 
+		ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+
 		//球
-		ImGui::ColorEdit4("Sphere Color", &sphereModel ->GetColor().x);
+		ImGui::ColorEdit4("Sphere Color", &sphereModel->GetColor().x);
 		ImGui::DragFloat3("Sphere Translate", &sphereModel->GetTranslate().x, 0.1f);
 		ImGui::DragFloat3("Sphere Scale", &sphereModel->GetScale().x, 0.1f);
 		ImGui::DragFloat3("Sphere Rotate", &sphereModel->GetRotate().x, 0.1f);
@@ -192,10 +197,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 3D描画
 		psoMgr->SetPipeline(commandList, "Object3D");
+		commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? tex2.gpuHandle : tex.gpuHandle);
 		sphereModel->Draw(camera->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, "Sprite");
+		commandList->SetGraphicsRootDescriptorTable(2,tex.gpuHandle);
 		sprite->Draw(camera->GetSpriteViewProjection());
 
 #ifdef USE_IMGUI
@@ -214,6 +221,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
 	sphereModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
+	tex2 = {};            // ID3D12Resource x2 (texture, intermediate)
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
 
 	dx->Finalize();
