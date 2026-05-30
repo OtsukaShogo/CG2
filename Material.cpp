@@ -24,8 +24,4 @@ void Material::SetColor(const Vector4& color) {
 
 void Material::Bind(ID3D12GraphicsCommandList* commandList) {
     commandList->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-
-    if (textureSrvHandleGPU_.ptr != 0) {
-        commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU_);
-    }
 }
