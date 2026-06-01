@@ -1,7 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <wrl/client.h>
-#include "Matrix4x4.h"
+#include "TransformMatrix.h"
 #include "WorldTransform.h"
 #include "Mesh.h"
 #include "Material.h"
@@ -37,5 +37,5 @@ private:
 	WorldTransform worldTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource_;
-	Matrix4x4* wvpData_ = nullptr;
+	TransformationMatrix* wvpData_ = nullptr;
 };

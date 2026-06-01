@@ -16,15 +16,17 @@ Sprite* Sprite::Create(float width, float height) {
     sprite->mesh_.CreateRect(width, height);
     sprite->mesh_.Upload();
     sprite->material_.Create();
+    sprite->material_.SetEnableLighting(false);
     sprite->CreateWvpBuffer();
     return sprite;
 }
 
 void Sprite::CreateWvpBuffer() {
     ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
-    wvpResource_ = CreateBufferResource(device, sizeof(Matrix4x4));
+    wvpResource_ = CreateBufferResource(device, sizeof(TransformationMatrix));
     wvpResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpData_));
-    *wvpData_ = MakeIdentity4x4();
+    wvpData_->WVP = MakeIdentity4x4();
+    wvpData_->World = MakeIdentity4x4();
 }
 
 void Sprite::Draw(const Matrix4x4& viewProjection) {
@@ -36,7 +38,8 @@ void Sprite::Draw(const Matrix4x4& viewProjection) {
         worldTransform_.rotate,
         worldTransform_.translate
     );
-    *wvpData_ = Multiply(worldMatrix, viewProjection);
+    wvpData_->WVP = Multiply(worldMatrix, viewProjection);
+    wvpData_->World = worldMatrix;
 
     commandList->SetGraphicsRootConstantBufferView(1, wvpResource_->GetGPUVirtualAddress());
 
