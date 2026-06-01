@@ -7,6 +7,7 @@
 #include "DebugUtil.h"
 #include "D3D12_Util.h"
 #include "Light.h"
+#include "TransformMatrix.h"
 #include "ShaderManager.h"
 #include "PipelineStateManager.h"
 #include "TextureManager.h"
@@ -147,6 +148,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	auto light = std::make_unique<Light>();
 	light->Initialize(device);
 
+	// === UV Transform ====================================================================================
+
+	WorldTransform uvTransformSprite{
+		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f },
+	};
+
 	// === メインループ ====================================================================================
 
 	bool useMonsterBall = true;
@@ -178,6 +187,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//スプライト
 		ImGui::ColorEdit4("Sprite Color", &sprite->GetColor().x);
 		ImGui::DragFloat2("Sprite Translate", &sprite->GetTranslate().x, 1.0f);
+		ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
+		ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+		ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
 
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
@@ -200,6 +212,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// カメラ更新
 		camera->Update();
+
+		// スプライトUV更新
+		Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+		uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+		uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
+		sprite->GetMaterial().GetUVTransform() = uvTransformMatrix;
 
 		// ====================================================================================================
 		// 描画処理

@@ -1,6 +1,7 @@
 #include "Material.h"
 #include "DirectXCommon.h"
 #include "D3D12_Util.h"
+#include "Matrix4x4.h"
 
 Material::Material(){}
 
@@ -16,6 +17,7 @@ void Material::Create() {
     materialResource_ = CreateBufferResource(device, sizeof(ConstantData));
     materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
     *materialData_ = ConstantData{};
+    materialData_->uvTransform = MakeIdentity4x4();
 }
 
 void Material::SetColor(const Vector4& color) {

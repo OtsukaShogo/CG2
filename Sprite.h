@@ -18,8 +18,9 @@ public:
 
 public:
 
-	Vector4& GetColor() { return material_.GetColor(); }
-	Vector3& GetTranslate() { return worldTransform_.translate; }
+	Vector4&  GetColor()    { return material_.GetColor(); }
+	Vector3&  GetTranslate(){ return worldTransform_.translate; }
+	Material& GetMaterial() { return material_; }
 
 	void SetColor(const Vector4& color) { material_.SetColor(color); }
 	void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { material_.SetTextureHandle(handle); }
