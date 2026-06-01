@@ -31,6 +31,7 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 			vertices_[start + 0].position.z = std::cos(lat) * std::sin(lon);
 			vertices_[start + 0].position.w = 1.0f;
 			vertices_[start + 0].texcoord = { startU, startV };
+			vertices_[start + 0].normal = { vertices_[start + 0].position.x, vertices_[start + 0].position.y, vertices_[start + 0].position.z };
 
 			// b
 			vertices_[start + 1].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
@@ -38,6 +39,7 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 			vertices_[start + 1].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
 			vertices_[start + 1].position.w = 1.0f;
 			vertices_[start + 1].texcoord = { startU, nextV };
+			vertices_[start + 1].normal = { vertices_[start + 1].position.x, vertices_[start + 1].position.y, vertices_[start + 1].position.z };
 
 			// c
 			vertices_[start + 2].position.x = std::cos(lat) * std::cos(lon + kLonEvery);
@@ -45,6 +47,7 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 			vertices_[start + 2].position.z = std::cos(lat) * std::sin(lon + kLonEvery);
 			vertices_[start + 2].position.w = 1.0f;
 			vertices_[start + 2].texcoord = { nextU, startV };
+			vertices_[start + 2].normal = { vertices_[start + 2].position.x, vertices_[start + 2].position.y, vertices_[start + 2].position.z };
 
 			// d
 			vertices_[start + 3].position.x = std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery);
@@ -52,6 +55,7 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 			vertices_[start + 3].position.z = std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery);
 			vertices_[start + 3].position.w = 1.0f;
 			vertices_[start + 3].texcoord = { nextU, nextV };
+			vertices_[start + 3].normal = { vertices_[start + 3].position.x, vertices_[start + 3].position.y, vertices_[start + 3].position.z };
 
 			// c
 			vertices_[start + 4] = vertices_[start + 2];
@@ -67,21 +71,27 @@ void Mesh::CreateRect(float width, float height) {
 
 	vertices_[0].position = { 0.0f,  height, 0.0f, 1.0f }; // 左下
 	vertices_[0].texcoord = { 0.0f, 1.0f };
+	vertices_[0].normal   = { 0.0f, 0.0f, -1.0f };
 
 	vertices_[1].position = { 0.0f,  0.0f,  0.0f, 1.0f }; // 左上
 	vertices_[1].texcoord = { 0.0f, 0.0f };
+	vertices_[1].normal   = { 0.0f, 0.0f, -1.0f };
 
 	vertices_[2].position = { width, height, 0.0f, 1.0f }; // 右下
 	vertices_[2].texcoord = { 1.0f, 1.0f };
+	vertices_[2].normal   = { 0.0f, 0.0f, -1.0f };
 
 	vertices_[3].position = { 0.0f,  0.0f,  0.0f, 1.0f }; // 左上
 	vertices_[3].texcoord = { 0.0f, 0.0f };
+	vertices_[3].normal   = { 0.0f, 0.0f, -1.0f };
 
 	vertices_[4].position = { width, 0.0f,  0.0f, 1.0f }; // 右上
 	vertices_[4].texcoord = { 1.0f, 0.0f };
+	vertices_[4].normal   = { 0.0f, 0.0f, -1.0f };
 
 	vertices_[5].position = { width, height, 0.0f, 1.0f }; // 右下
 	vertices_[5].texcoord = { 1.0f, 1.0f };
+	vertices_[5].normal   = { 0.0f, 0.0f, -1.0f };
 }
 
 void Mesh::Upload() {

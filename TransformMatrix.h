@@ -1,7 +1,11 @@
 #pragma once
+#include "Matrix4x4.h"
+#include "Vector3.h"
 
-struct Matrix4x4;
-struct Vector3;
+struct TransformationMatrix {
+    Matrix4x4 WVP;
+    Matrix4x4 World;
+};
 
 //平行移動行列
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate);

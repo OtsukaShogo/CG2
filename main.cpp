@@ -5,6 +5,8 @@
 #include "WinApp.h"
 #include "DirectXCommon.h"
 #include "DebugUtil.h"
+#include "D3D12_Util.h"
+#include "Light.h"
 #include "ShaderManager.h"
 #include "PipelineStateManager.h"
 #include "TextureManager.h"
@@ -45,7 +47,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	IDxcBlob* vs = shaderMgr->Compile(L"Object3d.VS.hlsl", L"vs_6_0");
 	IDxcBlob* ps = shaderMgr->Compile(L"Object3d.PS.hlsl", L"ps_6_0");
 
-	D3D12_INPUT_ELEMENT_DESC inputElements[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
 	inputElements[0].SemanticName = "POSITION";
 	inputElements[0].SemanticIndex = 0;
 	inputElements[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -55,6 +57,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	inputElements[1].SemanticIndex = 0;
 	inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElements[2].SemanticName = "NORMAL";
+	inputElements[2].SemanticIndex = 0;
+	inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout{};
 	inputLayout.pInputElementDescs = inputElements;
@@ -135,6 +142,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	auto sprite = std::unique_ptr<Sprite>(Sprite::Create(640.0f, 360.0f));
 	sprite->SetTextureHandle(tex.gpuHandle);
 
+	// === DirectionalLight ================================================================================
+
+	auto light = std::make_unique<Light>();
+	light->Initialize(device);
+
 	// === メインループ ====================================================================================
 
 	bool useMonsterBall = true;
@@ -167,6 +179,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::ColorEdit4("Sprite Color", &sprite->GetColor().x);
 		ImGui::DragFloat2("Sprite Translate", &sprite->GetTranslate().x, 1.0f);
 
+		//ライト
+		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
+		ImGui::DragFloat3("Light Direction", &light->GetDirectionalLight()->direction.x, 0.1f);
+		ImGui::DragFloat("Light Intensity", &light->GetDirectionalLight()->intensity, 0.1f);
+
 		//カメラ
 		ImGui::DragFloat3("Camera Translate", &camera->GetTranslate().x, 0.1f);
 		ImGui::DragFloat3("Camera Rotate", &camera->GetRotate().x, 0.1f);
@@ -198,6 +215,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// 3D描画
 		psoMgr->SetPipeline(commandList, "Object3D");
 		commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? tex2.gpuHandle : tex.gpuHandle);
+		commandList->SetGraphicsRootConstantBufferView(3, light->GetDirectionalLightAddress());
 		sphereModel->Draw(camera->GetViewProjection());
 
 		// 2D描画
@@ -218,6 +236,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// D3D12リソースをデバイス解放より前に明示的に解放する
 	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
+	light.reset();        // ~Light() で Unmap + Release
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
 	sphereModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
