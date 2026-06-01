@@ -22,7 +22,11 @@ public:
 
 private:
     std::vector<VertexData> vertices_;
+    std::vector<uint32_t>   indices_;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
     D3D12_VERTEX_BUFFER_VIEW vbv_{};
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> indexResource_;
+    D3D12_INDEX_BUFFER_VIEW ibv_{};
 };
