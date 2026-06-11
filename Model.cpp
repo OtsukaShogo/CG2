@@ -1,7 +1,8 @@
 #include "Model.h"
 #include "DirectXCommon.h"
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
 #include "TransformMatrix.h"
+#include "TextureManager.h"
 
 Model::Model() {}
 
@@ -20,6 +21,26 @@ Model* Model::CreateSphere() {
 
     // Material生成
     model->material_.Create();
+
+    // WVP生成
+    model->CreateWvpBuffer();
+
+    return model;
+}
+
+Model* Model::CreateFromObj(const std::string& directoryPath, const std::string& filename) {
+    auto* model = new Model();
+
+    // Mesh生成（OBJファイル読み込み）・GPU転送
+    model->mesh_.LoadObjFile(directoryPath, filename);
+    model->mesh_.Upload();
+
+    // Material生成
+    model->material_.Create();
+
+    // OBJのmtlで指定されたテクスチャを読み込み、バインドする
+    // （GPUへのアップロードが完了するまでtexture/intermediateを生かしておく必要があるため、Material側で保持する）
+    model->material_.SetTexture(TextureManager::GetInstance()->LoadTexture(model->mesh_.GetTextureFilePath()));
 
     // WVP生成
     model->CreateWvpBuffer();

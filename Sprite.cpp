@@ -1,6 +1,6 @@
 #include "Sprite.h"
 #include "DirectXCommon.h"
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
 #include "TransformMatrix.h"
 
 Sprite::Sprite(){}

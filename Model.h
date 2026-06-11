@@ -13,6 +13,9 @@ public:
 
 	static Model* CreateSphere();
 
+	// Objファイルを読み込んでモデルを生成する
+	static Model* CreateFromObj(const std::string& directoryPath, const std::string& filename);
+
 	void Update();
 
 	void Draw(const Matrix4x4& viewProjection);
@@ -32,7 +35,7 @@ private:
 	void CreateWvpBuffer();
 
 private:
-	Mesh     mesh_;
+	Mesh mesh_;
 	Material material_;
 	WorldTransform worldTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 

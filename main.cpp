@@ -5,7 +5,7 @@
 #include "WinApp.h"
 #include "DirectXCommon.h"
 #include "DebugUtil.h"
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
 #include "Light.h"
 #include "TransformMatrix.h"
 #include "ShaderManager.h"
@@ -133,12 +133,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	TextureHandle tex = texMgr->LoadTexture("resources/uvChecker.png");
 	TextureHandle tex2 = texMgr->LoadTexture("resources/monsterBall.png");
-	dx->FlushCommands();
 
 	// === モデル / スプライト / オブジェクト =============================================================
+	// ※ Model::CreateSphere内部でもLoadTextureを呼ぶため、コマンドリストがCloseされる前に生成する
 
-	auto sphereModel = std::unique_ptr<Model>(Model::CreateSphere());
-	sphereModel->SetTextureHandle(tex2.gpuHandle);
+	auto axisModel = std::unique_ptr<Model>(Model::CreateFromObj("resources", "axis.obj"));
+
+	dx->FlushCommands();
 
 	auto sprite = std::unique_ptr<Sprite>(Sprite::Create(640.0f, 360.0f));
 	sprite->SetTextureHandle(tex.gpuHandle);
@@ -158,8 +159,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// === メインループ ====================================================================================
 
-	bool useMonsterBall = true;
-
 	MSG msg{};
 	while (true) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -176,13 +175,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui::Begin("Debug");
 
-		ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-
-		//球
-		ImGui::ColorEdit4("Sphere Color", &sphereModel->GetColor().x);
-		ImGui::DragFloat3("Sphere Translate", &sphereModel->GetTranslate().x, 0.1f);
-		ImGui::DragFloat3("Sphere Scale", &sphereModel->GetScale().x, 0.1f);
-		ImGui::DragFloat3("Sphere Rotate", &sphereModel->GetRotate().x, 0.1f);
+		//モデル
+		ImGui::ColorEdit4("Axis Color", &axisModel->GetColor().x);
+		ImGui::DragFloat3("Axis Translate", &axisModel->GetTranslate().x, 0.1f);
+		ImGui::DragFloat3("Axis Scale", &axisModel->GetScale().x, 0.1f);
+		ImGui::DragFloat3("Axis Rotate", &axisModel->GetRotate().x, 0.1f);
 
 		//スプライト
 		ImGui::ColorEdit4("Sprite Color", &sprite->GetColor().x);
@@ -208,7 +205,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// ====================================================================================================
 
 		//球を回転させる
-		sphereModel->Update();
+		//sphereModel->Update();
 
 		// カメラ更新
 		camera->Update();
@@ -232,14 +229,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 3D描画
 		psoMgr->SetPipeline(commandList, "Object3D");
-		commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? tex2.gpuHandle : tex.gpuHandle);
 		commandList->SetGraphicsRootConstantBufferView(3, light->GetDirectionalLightAddress());
-		sphereModel->Draw(camera->GetViewProjection());
+		axisModel->Draw(camera->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, "Sprite");
 		commandList->SetGraphicsRootDescriptorTable(2,tex.gpuHandle);
-		sprite->Draw(camera->GetSpriteViewProjection());
+		//sprite->Draw(camera->GetSpriteViewProjection());
 
 #ifdef USE_IMGUI
 		imgui->EndFrame(dx->GetCommandList());
@@ -256,7 +252,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
 	light.reset();        // ~Light() で Unmap + Release
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
-	sphereModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
+	axisModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
 	tex2 = {};            // ID3D12Resource x2 (texture, intermediate)
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
