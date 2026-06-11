@@ -1,4 +1,4 @@
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
 #include <cassert>
 #include "externals/DirectXTex/d3dx12.h"
 #include <vector>

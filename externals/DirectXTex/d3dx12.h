@@ -2358,7 +2358,7 @@ inline UINT64 UpdateSubresources(
     return RequiredSize;
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
 // All arrays must be populated (e.g. by calling GetCopyableFootprints)
 inline UINT64 UpdateSubresources(
     _In_ ID3D12GraphicsCommandList* pCmdList,

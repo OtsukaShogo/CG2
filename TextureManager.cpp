@@ -1,6 +1,6 @@
 #include "TextureManager.h"
 #include "DirectXCommon.h"
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
 #include "externals/DirectXTex/DirectXTex.h"
 #include <cassert>
 

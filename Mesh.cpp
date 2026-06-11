@@ -1,25 +1,33 @@
 #include "Mesh.h"
 #include <numbers>
 #include <cstring>
+#include <fstream>
+#include <sstream>
+#include <cassert>
 #include "DirectXCommon.h"
-#include "D3D12_Util.h"
+#include "D3D12Util.h"
+#include"Material.h"
 
 Mesh::Mesh() {}
 
 Mesh::~Mesh() {}
 
+const std::string& Mesh::GetTextureFilePath() const {
+	return material_->GetTextureFilePath();
+}
+
 void Mesh::CreateSphere(uint32_t subdivision) {
 	const float kLonEvery = std::numbers::pi_v<float> * 2.0f / float(subdivision);
 	const float kLatEvery = std::numbers::pi_v<float> / float(subdivision);
 
-	vertices_.resize(subdivision * subdivision * 4);
-	indices_.resize(subdivision * subdivision * 6);
+	vertices_.clear();
+	indices_.clear();
+	vertices_.reserve(subdivision * subdivision * 4);
+	indices_.reserve(subdivision * subdivision * 6);
 
 	for (uint32_t latIndex = 0; latIndex < subdivision; ++latIndex) {
 		float lat = -std::numbers::pi_v<float> / 2.0f + kLatEvery * latIndex;
 		for (uint32_t lonIndex = 0; lonIndex < subdivision; ++lonIndex) {
-			uint32_t vStart = (latIndex * subdivision + lonIndex) * 4;
-			uint32_t iStart = (latIndex * subdivision + lonIndex) * 6;
 			float lon = lonIndex * kLonEvery;
 
 			float startU = float(lonIndex) / float(subdivision);
@@ -27,47 +35,46 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 			float nextU = float(lonIndex + 1) / float(subdivision);
 			float nextV = 1.0f - float(latIndex + 1) / float(subdivision);
 
+			uint32_t vStart = static_cast<uint32_t>(vertices_.size());
+
 			// a
-			vertices_[vStart + 0].position.x = std::cos(lat) * std::cos(lon);
-			vertices_[vStart + 0].position.y = std::sin(lat);
-			vertices_[vStart + 0].position.z = std::cos(lat) * std::sin(lon);
-			vertices_[vStart + 0].position.w = 1.0f;
-			vertices_[vStart + 0].texcoord = { startU, startV };
-			vertices_[vStart + 0].normal = { vertices_[vStart + 0].position.x, vertices_[vStart + 0].position.y, vertices_[vStart + 0].position.z };
+			VertexData a{};
+			a.position = { std::cos(lat) * std::cos(lon), std::sin(lat), std::cos(lat) * std::sin(lon), 1.0f };
+			a.texcoord = { startU, startV };
+			a.normal = { a.position.x, a.position.y, a.position.z };
 
 			// b
-			vertices_[vStart + 1].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
-			vertices_[vStart + 1].position.y = std::sin(lat + kLatEvery);
-			vertices_[vStart + 1].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
-			vertices_[vStart + 1].position.w = 1.0f;
-			vertices_[vStart + 1].texcoord = { startU, nextV };
-			vertices_[vStart + 1].normal = { vertices_[vStart + 1].position.x, vertices_[vStart + 1].position.y, vertices_[vStart + 1].position.z };
+			VertexData b{};
+			b.position = { std::cos(lat + kLatEvery) * std::cos(lon), std::sin(lat + kLatEvery), std::cos(lat + kLatEvery) * std::sin(lon), 1.0f };
+			b.texcoord = { startU, nextV };
+			b.normal = { b.position.x, b.position.y, b.position.z };
 
 			// c
-			vertices_[vStart + 2].position.x = std::cos(lat) * std::cos(lon + kLonEvery);
-			vertices_[vStart + 2].position.y = std::sin(lat);
-			vertices_[vStart + 2].position.z = std::cos(lat) * std::sin(lon + kLonEvery);
-			vertices_[vStart + 2].position.w = 1.0f;
-			vertices_[vStart + 2].texcoord = { nextU, startV };
-			vertices_[vStart + 2].normal = { vertices_[vStart + 2].position.x, vertices_[vStart + 2].position.y, vertices_[vStart + 2].position.z };
+			VertexData c{};
+			c.position = { std::cos(lat) * std::cos(lon + kLonEvery), std::sin(lat), std::cos(lat) * std::sin(lon + kLonEvery), 1.0f };
+			c.texcoord = { nextU, startV };
+			c.normal = { c.position.x, c.position.y, c.position.z };
 
 			// d
-			vertices_[vStart + 3].position.x = std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery);
-			vertices_[vStart + 3].position.y = std::sin(lat + kLatEvery);
-			vertices_[vStart + 3].position.z = std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery);
-			vertices_[vStart + 3].position.w = 1.0f;
-			vertices_[vStart + 3].texcoord = { nextU, nextV };
-			vertices_[vStart + 3].normal = { vertices_[vStart + 3].position.x, vertices_[vStart + 3].position.y, vertices_[vStart + 3].position.z };
+			VertexData d{};
+			d.position = { std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery), std::sin(lat + kLatEvery), std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery), 1.0f };
+			d.texcoord = { nextU, nextV };
+			d.normal = { d.position.x, d.position.y, d.position.z };
+
+			vertices_.push_back(a);
+			vertices_.push_back(b);
+			vertices_.push_back(c);
+			vertices_.push_back(d);
 
 			// T1: a, b, c
-			indices_[iStart + 0] = vStart + 0;
-			indices_[iStart + 1] = vStart + 1;
-			indices_[iStart + 2] = vStart + 2;
+			indices_.push_back(vStart + 0);
+			indices_.push_back(vStart + 1);
+			indices_.push_back(vStart + 2);
 
 			// T2: d, c, b
-			indices_[iStart + 3] = vStart + 3;
-			indices_[iStart + 4] = vStart + 2;
-			indices_[iStart + 5] = vStart + 1;
+			indices_.push_back(vStart + 3);
+			indices_.push_back(vStart + 2);
+			indices_.push_back(vStart + 1);
 		}
 	}
 }
@@ -92,6 +99,82 @@ void Mesh::CreateRect(float width, float height) {
 	vertices_[3].normal   = { 0.0f, 0.0f, -1.0f };
 
 	indices_ = { 0, 1, 3, 1, 2, 3 };
+}
+
+void Mesh::LoadObjFile(const std::string& directoryPath, const std::string& filename) {
+	//1.中で必要となる変数の宣言
+	std::vector<Vector4> positions; // 位置
+	std::vector<Vector3> normals;   // 法線
+	std::vector<Vector2> texcoords; // テクスチャ座標
+	std::string line;               // ファイルから読んだ1行を格納する
+
+	//2.ファイルを開く
+	std::ifstream file(directoryPath + "/" + filename);
+	assert(file.is_open());
+
+	//3.実際にファイルを読み、vertices_に代入する
+	while (std::getline(file, line)) {
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier;
+
+		// identifierに応じた処理
+		if (identifier == "v") {
+			Vector4 position;
+			s >> position.x >> position.y >> position.z;
+			position.x *= -1.0f;
+			position.w = 1.0f;
+			positions.push_back(position);
+
+		} else if (identifier == "vt") {
+			Vector2 texcoord;
+			s >> texcoord.x >> texcoord.y;
+			texcoord.y = 1.0f - texcoord.y;
+			texcoords.push_back(texcoord);
+
+		} else if (identifier == "vn") {
+			Vector3 normal;
+			s >> normal.x >> normal.y >> normal.z;
+			normal.x *= -1.0f;
+			normals.push_back(normal);
+
+		} else if (identifier == "f") {
+			// 面は三角形限定。面を構成する頂点を逆順に登録することで、回り順を反転させる
+			VertexData triangle[3];
+			for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
+				std::string vertexDefinition;
+				s >> vertexDefinition;
+
+				// 頂点の要素へのインデックスは「位置/UV/法線」の形式で書かれているので分解する
+				std::istringstream v(vertexDefinition);
+				uint32_t elementIndices[3];
+				for (int32_t element = 0; element < 3; ++element) {
+					std::string index;
+					std::getline(v, index, '/');
+					elementIndices[element] = static_cast<uint32_t>(std::stoi(index));
+				}
+
+				// 要素のインデックスから、実際の要素の値を取得して頂点を構築する
+				Vector4 position = positions[elementIndices[0] - 1];
+				Vector2 texcoord = texcoords[elementIndices[1] - 1];
+				Vector3 normal   = normals[elementIndices[2] - 1];
+				triangle[faceVertex] = VertexData{ position, texcoord, normal };
+			}
+
+			// 頂点を逆順で登録する
+			vertices_.push_back(triangle[2]);
+			vertices_.push_back(triangle[1]);
+			vertices_.push_back(triangle[0]);
+
+		} else if (identifier == "mtllib") {
+			// materialTemplateLibraryファイルの名前を取得する
+			std::string materialFilename;
+			s >> materialFilename;
+			// Materialを生成し、mtlファイルを読み込ませる（基本的にobjファイルと同一階層にmtlは存在する）
+			material_ = std::make_unique<Material>();
+			material_->LoadMaterialTemplateFile(directoryPath, materialFilename);
+		}
+	}
 }
 
 void Mesh::Upload() {

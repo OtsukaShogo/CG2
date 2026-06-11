@@ -60,7 +60,7 @@
     <ClCompile Include="DirectXCommon.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
-    <ClCompile Include="D3D12_Util.cpp">
+    <ClCompile Include="D3D12Util.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
     <ClCompile Include="DebugUtil.cpp">
@@ -146,7 +146,7 @@
     <ClInclude Include="DirectXCommon.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
-    <ClInclude Include="D3D12_Util.h">
+    <ClInclude Include="D3D12Util.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
     <ClInclude Include="DebugUtil.h">
