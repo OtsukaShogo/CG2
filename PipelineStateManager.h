@@ -5,9 +5,13 @@
 #include <unordered_map>
 
 struct IDxcBlob;
+class ShaderManager;
 
 class PipelineStateManager {
 public:
+    // PSO名
+    static constexpr const char* kObject3D = "Object3D";
+    static constexpr const char* kSprite   = "Sprite";
 
     PipelineStateManager();
     ~PipelineStateManager();
@@ -24,6 +28,12 @@ public:
         const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
         DXGI_FORMAT rtvFormat,
         DXGI_FORMAT dsvFormat);
+
+    // Object3D 用 PSO を作成してキャッシュする
+    ID3D12PipelineState* CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr);
+
+    // Sprite(2D) 用 PSO を作成してキャッシュする
+    ID3D12PipelineState* CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
 
     // 既に作った PSO を取得
     ID3D12PipelineState* GetPipelineState(const std::string& name) const;

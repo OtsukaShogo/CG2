@@ -2,8 +2,9 @@
 #include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <wrl/client.h> 
+#include <wrl/client.h>
 #include <cstdint>
+#include <dxgi1_5.h>
 
 class DirectXCommon {
 public:

@@ -102,6 +102,9 @@
     <ClCompile Include="Light.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="D3DResourceLeakChecker.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector4.h">
@@ -196,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="Matrix3x3.h">
       <Filter>ソース ファイル\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DResourceLeakChecker.h">
+      <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
