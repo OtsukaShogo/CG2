@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <d3d12.h>
 #include<memory>
+#include<wrl/client.h>
 
 #include "WinApp.h"
 #include "DirectXCommon.h"
@@ -15,6 +16,7 @@
 #include "Sprite.h"
 #include "ImGuiManager.h"
 #include"Camera.h"
+#include "AudioManager.h"
 
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -22,7 +24,9 @@
 #include "Matrix4x4.h"
 #include "WorldTransform.h"
 
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+// WinMain の定義にヘッダと整合する SAL 注釈を追加
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
 	// === リソースリークチェッカー生成 ====================================================================
 
 	D3DResourceLeakChecker leakCheck;
@@ -46,7 +50,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	dx->Initialize(winApp->GetHwnd(), WinApp::kClientWidth, WinApp::kClientHeight);
 
 	// === Shader初期化 =============================================================================================
-	
+
 	auto shaderMgr = std::make_unique<ShaderManager>();
 	shaderMgr->InitializeDXC();
 
@@ -75,17 +79,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	TextureHandle tex = texMgr->LoadTexture("resources/uvChecker.png");
 	TextureHandle tex2 = texMgr->LoadTexture("resources/monsterBall.png");
 
+	// === 音声データ =====================================================================================
+
+	AudioManager* audioMgr = AudioManager::GetInstance();
+	audioMgr->Initialize();
+
+	// 音声読み込み
+	SoundData soundData1 = audioMgr->LoadWave("Resources/Alarm01.wav");
+
+	// 音声再生
+	audioMgr->Play(soundData1);
+
 	// === カメラ ==========================================================================================
 
 	std::unique_ptr<Camera> camera = std::make_unique<Camera>();
 	camera->Update();
 
-	// === モデル / スプライト =============================================================
+	// === オブジェクト ===========================================================================================
 
+	// モデル
 	auto axisModel = std::unique_ptr<Model>(Model::CreateFromObj("resources", "axis.obj"));
+	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
 
-	dx->FlushCommands();
-
+	// スプライト
 	auto sprite = std::unique_ptr<Sprite>(Sprite::Create(640.0f, 360.0f));
 	sprite->SetTextureHandle(tex.gpuHandle);
 
@@ -179,7 +195,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);
-		commandList->SetGraphicsRootDescriptorTable(2,tex.gpuHandle);
+		commandList->SetGraphicsRootDescriptorTable(2, tex.gpuHandle);
 		//sprite->Draw(camera->GetSpriteViewProjection());
 
 #ifdef USE_IMGUI
@@ -198,6 +214,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	light.reset();        // ~Light() で Unmap + Release
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
 	axisModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
+	audioMgr->Unload(&soundData1);
+	audioMgr->Finalize();
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
 	tex2 = {};            // ID3D12Resource x2 (texture, intermediate)
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
