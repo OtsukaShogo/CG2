@@ -1,5 +1,6 @@
 #include "PipelineStateManager.h"
 #include "DebugUtil.h"
+#include "ShaderManager.h"
 #include <cassert>
 #include<dxcapi.h>
 
@@ -9,8 +10,6 @@ PipelineStateManager::~PipelineStateManager() {}
 
 void PipelineStateManager::InitializeRootSignature(ID3D12Device* device) {
 	if (rootSignature_) return;
-
-	// ==== ここは今 WinMain に書いてある RootSignature の設定をほぼそのまま移植 ====
 
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -134,6 +133,106 @@ ID3D12PipelineState* PipelineStateManager::GetPipelineState(const std::string& n
 		return nullptr;
 	}
 	return it->second.Get();
+}
+
+ID3D12PipelineState* PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+	IDxcBlob* vs = shaderMgr->Compile(L"Object3d.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Object3d.PS.hlsl", L"ps_6_0");
+
+	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
+	inputElements[0].SemanticName = "POSITION";
+	inputElements[0].SemanticIndex = 0;
+	inputElements[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	inputElements[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElements[1].SemanticName = "TEXCOORD";
+	inputElements[1].SemanticIndex = 0;
+	inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+	inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElements[2].SemanticName = "NORMAL";
+	inputElements[2].SemanticIndex = 0;
+	inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	D3D12_INPUT_LAYOUT_DESC inputLayout{};
+	inputLayout.pInputElementDescs = inputElements;
+	inputLayout.NumElements = _countof(inputElements);
+
+	D3D12_BLEND_DESC blendDesc{};
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	D3D12_RASTERIZER_DESC rasterDesc{};
+	rasterDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+	D3D12_DEPTH_STENCIL_DESC depthDesc{};
+	depthDesc.DepthEnable = true;
+	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+	return CreateGraphicsPipeline(
+		kObject3D,
+		device,
+		vs,
+		ps,
+		inputLayout,
+		blendDesc,
+		rasterDesc,
+		depthDesc,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+		DXGI_FORMAT_D24_UNORM_S8_UINT
+	);
+}
+
+ID3D12PipelineState* PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+	IDxcBlob* vs = shaderMgr->Compile(L"Object3d.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Object3d.PS.hlsl", L"ps_6_0");
+
+	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
+	inputElements[0].SemanticName = "POSITION";
+	inputElements[0].SemanticIndex = 0;
+	inputElements[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	inputElements[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElements[1].SemanticName = "TEXCOORD";
+	inputElements[1].SemanticIndex = 0;
+	inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+	inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	inputElements[2].SemanticName = "NORMAL";
+	inputElements[2].SemanticIndex = 0;
+	inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+	D3D12_INPUT_LAYOUT_DESC inputLayout{};
+	inputLayout.pInputElementDescs = inputElements;
+	inputLayout.NumElements = _countof(inputElements);
+
+	D3D12_BLEND_DESC blendDesc{};
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	D3D12_RASTERIZER_DESC rasterDesc{};
+	rasterDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+	D3D12_DEPTH_STENCIL_DESC depthNone{};
+	depthNone.DepthEnable = false;
+	depthNone.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	depthNone.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+	return CreateGraphicsPipeline(
+		kSprite,
+		device,
+		vs,
+		ps,
+		inputLayout,
+		blendDesc,
+		rasterDesc,
+		depthNone,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+		DXGI_FORMAT_UNKNOWN
+	);
 }
 
 void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name) {
