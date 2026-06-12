@@ -105,6 +105,9 @@
     <ClCompile Include="D3DResourceLeakChecker.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
+    <ClCompile Include="AudioManager.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector4.h">
@@ -201,6 +204,9 @@
       <Filter>ソース ファイル\Math</Filter>
     </ClInclude>
     <ClInclude Include="D3DResourceLeakChecker.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioManager.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
   </ItemGroup>
