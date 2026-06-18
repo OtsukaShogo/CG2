@@ -21,6 +21,7 @@ public:
 	static constexpr int32_t kClientHeight = 720;
 
 	const HWND& GetHwnd() const { return hwnd_; }
+	HINSTANCE GetHInstance() const { return hInstance_; }
 
 private:
 
@@ -28,4 +29,5 @@ private:
 	~WinApp() = default;
 
 	HWND hwnd_ = nullptr;
+	HINSTANCE hInstance_ = nullptr;
 };
