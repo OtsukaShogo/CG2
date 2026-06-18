@@ -1,7 +1,6 @@
 #include <Windows.h>
 #include <d3d12.h>
 #include<memory>
-#include<wrl/client.h>
 
 #include "WinApp.h"
 #include "DirectXCommon.h"
@@ -17,6 +16,7 @@
 #include "ImGuiManager.h"
 #include"Camera.h"
 #include "AudioManager.h"
+#include "Input.h"
 
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -48,6 +48,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	DirectXCommon* dx = DirectXCommon::GetInstance();
 	dx->Initialize(winApp->GetHwnd(), WinApp::kClientWidth, WinApp::kClientHeight);
+
+	// === Input初期化 =======================================================================
+
+	Input* input = Input::GetInstance();
+	input->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
 
 	// === Shader初期化 =============================================================================================
 
@@ -183,6 +188,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		dx->BeginFrame();
 
+		// キー状態更新
+		input->Update();
+
+		// キーが押されていたら
+		if (input->TriggerKey(DIK_A)) {
+			OutputDebugStringA("Hit A\n");
+			axisModel->GetTranslate().x--;
+		}
+
+		if (input->TriggerKey(DIK_D)) {
+			OutputDebugStringA("Hit D\n");
+			axisModel->GetTranslate().x++;
+		}
+
 		// DescriptorHeap・RootSignature・PSOのセット
 		auto* commandList = dx->GetCommandList();
 		ID3D12DescriptorHeap* heaps[] = { dx->GetSrvDescriptorHeap() };
@@ -216,6 +235,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	axisModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
 	audioMgr->Unload(&soundData1);
 	audioMgr->Finalize();
+	input->Finalize();
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
 	tex2 = {};            // ID3D12Resource x2 (texture, intermediate)
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1

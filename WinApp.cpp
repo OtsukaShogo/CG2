@@ -45,6 +45,9 @@ void WinApp::Initialize() {
 
 	WNDCLASS wc{};
 
+	// インスタンスハンドル
+	hInstance_ = GetModuleHandle(nullptr);
+
 	// ウィンドウプロシージャ
 	wc.lpfnWndProc = WindowProc;
 
@@ -52,7 +55,7 @@ void WinApp::Initialize() {
 	wc.lpszClassName = L"CG2WindowClass";
 
 	// インスタンスハンドル
-	wc.hInstance = GetModuleHandle(nullptr);
+	wc.hInstance = hInstance_;
 
 	// カーソル
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
