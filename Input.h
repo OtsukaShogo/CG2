@@ -7,38 +7,37 @@ class Input {
 public:
 	static Input* GetInstance();
 
-	// コピー禁止
 	Input(const Input&) = delete;
 	Input& operator=(const Input&) = delete;
 
-	// DirectInput初期化・キーボードデバイス生成
 	void Initialize(HINSTANCE hInstance, HWND hwnd);
-
-	// キー状態を更新（毎フレーム呼ぶ）
 	void Update();
-
-	// 終了処理
 	void Finalize();
 
-	// キーを押した状態か
+	// キーボード
 	bool PushKey(BYTE keyCode) const;
-
-	// キーを離した状態か
 	bool UpKey(BYTE keyCode) const;
-
-	// キーを押した瞬間か
 	bool TriggerKey(BYTE keyCode) const;
-
-	// キーを離した瞬間か
 	bool ReleaseKey(BYTE keyCode) const;
+
+	// マウス（今フレームの相対移動量）
+	long GetMouseDeltaX() const { return mouseState_.lX; }
+	long GetMouseDeltaY() const { return mouseState_.lY; }
+	long GetMouseDeltaWheel() const { return mouseState_.lZ; }
+
+	// マウスボタン (0=左, 1=右, 2=中)
+	bool PushMouseButton(int button) const;
+	bool TriggerMouseButton(int button) const;
 
 private:
 	Input() = default;
 	~Input() = default;
 
-private:
 	IDirectInput8* directInput_ = nullptr;
 	IDirectInputDevice8* keyboard_ = nullptr;
+	IDirectInputDevice8* mouseDevice_ = nullptr;
 	BYTE key_[256] = {};
 	BYTE keyPrev_[256] = {};
+	DIMOUSESTATE mouseStatePrev_ = {};
+	DIMOUSESTATE mouseState_ = {};
 };

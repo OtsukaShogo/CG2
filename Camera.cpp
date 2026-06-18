@@ -2,29 +2,36 @@
 #include "TransformMatrix.h"
 #include "WinApp.h"
 
-Camera::Camera(){}
+Camera::Camera() {
+    rotateMatrix_ = MakeIdentity4x4();
+}
 
 Camera::~Camera(){}
 
-void Camera::Update() {
-   //回転行列
-    Matrix4x4 rotateXMatrix = MakeRotateXMatrix(rotate_.x);
-    Matrix4x4 rotateYMatrix = MakeRotateYMatrix(rotate_.y);
-    Matrix4x4 rotateZMatrix = MakeRotateZMatrix(rotate_.z);
-    Matrix4x4 rotateMatrix = Multiply(rotateXMatrix, Multiply(rotateYMatrix, rotateZMatrix));
+void Camera::Initialize() {
+	Update();
+}
 
+void Camera::AddRotation(float deltaX, float deltaY) {
+    Matrix4x4 matRotDelta = MakeIdentity4x4();
+    matRotDelta = Multiply(matRotDelta, MakeRotateXMatrix(deltaX));
+    matRotDelta = Multiply(matRotDelta, MakeRotateYMatrix(deltaY));
+    rotateMatrix_ = Multiply(matRotDelta, rotateMatrix_);
+}
+
+void Camera::Update() {
     //移動行列
     Matrix4x4 translateMatrix = MakeTranslateMatrix(translate_);
 
     // ビュー行列
-    Matrix4x4 worldMatrix = Multiply(rotateMatrix, translateMatrix);
-    Matrix4x4 view = Inverse(worldMatrix);
+    Matrix4x4 worldMatrix = Multiply(rotateMatrix_, translateMatrix);
+    viewMatrix_ = Inverse(worldMatrix);
 
     // プロジェクション行列
     float aspect = float(WinApp::kClientWidth) / float(WinApp::kClientHeight);
-    Matrix4x4 proj = MakePerspectiveFovMatrix(fovY_, aspect, nearZ_, farZ_);
+    projMatrix_ = MakePerspectiveFovMatrix(fovY_, aspect, nearZ_, farZ_);
 
-    viewProjection_ = Multiply(view, proj);
+    viewProjection_ = Multiply(viewMatrix_, projMatrix_);
 
     // 2D用の正射影行列
     spriteViewProjection_ = MakeOrthographicMatrix(

@@ -14,7 +14,7 @@
 #include "Model.h"
 #include "Sprite.h"
 #include "ImGuiManager.h"
-#include"Camera.h"
+#include "CameraManager.h"
 #include "AudioManager.h"
 #include "Input.h"
 
@@ -97,8 +97,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === カメラ ==========================================================================================
 
-	std::unique_ptr<Camera> camera = std::make_unique<Camera>();
-	camera->Update();
+	CameraManager* cameraMgr = CameraManager::GetInstance();
+	cameraMgr->Initialize();
 
 	// === オブジェクト ===========================================================================================
 
@@ -141,6 +141,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		ImGui::Begin("Debug");
 
+		cameraMgr->DrawImGui();
+		ImGui::Separator();
+
 		//モデル
 		ImGui::ColorEdit4("Axis Color", &axisModel->GetColor().x);
 		ImGui::DragFloat3("Axis Translate", &axisModel->GetTranslate().x, 0.1f);
@@ -159,10 +162,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Light Direction", &light->GetDirectionalLight()->direction.x, 0.1f);
 		ImGui::DragFloat("Light Intensity", &light->GetDirectionalLight()->intensity, 0.1f);
 
-		//カメラ
-		ImGui::DragFloat3("Camera Translate", &camera->GetTranslate().x, 0.1f);
-		ImGui::DragFloat3("Camera Rotate", &camera->GetRotate().x, 0.1f);
-
 		ImGui::End();
 #endif
 
@@ -172,9 +171,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//球を回転させる
 		//sphereModel->Update();
-
-		// カメラ更新
-		camera->Update();
 
 		// スプライトUV更新
 		Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
@@ -191,16 +187,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// キー状態更新
 		input->Update();
 
-		// キーが押されていたら
-		if (input->TriggerKey(DIK_A)) {
-			OutputDebugStringA("Hit A\n");
-			axisModel->GetTranslate().x--;
-		}
-
-		if (input->TriggerKey(DIK_D)) {
-			OutputDebugStringA("Hit D\n");
-			axisModel->GetTranslate().x++;
-		}
+		// カメラ更新（F1切り替え含む）
+		cameraMgr->Update();
 
 		// DescriptorHeap・RootSignature・PSOのセット
 		auto* commandList = dx->GetCommandList();
@@ -210,7 +198,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 3D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D);
 		commandList->SetGraphicsRootConstantBufferView(3, light->GetDirectionalLightAddress());
-		axisModel->Draw(camera->GetViewProjection());
+		axisModel->Draw(cameraMgr->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);
