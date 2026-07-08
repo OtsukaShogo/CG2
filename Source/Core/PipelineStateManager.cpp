@@ -136,8 +136,8 @@ ID3D12PipelineState* PipelineStateManager::GetPipelineState(const std::string& n
 }
 
 ID3D12PipelineState* PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
-	IDxcBlob* vs = shaderMgr->Compile(L"Object3d.VS.hlsl", L"vs_6_0");
-	IDxcBlob* ps = shaderMgr->Compile(L"Object3d.PS.hlsl", L"ps_6_0");
+	IDxcBlob* vs = shaderMgr->Compile(L"Shaders/Object3d.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
 	inputElements[0].SemanticName = "POSITION";
@@ -186,8 +186,8 @@ ID3D12PipelineState* PipelineStateManager::CreateObject3DPipeline(ID3D12Device* 
 }
 
 ID3D12PipelineState* PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
-	IDxcBlob* vs = shaderMgr->Compile(L"Object3d.VS.hlsl", L"vs_6_0");
-	IDxcBlob* ps = shaderMgr->Compile(L"Object3d.PS.hlsl", L"ps_6_0");
+	IDxcBlob* vs = shaderMgr->Compile(L"Shaders/Object3d.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
 	inputElements[0].SemanticName = "POSITION";
