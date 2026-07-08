@@ -28,6 +28,12 @@
     <Filter Include="Imgui">
       <UniqueIdentifier>{29ed65fb-6b59-48c5-bcdf-fa469d5302cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Audio">
+      <UniqueIdentifier>{6b2a1c3d-4e5f-4a6b-8c9d-0e1f2a3b4c5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Input">
+      <UniqueIdentifier>{7c3b2d4e-5f60-4b7c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Math\Matrix4x4.cpp">
@@ -108,11 +114,11 @@
     <ClCompile Include="Source\Core\D3DResourceLeakChecker.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\AudioManager.cpp">
-      <Filter>ソース ファイル\Core</Filter>
+    <ClCompile Include="Source\Audio\AudioManager.cpp">
+      <Filter>ソース ファイル\Audio</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\Input.cpp">
-      <Filter>ソース ファイル\Core</Filter>
+    <ClCompile Include="Source\Input\Input.cpp">
+      <Filter>ソース ファイル\Input</Filter>
     </ClCompile>
     <ClCompile Include="Source\Graphics\DebugCamera.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
@@ -218,11 +224,11 @@
     <ClInclude Include="Source\Core\D3DResourceLeakChecker.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Core\AudioManager.h">
-      <Filter>ソース ファイル\Core</Filter>
+    <ClInclude Include="Source\Audio\AudioManager.h">
+      <Filter>ソース ファイル\Audio</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Core\Input.h">
-      <Filter>ソース ファイル\Core</Filter>
+    <ClInclude Include="Source\Input\Input.h">
+      <Filter>ソース ファイル\Input</Filter>
     </ClInclude>
     <ClInclude Include="Source\Graphics\DebugCamera.h">
       <Filter>ソース ファイル\Graphics</Filter>
