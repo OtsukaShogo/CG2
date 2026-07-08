@@ -18,7 +18,7 @@ void DebugUtil::Log(const std::string& message) {
 
 void DebugUtil::CreateLogFile() {
 	//ログのディレクトリを用意
-	std::filesystem::create_directory("logs");
+	std::filesystem::create_directory("Logs");
 
 	// 現在時刻を取得 (UTC時刻)
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -34,7 +34,7 @@ void DebugUtil::CreateLogFile() {
 	std::string dateString = std::format("{:%Y%m%d_%H%M%S}", localTime);
 
 	// 時刻を使ってファイル名を決定
-	std::string logFilePath = std::string("logs/") + dateString + ".log";
+	std::string logFilePath = std::string("Logs/") + dateString + ".log";
 
 	// ファイルを作って書き込み準備
     logStream_.open(logFilePath);
