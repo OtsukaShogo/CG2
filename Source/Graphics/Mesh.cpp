@@ -8,6 +8,8 @@
 #include "D3D12Util.h"
 #include"Material.h"
 
+namespace Engine {
+
 Mesh::Mesh() {}
 
 Mesh::~Mesh() {}
@@ -17,14 +19,19 @@ const std::string& Mesh::GetTextureFilePath() const {
 }
 
 void Mesh::CreateSphere(uint32_t subdivision) {
+	// 緯度・経度1区画（クアッド）あたりの頂点数・インデックス数（三角形2枚分）
+	constexpr uint32_t kVerticesPerQuad = 4;
+	constexpr uint32_t kIndicesPerQuad  = 6;
+
 	const float kLonEvery = std::numbers::pi_v<float> * 2.0f / float(subdivision);
 	const float kLatEvery = std::numbers::pi_v<float> / float(subdivision);
 
 	vertices_.clear();
 	indices_.clear();
-	vertices_.reserve(subdivision * subdivision * 4);
-	indices_.reserve(subdivision * subdivision * 6);
+	vertices_.reserve(subdivision * subdivision * kVerticesPerQuad);
+	indices_.reserve(subdivision * subdivision * kIndicesPerQuad);
 
+	// 緯度・経度をsubdivision分割し、各区画（クアッド）ごとに4頂点・2三角形を生成してUV球を作る
 	for (uint32_t latIndex = 0; latIndex < subdivision; ++latIndex) {
 		float lat = -std::numbers::pi_v<float> / 2.0f + kLatEvery * latIndex;
 		for (uint32_t lonIndex = 0; lonIndex < subdivision; ++lonIndex) {
@@ -80,7 +87,9 @@ void Mesh::CreateSphere(uint32_t subdivision) {
 }
 
 void Mesh::CreateRect(float width, float height) {
-	vertices_.resize(4);
+	// 矩形の頂点数（左下・左上・右上・右下の4点）
+	constexpr size_t kRectVertexCount = 4;
+	vertices_.resize(kRectVertexCount);
 
 	vertices_[0].position = { 0.0f,  height, 0.0f, 1.0f }; // 左下
 	vertices_[0].texcoord = { 0.0f, 1.0f };
@@ -177,6 +186,7 @@ void Mesh::LoadObjFile(const std::string& directoryPath, const std::string& file
 	}
 }
 
+// CPU上に構築した頂点・インデックスデータをGPUバッファへコピーし、各種ビューを作成する
 void Mesh::Upload() {
 	ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
 	uint32_t vertexCount = GetVertexCount();
@@ -206,6 +216,7 @@ void Mesh::Upload() {
 	}
 }
 
+// インデックスバッファがあればインデックス付き描画、なければ通常描画を行う
 void Mesh::Draw(ID3D12GraphicsCommandList* commandList) {
 	commandList->IASetVertexBuffers(0, 1, &vbv_);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -217,3 +228,5 @@ void Mesh::Draw(ID3D12GraphicsCommandList* commandList) {
 		commandList->DrawInstanced(GetVertexCount(), 1, 0, 0);
 	}
 }
+
+} // namespace Engine

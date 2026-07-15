@@ -7,18 +7,27 @@
 
 #include"DebugUtil.h"
 
-WinApp* WinApp::GetInstance() {
-	static WinApp instance;
-	return &instance;
-}
-
 #ifdef USE_IMGUI
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #endif
 
-// ウィンドウプロシージャ
+namespace Engine {
+
+WinApp* WinApp::GetInstance() {
+	static WinApp instance;
+	return &instance;
+}
+
+/// <summary>
+/// ウィンドウメッセージを処理するウィンドウプロシージャ
+/// </summary>
+/// <param name="hwnd">メッセージの送信先ウィンドウハンドル</param>
+/// <param name="msg">メッセージの種類</param>
+/// <param name="wparam">メッセージの追加情報</param>
+/// <param name="lparam">メッセージの追加情報</param>
+/// <returns>メッセージ処理結果</returns>
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 #ifdef USE_IMGUI
 
@@ -88,8 +97,6 @@ void WinApp::Initialize() {
 	ShowWindow(hwnd_, SW_SHOW);
 
 	DebugUtil::Log("ShowWindow called\n");
-
-	MSG msg{};
 }
 
 bool WinApp::ProcessMessage() {
@@ -103,3 +110,5 @@ bool WinApp::ProcessMessage() {
 	}
 	return true;
 }
+
+} // namespace Engine

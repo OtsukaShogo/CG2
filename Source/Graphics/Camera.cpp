@@ -2,6 +2,8 @@
 #include "TransformMatrix.h"
 #include "WinApp.h"
 
+namespace Engine {
+
 Camera::Camera() {
     rotateMatrix_ = MakeIdentity4x4();
 }
@@ -12,6 +14,7 @@ void Camera::Initialize() {
 	Update();
 }
 
+// 現在の回転行列に対して、追加の回転を左から掛けて累積させる
 void Camera::AddRotation(float deltaX, float deltaY) {
     Matrix4x4 matRotDelta = MakeIdentity4x4();
     matRotDelta = Multiply(matRotDelta, MakeRotateXMatrix(deltaX));
@@ -41,3 +44,5 @@ void Camera::Update() {
         0.0f, 100.0f
     );
 }
+
+} // namespace Engine

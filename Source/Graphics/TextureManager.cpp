@@ -4,6 +4,8 @@
 #include "externals/DirectXTex/DirectXTex.h"
 #include <cassert>
 
+namespace Engine {
+
 TextureManager* TextureManager::GetInstance() {
     static TextureManager instance;
     return &instance;
@@ -57,3 +59,5 @@ TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
 
     return handle;
 }
+
+} // namespace Engine

@@ -103,11 +103,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Graphics\Camera.cpp" />
     <ClCompile Include="Source\Graphics\CameraManager.cpp" />
     <ClCompile Include="Source\Core\ConvertString.cpp" />
+    <ClCompile Include="Source\Core\CommandContext.cpp" />
+    <ClCompile Include="Source\Core\D3D12Device.cpp" />
     <ClCompile Include="Source\Core\D3D12Util.cpp" />
     <ClCompile Include="Source\Core\D3DResourceLeakChecker.cpp" />
     <ClCompile Include="Source\Graphics\DebugCamera.cpp" />
     <ClCompile Include="Source\Core\DebugUtil.cpp" />
     <ClCompile Include="Source\Core\DirectXCommon.cpp" />
+    <ClCompile Include="Source\Core\FrameSync.cpp" />
+    <ClCompile Include="Source\Core\SwapChain.cpp" />
     <ClCompile Include="externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -149,11 +153,15 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Graphics\Camera.h" />
     <ClInclude Include="Source\Graphics\CameraManager.h" />
     <ClInclude Include="Source\Core\ConvertString.h" />
+    <ClInclude Include="Source\Core\CommandContext.h" />
+    <ClInclude Include="Source\Core\D3D12Device.h" />
     <ClInclude Include="Source\Core\D3D12Util.h" />
     <ClInclude Include="Source\Core\D3DResourceLeakChecker.h" />
     <ClInclude Include="Source\Graphics\DebugCamera.h" />
     <ClInclude Include="Source\Core\DebugUtil.h" />
     <ClInclude Include="Source\Core\DirectXCommon.h" />
+    <ClInclude Include="Source\Core\FrameSync.h" />
+    <ClInclude Include="Source\Core\SwapChain.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />
     <ClInclude Include="externals\imgui\imgui_impl_dx12.h" />

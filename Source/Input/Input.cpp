@@ -5,6 +5,8 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
+namespace Engine {
+
 Input* Input::GetInstance() {
 	static Input instance;
 	return &instance;
@@ -40,6 +42,7 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	assert(SUCCEEDED(result));
 }
 
+// Trigger/Release判定に使うため、更新前に前フレームの状態を保存してから最新の状態を取得する
 void Input::Update() {
 	std::memcpy(keyPrev_, key_, sizeof(key_));
 	keyboard_->Acquire();
@@ -83,3 +86,5 @@ void Input::Finalize() {
 	directInput_->Release();
 	directInput_ = nullptr;
 }
+
+} // namespace Engine

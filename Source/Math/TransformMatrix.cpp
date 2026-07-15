@@ -4,6 +4,8 @@
 #include<cassert>
 #include<cmath>
 
+namespace Engine {
+
 //平行移動行列
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 	Matrix4x4 result = MakeIdentity4x4();
@@ -150,3 +152,5 @@ Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, f
 
 	return result;
 }
+
+} // namespace Engine

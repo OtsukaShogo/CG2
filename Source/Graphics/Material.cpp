@@ -2,10 +2,13 @@
 #include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include "Matrix4x4.h"
+#include "PipelineStateManager.h"
 
 #include<cassert>
 #include <fstream>
 #include <sstream>
+
+namespace Engine {
 
 Material::Material(){}
 
@@ -15,6 +18,7 @@ Material::~Material() {
     }
 }
 
+// 定数バッファを作成してCPUから書き込める状態にし、デフォルト値を書き込んでおく
 void Material::Create() {
     ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
 
@@ -28,9 +32,10 @@ void Material::SetColor(const Vector4& color) {
     if (materialData_) materialData_->color = color;
 }
 
+// マテリアルの定数バッファとテクスチャを、それぞれ対応するルートパラメータにセットする
 void Material::Bind(ID3D12GraphicsCommandList* commandList) {
-    commandList->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-    commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU_);
+    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kMaterial), materialResource_->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), textureSrvHandleGPU_);
 }
 
 void Material::LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename) {
@@ -54,3 +59,5 @@ void Material::LoadMaterialTemplateFile(const std::string& directoryPath, const 
         }
     }
 }
+
+} // namespace Engine

@@ -24,6 +24,16 @@
 #include "Matrix4x4.h"
 #include "WorldTransform.h"
 
+using namespace Engine;
+
+/// <summary>
+/// アプリケーションのエントリーポイント。各種システムの初期化・メインループ・終了処理を行う
+/// </summary>
+/// <param name="hInstance">アプリケーションのインスタンスハンドル</param>
+/// <param name="hPrevInstance">未使用（常にnullptr）</param>
+/// <param name="lpCmdLine">コマンドライン文字列</param>
+/// <param name="nCmdShow">ウィンドウの表示状態</param>
+/// <returns>アプリケーションの終了コード</returns>
 // WinMain の定義にヘッダと整合する SAL 注釈を追加
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
@@ -82,7 +92,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// === テクスチャ ======================================================================================
 
 	TextureHandle tex = texMgr->LoadTexture("resources/uvChecker.png");
-	TextureHandle tex2 = texMgr->LoadTexture("resources/monsterBall.png");
 
 	// === 音声データ =====================================================================================
 
@@ -103,11 +112,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// === オブジェクト ===========================================================================================
 
 	// モデル
-	auto axisModel = std::unique_ptr<Model>(Model::CreateFromObj("resources", "axis.obj"));
+	auto axisModel = Model::CreateFromObj("resources", "axis.obj");
 	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
 
 	// スプライト
-	auto sprite = std::unique_ptr<Sprite>(Sprite::Create(640.0f, 360.0f));
+	auto sprite = Sprite::Create(640.0f, 360.0f);
 	sprite->SetTextureHandle(tex.gpuHandle);
 
 	// === ライト ================================================================================
@@ -150,13 +159,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Axis Scale", &axisModel->GetScale().x, 0.1f);
 		ImGui::DragFloat3("Axis Rotate", &axisModel->GetRotate().x, 0.1f);
 
-		//スプライト
-		/*ImGui::ColorEdit4("Sprite Color", &sprite->GetColor().x);
-		ImGui::DragFloat2("Sprite Translate", &sprite->GetTranslate().x, 1.0f);
-		ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
-		ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-		ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);*/
-
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
 		ImGui::DragFloat3("Light Direction", &light->GetDirectionalLight()->direction.x, 0.1f);
@@ -168,9 +170,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// ====================================================================================================
 		// 更新処理
 		// ====================================================================================================
-
-		//球を回転させる
-		//sphereModel->Update();
 
 		// スプライトUV更新
 		Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
@@ -197,13 +196,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		// 3D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D);
-		commandList->SetGraphicsRootConstantBufferView(3, light->GetDirectionalLightAddress());
+		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
 		axisModel->Draw(cameraMgr->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);
-		commandList->SetGraphicsRootDescriptorTable(2, tex.gpuHandle);
-		//sprite->Draw(camera->GetSpriteViewProjection());
+		commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), tex.gpuHandle);
 
 #ifdef USE_IMGUI
 		imgui->EndFrame(dx->GetCommandList());
@@ -225,7 +223,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	audioMgr->Finalize();
 	input->Finalize();
 	tex = {};             // ID3D12Resource x2 (texture, intermediate)
-	tex2 = {};            // ID3D12Resource x2 (texture, intermediate)
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
 
 	dx->Finalize();

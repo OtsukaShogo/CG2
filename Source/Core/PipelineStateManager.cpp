@@ -4,6 +4,50 @@
 #include <cassert>
 #include<dxcapi.h>
 
+namespace Engine {
+
+namespace {
+
+// POSITION/TEXCOORD/NORMALを持つ標準的な頂点レイアウト（Object3D/Sprite共通）
+// D3D12_INPUT_LAYOUT_DESCはポインタで要素配列を参照するため、
+// 関数を抜けても参照が有効であるよう静的な配列として保持する
+constexpr D3D12_INPUT_ELEMENT_DESC kStandardInputElements[3] = {
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+};
+
+/// <summary>
+/// POSITION/TEXCOORD/NORMALを持つ標準的な頂点レイアウトを作成する
+/// </summary>
+D3D12_INPUT_LAYOUT_DESC MakeStandardInputLayout() {
+	D3D12_INPUT_LAYOUT_DESC inputLayout{};
+	inputLayout.pInputElementDescs = kStandardInputElements;
+	inputLayout.NumElements = _countof(kStandardInputElements);
+	return inputLayout;
+}
+
+/// <summary>
+/// 不透明描画用のブレンドステート（アルファブレンドなし、全チャンネル書き込み）を作成する
+/// </summary>
+D3D12_BLEND_DESC MakeOpaqueBlendDesc() {
+	D3D12_BLEND_DESC blendDesc{};
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	return blendDesc;
+}
+
+/// <summary>
+/// 標準的なラスタライザステート（背面カリング・塗りつぶし）を作成する
+/// </summary>
+D3D12_RASTERIZER_DESC MakeStandardRasterizerDesc() {
+	D3D12_RASTERIZER_DESC rasterDesc{};
+	rasterDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	return rasterDesc;
+}
+
+} // namespace
+
 PipelineStateManager::PipelineStateManager() {}
 
 PipelineStateManager::~PipelineStateManager() {}
@@ -83,7 +127,7 @@ void PipelineStateManager::InitializeRootSignature(ID3D12Device* device) {
 	assert(SUCCEEDED(hr));
 }
 
-ID3D12PipelineState* PipelineStateManager::CreateGraphicsPipeline(
+void PipelineStateManager::CreateGraphicsPipeline(
 	const std::string& name,
 	ID3D12Device* device,
 	IDxcBlob* vsBlob,
@@ -95,9 +139,9 @@ ID3D12PipelineState* PipelineStateManager::CreateGraphicsPipeline(
 	DXGI_FORMAT rtvFormat,
 	DXGI_FORMAT dsvFormat)
 {
-	// 既にあるならそれを返す
+	// 既にあるなら何もしない
 	if (pipelineStates_.contains(name)) {
-		return pipelineStates_[name].Get();
+		return;
 	}
 
 	// RootSignature がまだなら作る
@@ -124,7 +168,6 @@ ID3D12PipelineState* PipelineStateManager::CreateGraphicsPipeline(
 	assert(SUCCEEDED(hr));
 
 	pipelineStates_[name] = pso;
-	return pso.Get();
 }
 
 ID3D12PipelineState* PipelineStateManager::GetPipelineState(const std::string& name) const {
@@ -135,43 +178,20 @@ ID3D12PipelineState* PipelineStateManager::GetPipelineState(const std::string& n
 	return it->second.Get();
 }
 
-ID3D12PipelineState* PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+void PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
 	IDxcBlob* vs = shaderMgr->Compile(L"Shaders/Object3d.VS.hlsl", L"vs_6_0");
 	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
-	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
-	inputElements[0].SemanticName = "POSITION";
-	inputElements[0].SemanticIndex = 0;
-	inputElements[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	inputElements[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	inputElements[1].SemanticName = "TEXCOORD";
-	inputElements[1].SemanticIndex = 0;
-	inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	inputElements[2].SemanticName = "NORMAL";
-	inputElements[2].SemanticIndex = 0;
-	inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	D3D12_INPUT_LAYOUT_DESC inputLayout{};
-	inputLayout.pInputElementDescs = inputElements;
-	inputLayout.NumElements = _countof(inputElements);
-
-	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	D3D12_RASTERIZER_DESC rasterDesc{};
-	rasterDesc.CullMode = D3D12_CULL_MODE_BACK;
-	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
+	D3D12_BLEND_DESC blendDesc = MakeOpaqueBlendDesc();
+	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
 
 	D3D12_DEPTH_STENCIL_DESC depthDesc{};
 	depthDesc.DepthEnable = true;
 	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-	return CreateGraphicsPipeline(
+	CreateGraphicsPipeline(
 		kObject3D,
 		device,
 		vs,
@@ -185,43 +205,20 @@ ID3D12PipelineState* PipelineStateManager::CreateObject3DPipeline(ID3D12Device* 
 	);
 }
 
-ID3D12PipelineState* PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
 	IDxcBlob* vs = shaderMgr->Compile(L"Shaders/Object3d.VS.hlsl", L"vs_6_0");
 	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
-	D3D12_INPUT_ELEMENT_DESC inputElements[3] = {};
-	inputElements[0].SemanticName = "POSITION";
-	inputElements[0].SemanticIndex = 0;
-	inputElements[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	inputElements[0].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	inputElements[1].SemanticName = "TEXCOORD";
-	inputElements[1].SemanticIndex = 0;
-	inputElements[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	inputElements[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	inputElements[2].SemanticName = "NORMAL";
-	inputElements[2].SemanticIndex = 0;
-	inputElements[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	inputElements[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-
-	D3D12_INPUT_LAYOUT_DESC inputLayout{};
-	inputLayout.pInputElementDescs = inputElements;
-	inputLayout.NumElements = _countof(inputElements);
-
-	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	D3D12_RASTERIZER_DESC rasterDesc{};
-	rasterDesc.CullMode = D3D12_CULL_MODE_BACK;
-	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
+	D3D12_BLEND_DESC blendDesc = MakeOpaqueBlendDesc();
+	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
 
 	D3D12_DEPTH_STENCIL_DESC depthNone{};
 	depthNone.DepthEnable = false;
 	depthNone.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	depthNone.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	return CreateGraphicsPipeline(
+	CreateGraphicsPipeline(
 		kSprite,
 		device,
 		vs,
@@ -241,3 +238,5 @@ void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, c
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pso);
 }
+
+} // namespace Engine

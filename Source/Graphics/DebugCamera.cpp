@@ -1,6 +1,8 @@
 #include "DebugCamera.h"
 #include "Input.h"
 
+namespace Engine {
+
 void DebugCamera::Initialize() {
 	camera_.Initialize();
 }
@@ -38,3 +40,5 @@ void DebugCamera::Update() {
 
 	camera_.Update();
 }
+
+} // namespace Engine

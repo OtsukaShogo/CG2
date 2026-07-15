@@ -1,23 +1,58 @@
 #pragma once
 #include <d3d12.h>
-#include <wrl/client.h> 
+#include <wrl/client.h>
 #include <string>
 #include <unordered_map>
 
 struct IDxcBlob;
+
+namespace Engine {
+
 class ShaderManager;
 
+/// <summary>
+/// グラフィックスパイプラインステート(PSO)とルートシグネチャの生成・管理を行うクラス
+/// </summary>
 class PipelineStateManager {
 public:
     // PSO名
     static constexpr const char* kObject3D = "Object3D";
     static constexpr const char* kSprite   = "Sprite";
 
+    /// <summary>
+    /// 共通ルートシグネチャにおけるルートパラメータのスロット番号
+    /// </summary>
+    enum class RootParameter : UINT {
+        kMaterial         = 0, // PixelShader用CBV (b0)
+        kWVP              = 1, // VertexShader用CBV (b0)
+        kTexture          = 2, // SRVテーブル (t0)
+        kDirectionalLight = 3, // PixelShader用CBV (b1)
+    };
+
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
     PipelineStateManager();
+
+    /// <summary>
+    /// デストラクタ
+    /// </summary>
     ~PipelineStateManager();
 
-    // 汎用的な GraphicsPipeline を作成してキャッシュする
-    ID3D12PipelineState* CreateGraphicsPipeline(
+    /// <summary>
+    /// 汎用的なグラフィックスパイプラインを作成してキャッシュする
+    /// </summary>
+    /// <param name="name">PSOをキャッシュする際の名前</param>
+    /// <param name="device">D3D12デバイス</param>
+    /// <param name="vsBlob">頂点シェーダーのバイナリ</param>
+    /// <param name="psBlob">ピクセルシェーダーのバイナリ</param>
+    /// <param name="inputLayout">入力レイアウト</param>
+    /// <param name="blendDesc">ブレンドステート設定</param>
+    /// <param name="rasterizerDesc">ラスタライザステート設定</param>
+    /// <param name="depthStencilDesc">深度ステンシルステート設定</param>
+    /// <param name="rtvFormat">レンダーターゲットのフォーマット</param>
+    /// <param name="dsvFormat">深度ステンシルのフォーマット</param>
+    void CreateGraphicsPipeline(
         const std::string& name,
         ID3D12Device* device,
         IDxcBlob* vsBlob,
@@ -29,25 +64,49 @@ public:
         DXGI_FORMAT rtvFormat,
         DXGI_FORMAT dsvFormat);
 
-    // Object3D 用 PSO を作成してキャッシュする
-    ID3D12PipelineState* CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr);
+    /// <summary>
+    /// Object3D用のPSOを作成してキャッシュする
+    /// </summary>
+    /// <param name="device">D3D12デバイス</param>
+    /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
+    void CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr);
 
-    // Sprite(2D) 用 PSO を作成してキャッシュする
-    ID3D12PipelineState* CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
+    /// <summary>
+    /// Sprite(2D)用のPSOを作成してキャッシュする
+    /// </summary>
+    /// <param name="device">D3D12デバイス</param>
+    /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
+    void CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
 
-    // 既に作った PSO を取得
-    ID3D12PipelineState* GetPipelineState(const std::string& name) const;
+    /// <summary>
+    /// 既に作成済みのPSOを名前から取得する
+    /// </summary>
+    /// <param name="name">取得するPSOの名前</param>
+    /// <returns>該当するPSO（存在しない場合はnullptr）</returns>
+    [[nodiscard]] ID3D12PipelineState* GetPipelineState(const std::string& name) const;
 
-    // 共通 RootSignature を取得
-    ID3D12RootSignature* GetRootSignature() const { return rootSignature_.Get(); }
+    /// <summary>
+    /// 共通のルートシグネチャを取得する
+    /// </summary>
+    /// <returns>共通ルートシグネチャ</returns>
+    [[nodiscard]] ID3D12RootSignature* GetRootSignature() const { return rootSignature_.Get(); }
 
-    // RootSignature を初期化（最初に一度だけ呼ぶ）
+    /// <summary>
+    /// 共通のルートシグネチャを初期化する（最初に一度だけ呼ぶ）
+    /// </summary>
+    /// <param name="device">D3D12デバイス</param>
     void InitializeRootSignature(ID3D12Device* device);
 
-    // PSO・RootSignatureをコマンドリストにセットする
+    /// <summary>
+    /// 指定した名前のPSOとルートシグネチャをコマンドリストにセットする
+    /// </summary>
+    /// <param name="commandList">セット対象のコマンドリスト</param>
+    /// <param name="name">セットするPSOの名前</param>
     void SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelineStates_;
 };
+
+} // namespace Engine

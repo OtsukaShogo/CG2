@@ -4,69 +4,116 @@
 #include <dxgi1_6.h>
 #include <wrl/client.h>
 #include <cstdint>
-#include <dxgi1_5.h>
+#include <memory>
 
+#include "D3D12Device.h"
+#include "CommandContext.h"
+#include "SwapChain.h"
+#include "FrameSync.h"
+
+namespace Engine {
+
+/// <summary>
+/// DirectX12のデバイス・コマンド・スワップチェーンなど描画基盤全般を統括するファサードクラス。
+/// 実体はD3D12Device / CommandContext / SwapChain / FrameSyncの各クラスに委譲する。
+/// </summary>
 class DirectXCommon {
 public:
 
-    static DirectXCommon* GetInstance();
+    /// <summary>
+    /// シングルトンインスタンスを取得する
+    /// </summary>
+    /// <returns>DirectXCommonのインスタンス</returns>
+    [[nodiscard]] static DirectXCommon* GetInstance();
 
     //コピー禁止
     DirectXCommon(const DirectXCommon&) = delete;
     DirectXCommon& operator=(const DirectXCommon&) = delete;
 
+    /// <summary>
+    /// デバイス・コマンド・スワップチェーンなど描画に必要な各種リソースを初期化する
+    /// </summary>
+    /// <param name="hwnd">対象のウィンドウハンドル</param>
+    /// <param name="width">画面の幅</param>
+    /// <param name="height">画面の高さ</param>
     void Initialize(HWND hwnd, uint32_t width, uint32_t height);
+
+    /// <summary>
+    /// 1フレームの描画開始処理（バリア設定・レンダーターゲットのクリアなど）を行う
+    /// </summary>
     void BeginFrame();
+
+    /// <summary>
+    /// 1フレームの描画終了処理（コマンド実行・画面表示・フェンス待機）を行う
+    /// </summary>
     void EndFrame();
+
+    /// <summary>
+    /// 終了処理を行う
+    /// </summary>
     void Finalize();
 
-    // 初期化時など、記録済みコマンドをGPUへ投入して完了を待つ
+    /// <summary>
+    /// 記録済みコマンドをGPUへ投入し、完了を待つ（初期化時など）
+    /// </summary>
     void FlushCommands();
 
-    ID3D12Device* GetDevice() const { return device_.Get(); }
-    ID3D12GraphicsCommandList* GetCommandList() const { return commandList_.Get(); }
+    /// <summary>
+    /// D3D12デバイスを取得する
+    /// </summary>
+    /// <returns>D3D12デバイス</returns>
+    ID3D12Device* GetDevice() const { return device_->Get(); }
+
+    /// <summary>
+    /// コマンドリストを取得する
+    /// </summary>
+    /// <returns>コマンドリスト</returns>
+    ID3D12GraphicsCommandList* GetCommandList() const { return commandContext_->GetCommandList(); }
+
+    /// <summary>
+    /// SRV用ディスクリプタヒープを取得する
+    /// </summary>
+    /// <returns>SRV用ディスクリプタヒープ</returns>
     ID3D12DescriptorHeap* GetSrvDescriptorHeap() const { return srvDescriptorHeap_.Get(); }
 
+    /// <summary>
+    /// SRVディスクリプタ1個分のサイズを取得する
+    /// </summary>
+    /// <returns>SRVディスクリプタ1個分のサイズ</returns>
     uint32_t GetDescriptorSizeSRV() const { return descriptorSizeSRV_; }
+
+    /// <summary>
+    /// RTVディスクリプタ1個分のサイズを取得する
+    /// </summary>
+    /// <returns>RTVディスクリプタ1個分のサイズ</returns>
     uint32_t GetDescriptorSizeRTV() const { return descriptorSizeRTV_; }
+
+    /// <summary>
+    /// DSVディスクリプタ1個分のサイズを取得する
+    /// </summary>
+    /// <returns>DSVディスクリプタ1個分のサイズ</returns>
     uint32_t GetDescriptorSizeDSV() const { return descriptorSizeDSV_; }
 
 private:
     DirectXCommon() = default;
     ~DirectXCommon() = default;
 
-    void InitializeDevice();
-    void InitializeCommand();
-    void InitializeSwapChain(HWND hwnd, uint32_t width, uint32_t height);
-    void InitializeRenderTargets();
-    void InitializeDepthStencil(uint32_t width, uint32_t height);
-    void InitializeFence();
+    /// <summary>
+    /// 汎用SRVヒープと深度ステンシルリソース・DSVヒープを生成する
+    /// </summary>
+    /// <param name="width">深度ステンシルテクスチャの幅</param>
+    /// <param name="height">深度ステンシルテクスチャの高さ</param>
+    void InitializeHeapsAndDepthStencil(uint32_t width, uint32_t height);
 
 private:
-    static const uint32_t kBackBufferCount = 2;
+    std::unique_ptr<D3D12Device> device_;
+    std::unique_ptr<CommandContext> commandContext_;
+    std::unique_ptr<SwapChain> swapChain_;
+    std::unique_ptr<FrameSync> frameSync_;
 
-    Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory_;
-    Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter_;
-    Microsoft::WRL::ComPtr<ID3D12Device> device_;
-
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue_;
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator_;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
-
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain_;
-    Microsoft::WRL::ComPtr<ID3D12Resource> swapChainResources_[kBackBufferCount];
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap_;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap_;
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles_[kBackBufferCount]{};
-
     Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource_;
-
-    Microsoft::WRL::ComPtr<ID3D12Fence> fence_;
-    uint64_t fenceValue_ = 0;
-    HANDLE fenceEvent_ = nullptr;
-
-    uint32_t backBufferIndex_ = 0;
 
     uint32_t descriptorSizeSRV_ = 0;
     uint32_t descriptorSizeRTV_ = 0;
@@ -75,3 +122,5 @@ private:
     D3D12_VIEWPORT viewport_{};
     D3D12_RECT scissorRect_{};
 };
+
+} // namespace Engine
