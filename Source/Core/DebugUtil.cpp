@@ -9,8 +9,11 @@
 
 #include "DebugUtil.h"
 
+namespace Engine {
+
 std::ofstream DebugUtil::logStream_;
 
+// ログメッセージをログファイルとVisual Studioの出力ウィンドウの両方に出力する
 void DebugUtil::Log(const std::string& message) {
 	logStream_ << message << std::endl;
 	OutputDebugStringA(message.c_str());
@@ -98,3 +101,5 @@ LONG WINAPI DebugUtil::ExportDump(EXCEPTION_POINTERS* exception) {
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }
+
+} // namespace Engine

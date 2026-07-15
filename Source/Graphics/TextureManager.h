@@ -3,6 +3,11 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 
+namespace Engine {
+
+/// <summary>
+/// 読み込み済みテクスチャのリソースとSRVハンドルをまとめた構造体
+/// </summary>
 struct TextureHandle {
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;      // 実テクスチャ
     Microsoft::WRL::ComPtr<ID3D12Resource> intermediate; // アップロード用
@@ -10,12 +15,23 @@ struct TextureHandle {
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle{};             // SRV の GPU ハンドル
 };
 
+/// <summary>
+/// テクスチャファイルの読み込みとSRV生成を行うクラス
+/// </summary>
 class TextureManager {
 public:
-    static TextureManager* GetInstance();
+    /// <summary>
+    /// シングルトンインスタンスを取得する
+    /// </summary>
+    /// <returns>TextureManagerのインスタンス</returns>
+    [[nodiscard]] static TextureManager* GetInstance();
 
-    // テクスチャ読み込み → GPU転送 → SRV作成 → ハンドル返却
-    TextureHandle LoadTexture(const std::string& filePath);
+    /// <summary>
+    /// テクスチャファイルを読み込み、GPUへ転送してSRVを作成しハンドルを返す
+    /// </summary>
+    /// <param name="filePath">読み込むテクスチャファイルのパス</param>
+    /// <returns>読み込んだテクスチャのハンドル</returns>
+    [[nodiscard]] TextureHandle LoadTexture(const std::string& filePath);
 
 private:
     TextureManager() = default;
@@ -24,3 +40,5 @@ private:
 private:
     uint32_t srvIndex_ = 1; // 0 は ImGui が使うので 1 から
 };
+
+} // namespace Engine

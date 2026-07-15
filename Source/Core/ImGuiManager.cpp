@@ -5,11 +5,14 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 
+namespace Engine {
+
 ImGuiManager* ImGuiManager::GetInstance() {
 	static ImGuiManager instance;
 	return &instance;
 }
 
+// ImGui本体・Win32・DX12それぞれのバックエンドを初期化する
 void ImGuiManager::Initialize(HWND hwnd, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap) {
 	if (initialized_) return;
 
@@ -51,4 +54,6 @@ void ImGuiManager::Finalize() {
 
 	initialized_ = false;
 }
+
+} // namespace Engine
 #endif

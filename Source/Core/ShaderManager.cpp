@@ -5,10 +5,13 @@
 
 #pragma comment(lib, "dxcompiler.lib")
 
+namespace Engine {
+
 ShaderManager::ShaderManager(){}
 
 ShaderManager::~ShaderManager(){}
 
+// DXCコンパイラ一式（Utils/Compiler/IncludeHandler）を生成する。一度だけ初期化すればよい
 void ShaderManager::InitializeDXC() {
     if (initialized_) return;
 
@@ -82,3 +85,5 @@ IDxcBlob* ShaderManager::Compile(const std::wstring& filePath,const wchar_t* pro
 
     return shaderBlob.Get();
 }
+
+} // namespace Engine

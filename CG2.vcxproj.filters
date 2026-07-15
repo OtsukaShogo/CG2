@@ -75,6 +75,18 @@
     <ClCompile Include="Source\Core\DebugUtil.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Core\D3D12Device.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\CommandContext.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\SwapChain.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\FrameSync.cpp">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Graphics\TextureManager.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
@@ -171,6 +183,18 @@
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Core\D3D12Util.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\D3D12Device.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\CommandContext.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\SwapChain.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\FrameSync.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Core\DebugUtil.h">

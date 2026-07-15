@@ -2,6 +2,9 @@
 #include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include "TransformMatrix.h"
+#include "PipelineStateManager.h"
+
+namespace Engine {
 
 Sprite::Sprite(){}
 
@@ -11,8 +14,8 @@ Sprite::~Sprite() {
     }
 }
 
-Sprite* Sprite::Create(float width, float height) {
-    Sprite* sprite = new Sprite();
+std::unique_ptr<Sprite> Sprite::Create(float width, float height) {
+    auto sprite = std::make_unique<Sprite>();
     sprite->mesh_.CreateRect(width, height);
     sprite->mesh_.Upload();
     sprite->material_.Create();
@@ -21,6 +24,7 @@ Sprite* Sprite::Create(float width, float height) {
     return sprite;
 }
 
+// WVP行列用の定数バッファを作成してCPUから書き込める状態にし、単位行列で初期化しておく
 void Sprite::CreateWvpBuffer() {
     ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
     wvpResource_ = CreateBufferResource(device, sizeof(TransformationMatrix));
@@ -41,8 +45,10 @@ void Sprite::Draw(const Matrix4x4& viewProjection) {
     wvpData_->WVP = Multiply(worldMatrix, viewProjection);
     wvpData_->World = worldMatrix;
 
-    commandList->SetGraphicsRootConstantBufferView(1, wvpResource_->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kWVP), wvpResource_->GetGPUVirtualAddress());
 
     material_.Bind(commandList);
     mesh_.Draw(commandList);
 }
+
+} // namespace Engine

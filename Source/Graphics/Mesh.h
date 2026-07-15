@@ -6,27 +6,66 @@
 #include <string>
 #include "VertexData.h"
 
+namespace Engine {
+
 class Material;
 
+/// <summary>
+/// 頂点・インデックスデータとマテリアルを保持し、GPUへのアップロードと描画を行うクラス
+/// </summary>
 class Mesh {
 public:
+	/// <summary>
+	/// コンストラクタ
+	/// </summary>
 	Mesh();
+
+	/// <summary>
+	/// デストラクタ
+	/// </summary>
 	~Mesh();
 
-	// 球メッシュを生成
+	/// <summary>
+	/// 球メッシュを生成する
+	/// </summary>
+	/// <param name="subdivision">球の分割数</param>
 	void CreateSphere(uint32_t subdivision = 16);
 
-	// 矩形メッシュを生成
+	/// <summary>
+	/// 矩形メッシュを生成する
+	/// </summary>
+	/// <param name="width">矩形の幅</param>
+	/// <param name="height">矩形の高さ</param>
 	void CreateRect(float width, float height);
 
-	//Objファイルを読み込む
+	/// <summary>
+	/// objファイルを読み込み、頂点・マテリアルデータを生成する
+	/// </summary>
+	/// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
+	/// <param name="filename">読み込むobjファイル名</param>
 	void LoadObjFile(const std::string& directoryPath, const std::string& filename);
 
-	void Upload();  // GPUへ頂点データを転送
+	/// <summary>
+	/// 頂点・インデックスデータをGPUへ転送する
+	/// </summary>
+	void Upload();
+
+	/// <summary>
+	/// メッシュを描画する
+	/// </summary>
+	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+	/// <summary>
+	/// 頂点数を取得する
+	/// </summary>
+	/// <returns>頂点数</returns>
 	uint32_t GetVertexCount() const { return static_cast<uint32_t>(vertices_.size()); }
 
+	/// <summary>
+	/// マテリアルが参照するテクスチャファイルパスを取得する
+	/// </summary>
+	/// <returns>テクスチャファイルパス</returns>
 	const std::string& GetTextureFilePath() const;
 
 private:
@@ -41,3 +80,5 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexResource_;
 	D3D12_INDEX_BUFFER_VIEW ibv_{};
 };
+
+} // namespace Engine

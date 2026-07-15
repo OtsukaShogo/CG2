@@ -3,6 +3,9 @@
 #include "D3D12Util.h"
 #include "TransformMatrix.h"
 #include "TextureManager.h"
+#include "PipelineStateManager.h"
+
+namespace Engine {
 
 Model::Model() {}
 
@@ -12,8 +15,8 @@ Model::~Model() {
     }
 }
 
-Model* Model::CreateSphere() {
-    auto* model = new Model();
+std::unique_ptr<Model> Model::CreateSphere() {
+    auto model = std::make_unique<Model>();
 
     // Mesh生成・GPU転送
     model->mesh_.CreateSphere();
@@ -28,8 +31,8 @@ Model* Model::CreateSphere() {
     return model;
 }
 
-Model* Model::CreateFromObj(const std::string& directoryPath, const std::string& filename) {
-    auto* model = new Model();
+std::unique_ptr<Model> Model::CreateFromObj(const std::string& directoryPath, const std::string& filename) {
+    auto model = std::make_unique<Model>();
 
     // Mesh生成（OBJファイル読み込み）・GPU転送
     model->mesh_.LoadObjFile(directoryPath, filename);
@@ -48,6 +51,7 @@ Model* Model::CreateFromObj(const std::string& directoryPath, const std::string&
     return model;
 }
 
+// WVP行列用の定数バッファを作成してCPUから書き込める状態にし、単位行列で初期化しておく
 void Model::CreateWvpBuffer() {
     ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
     wvpResource_ = CreateBufferResource(device, sizeof(TransformationMatrix));
@@ -63,6 +67,7 @@ void Model::Update() {
 void Model::Draw(const Matrix4x4& viewProjection) {
     auto* commandList = DirectXCommon::GetInstance()->GetCommandList();
 
+    // ワールド行列を作り直し、ビュープロジェクションと合成してWVP定数バッファへ書き込む
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform_.scale,
         worldTransform_.rotate,
@@ -71,8 +76,10 @@ void Model::Draw(const Matrix4x4& viewProjection) {
     wvpData_->WVP = Multiply(worldMatrix, viewProjection);
     wvpData_->World = worldMatrix;
 
-    commandList->SetGraphicsRootConstantBufferView(1, wvpResource_->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kWVP), wvpResource_->GetGPUVirtualAddress());
 
     material_.Bind(commandList);
     mesh_.Draw(commandList);
 }
+
+} // namespace Engine

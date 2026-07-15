@@ -5,6 +5,8 @@
 #include "externals/imgui/imgui.h"
 #endif
 
+namespace Engine {
+
 CameraManager* CameraManager::GetInstance() {
 	static CameraManager instance;
 	return &instance;
@@ -21,10 +23,12 @@ void CameraManager::Initialize() {
 void CameraManager::Update() {
 	Input* input = Input::GetInstance();
 
+	// F1キーで通常カメラ/デバッグカメラを切り替える
 	if (input->TriggerKey(DIK_F1)) {
 		isDebugCamera_ = !isDebugCamera_;
 	}
 
+	// 有効な方のカメラだけを更新する
 	if (isDebugCamera_) {
 		debugCamera_->Update();
 	} else {
@@ -51,3 +55,5 @@ void CameraManager::DrawImGui() {
 	}
 }
 #endif
+
+} // namespace Engine

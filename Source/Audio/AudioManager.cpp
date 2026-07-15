@@ -5,21 +5,29 @@
 
 #pragma comment(lib,"xaudio2.lib")
 
+namespace Engine {
+
 namespace {
 
-	// チャンクヘッダ
+	/// <summary>
+	/// wavファイルのチャンクヘッダ（ID・サイズ）
+	/// </summary>
 	struct ChunkHeader {
 		char id[4]; // チャンク毎のID
 		int32_t size;  // チャンクサイズ
 	};
 
-	// RIFFヘッダチャンク
+	/// <summary>
+	/// wavファイルのRIFFヘッダチャンク
+	/// </summary>
 	struct RiffHeader {
 		ChunkHeader chunk;  // "RIFF"
 		char type[4]; // "WAVE"
 	};
 
-	// FMTチャンク
+	/// <summary>
+	/// wavファイルのフォーマットチャンク（波形フォーマット情報）
+	/// </summary>
 	struct FormatChunk {
 		ChunkHeader chunk; // "fmt "
 		WAVEFORMATEX fmt; // 波形フォーマット
@@ -46,6 +54,13 @@ void AudioManager::Initialize() {
 }
 
 void AudioManager::Finalize() {
+	// 再生中・再生済みのSourceVoiceを全て破棄してからエンジンを解放する
+	for (IXAudio2SourceVoice* voice : activeVoices_) {
+		voice->Stop();
+		voice->DestroyVoice();
+	}
+	activeVoices_.clear();
+
 	xAudio2_.Reset();
 	masterVoice_ = nullptr;
 }
@@ -106,8 +121,8 @@ SoundData AudioManager::LoadWave(const std::string& filePath) {
 	}
 
 	// Dataチャンクのデータ部（波形データ）の読み込み
-	char* pBuffer = new char[data.size];
-	file.read(pBuffer, data.size);
+	std::vector<BYTE> buffer(data.size);
+	file.read(reinterpret_cast<char*>(buffer.data()), data.size);
 
 	// Waveファイルを閉じる
 	file.close();
@@ -116,24 +131,39 @@ SoundData AudioManager::LoadWave(const std::string& filePath) {
 	SoundData soundData = {};
 
 	soundData.wfex = format.fmt;
-	soundData.pBuffer = reinterpret_cast<BYTE*>(pBuffer);
-	soundData.bufferSize = data.size;
+	soundData.buffer = std::move(buffer);
 
 	return soundData;
 }
 
 void AudioManager::Unload(SoundData* soundData) {
 	// バッファのメモリを解放
-	delete[] soundData->pBuffer;
-
-	soundData->pBuffer = 0;
-	soundData->bufferSize = 0;
+	soundData->buffer.clear();
+	soundData->buffer.shrink_to_fit();
 	soundData->wfex = {};
+}
+
+void AudioManager::ReapFinishedVoices() {
+	for (auto it = activeVoices_.begin(); it != activeVoices_.end();) {
+		XAUDIO2_VOICE_STATE state{};
+		(*it)->GetState(&state);
+
+		// 再生キューが空になっていれば再生完了とみなして破棄する
+		if (state.BuffersQueued == 0) {
+			(*it)->DestroyVoice();
+			it = activeVoices_.erase(it);
+		} else {
+			++it;
+		}
+	}
 }
 
 void AudioManager::Play(const SoundData& soundData) {
 
 	HRESULT result;
+
+	// 再生が終わった過去のSourceVoiceを破棄してからリソースを積み増す
+	ReapFinishedVoices();
 
 	// 波形フォーマットを元にSourceVoiceの生成
 	IXAudio2SourceVoice* pSourceVoice = nullptr;
@@ -142,11 +172,16 @@ void AudioManager::Play(const SoundData& soundData) {
 
 	// 再生する波形データの設定
 	XAUDIO2_BUFFER buf{};
-	buf.pAudioData = soundData.pBuffer;
-	buf.AudioBytes = soundData.bufferSize;
+	buf.pAudioData = soundData.buffer.data();
+	buf.AudioBytes = static_cast<UINT32>(soundData.buffer.size());
 	buf.Flags = XAUDIO2_END_OF_STREAM;
 
 	// 波形データの再生
 	result = pSourceVoice->SubmitSourceBuffer(&buf);
 	result = pSourceVoice->Start();
+
+	// 再生完了後に破棄できるよう保持しておく
+	activeVoices_.push_back(pSourceVoice);
 }
+
+} // namespace Engine
