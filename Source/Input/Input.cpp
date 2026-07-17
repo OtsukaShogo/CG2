@@ -17,12 +17,12 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 
 	result = DirectInput8Create(
 		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
-		(void**)&directInput_, nullptr
+		reinterpret_cast<void**>(directInput_.GetAddressOf()), nullptr
 	);
 	assert(SUCCEEDED(result));
 
 	// キーボード
-	result = directInput_->CreateDevice(GUID_SysKeyboard, &keyboard_, NULL);
+	result = directInput_->CreateDevice(GUID_SysKeyboard, keyboard_.GetAddressOf(), NULL);
 	assert(SUCCEEDED(result));
 	result = keyboard_->SetDataFormat(&c_dfDIKeyboard);
 	assert(SUCCEEDED(result));
@@ -32,7 +32,7 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	assert(SUCCEEDED(result));
 
 	// マウス
-	result = directInput_->CreateDevice(GUID_SysMouse, &mouseDevice_, NULL);
+	result = directInput_->CreateDevice(GUID_SysMouse, mouseDevice_.GetAddressOf(), NULL);
 	assert(SUCCEEDED(result));
 	result = mouseDevice_->SetDataFormat(&c_dfDIMouse);
 	assert(SUCCEEDED(result));
@@ -79,12 +79,9 @@ bool Input::TriggerMouseButton(int button) const {
 }
 
 void Input::Finalize() {
-	mouseDevice_->Release();
-	mouseDevice_ = nullptr;
-	keyboard_->Release();
-	keyboard_ = nullptr;
-	directInput_->Release();
-	directInput_ = nullptr;
+	mouseDevice_.Reset();
+	keyboard_.Reset();
+	directInput_.Reset();
 }
 
 } // namespace Engine
