@@ -34,6 +34,9 @@
     <Filter Include="ソース ファイル\Input">
       <UniqueIdentifier>{7c3b2d4e-5f60-4b7c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Application">
+      <UniqueIdentifier>{8d4c3e5f-6071-4c8d-ae1f-203b4c5d6e7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Math\Matrix4x4.cpp">
@@ -90,6 +93,12 @@
     <ClCompile Include="Source\Graphics\TextureManager.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Graphics\AssetFactory.cpp">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Graphics\AssetManager.cpp">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Core\ShaderManager.cpp">
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
@@ -97,6 +106,9 @@
       <Filter>ソース ファイル\Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Graphics\Model.cpp">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Graphics\ModelData.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Source\Graphics\Sprite.cpp">
@@ -114,8 +126,8 @@
     <ClCompile Include="Source\Graphics\Camera.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Source\main.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="Source\Application\main.cpp">
+      <Filter>ソース ファイル\Application</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\ConvertString.cpp">
       <Filter>ソース ファイル\Core</Filter>
@@ -203,6 +215,12 @@
     <ClInclude Include="Source\Graphics\TextureManager.h">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Graphics\AssetFactory.h">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Graphics\AssetManager.h">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Core\WinApp.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
@@ -213,6 +231,9 @@
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Graphics\Model.h">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Graphics\ModelData.h">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Graphics\Sprite.h">

@@ -1,5 +1,4 @@
 #include "Material.h"
-#include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include "Matrix4x4.h"
 #include "PipelineStateManager.h"
@@ -19,9 +18,7 @@ Material::~Material() {
 }
 
 // 定数バッファを作成してCPUから書き込める状態にし、デフォルト値を書き込んでおく
-void Material::Create() {
-    ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
-
+void Material::Create(ID3D12Device* device) {
     materialResource_ = CreateBufferResource(device, sizeof(ConstantData));
     materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
     *materialData_ = ConstantData{};

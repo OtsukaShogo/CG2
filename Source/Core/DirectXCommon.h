@@ -19,12 +19,8 @@ namespace Engine {
 /// </summary>
 class DirectXCommon {
 public:
-
-    /// <summary>
-    /// シングルトンインスタンスを取得する
-    /// </summary>
-    /// <returns>DirectXCommonのインスタンス</returns>
-    [[nodiscard]] static DirectXCommon* GetInstance();
+    DirectXCommon() = default;
+    ~DirectXCommon() = default;
 
     //コピー禁止
     DirectXCommon(const DirectXCommon&) = delete;
@@ -95,9 +91,6 @@ public:
     uint32_t GetDescriptorSizeDSV() const { return descriptorSizeDSV_; }
 
 private:
-    DirectXCommon() = default;
-    ~DirectXCommon() = default;
-
     /// <summary>
     /// 汎用SRVヒープと深度ステンシルリソース・DSVヒープを生成する
     /// </summary>

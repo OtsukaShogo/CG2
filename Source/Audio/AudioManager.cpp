@@ -33,6 +33,76 @@ namespace {
 		WAVEFORMATEX fmt; // 波形フォーマット
 	};
 
+	// wavファイルの各チャンクを識別するID文字列
+	constexpr char kChunkIdRiff[] = "RIFF";
+	constexpr char kChunkIdWave[] = "WAVE";
+	constexpr char kChunkIdFmt[]  = "fmt ";
+	constexpr char kChunkIdData[] = "data";
+	constexpr char kChunkIdJunk[] = "JUNK";
+
+	/// <summary>
+	/// RIFFヘッダーを読み込み、"RIFF"/"WAVE"であることを確認する
+	/// </summary>
+	RiffHeader ReadRiffHeader(std::ifstream& file) {
+		RiffHeader riff;
+		file.read((char*)&riff, sizeof(riff));
+
+		// ファイルがRIFFかチェック
+		assert(strncmp(riff.chunk.id, kChunkIdRiff, sizeof(kChunkIdRiff) - 1) == 0);
+
+		// タイプがWAVEかチェック
+		assert(strncmp(riff.type, kChunkIdWave, sizeof(kChunkIdWave) - 1) == 0);
+
+		return riff;
+	}
+
+	/// <summary>
+	/// Formatチャンクを読み込み、"fmt "であることを確認する
+	/// </summary>
+	FormatChunk ReadFormatChunk(std::ifstream& file) {
+		FormatChunk format = {};
+
+		// チャンクヘッダーの確認
+		file.read((char*)&format, sizeof(ChunkHeader));
+		assert(strncmp(format.chunk.id, kChunkIdFmt, sizeof(kChunkIdFmt) - 1) == 0);
+
+		// チャンク本体の読み込み
+		assert(format.chunk.size <= sizeof(format.fmt));
+		file.read((char*)&format.fmt, format.chunk.size);
+
+		return format;
+	}
+
+	/// <summary>
+	/// Dataチャンクのヘッダーを読み込む（JUNKチャンクが挟まっている場合は読み飛ばす）
+	/// </summary>
+	ChunkHeader ReadDataChunkHeader(std::ifstream& file) {
+		ChunkHeader data;
+		file.read((char*)&data, sizeof(data));
+
+		// JUNKチャンクを検出した場合
+		if (strncmp(data.id, kChunkIdJunk, sizeof(kChunkIdJunk) - 1) == 0) {
+			// 読み取り位置をJUNKチャンクの終わりまで進める
+			file.seekg(data.size, std::ios_base::cur);
+
+			// 再読み込み
+			file.read((char*)&data, sizeof(data));
+		}
+
+		assert(strncmp(data.id, kChunkIdData, sizeof(kChunkIdData) - 1) == 0);
+
+		return data;
+	}
+
+	/// <summary>
+	/// Dataチャンクのデータ部（波形データ本体）を読み込む
+	/// </summary>
+	std::vector<BYTE> ReadWaveBuffer(std::ifstream& file, int32_t size) {
+		std::vector<BYTE> buffer(size);
+		file.read(reinterpret_cast<char*>(buffer.data()), size);
+		return buffer;
+	}
+
 } // namespace
 
 AudioManager* AudioManager::GetInstance() {
@@ -67,69 +137,20 @@ void AudioManager::Finalize() {
 
 SoundData AudioManager::LoadWave(const std::string& filePath) {
 
-	// ファイル入力ストリームのインスタンス
-	std::ifstream file;
-
 	// .wavファイルをバイナリモードで開く
-	file.open(filePath, std::ios_base::binary);
-
-	// ファイルオープン失敗を検出する
+	std::ifstream file(filePath, std::ios_base::binary);
 	assert(file.is_open());
 
-	// RIFFヘッダーの読み込み
-	RiffHeader riff;
-	file.read((char*)&riff, sizeof(riff));
+	// RIFF → Format → Data の順にチャンクを読み進める
+	ReadRiffHeader(file);
+	FormatChunk format = ReadFormatChunk(file);
+	ChunkHeader data = ReadDataChunkHeader(file);
+	std::vector<BYTE> buffer = ReadWaveBuffer(file, data.size);
 
-	// ファイルがRIFFかチェック
-	if (strncmp(riff.chunk.id, "RIFF", 4) != 0) {
-		assert(0);
-	}
-
-	// タイプがWAVEかチェック
-	if (strncmp(riff.type, "WAVE", 4) != 0) {
-		assert(0);
-	}
-
-	// Formatチャンクの読み込み
-	FormatChunk format = {};
-
-	// チャンクヘッダーの確認
-	file.read((char*)&format, sizeof(ChunkHeader));
-	if (strncmp(format.chunk.id, "fmt ", 4) != 0) {
-		assert(0);
-	}
-
-	// チャンク本体の読み込み
-	assert(format.chunk.size <= sizeof(format.fmt));
-	file.read((char*)&format.fmt, format.chunk.size);
-
-	// Dataチャンクの読み込み
-	ChunkHeader data;
-	file.read((char*)&data, sizeof(data));
-
-	// JUNKチャンクを検出した場合
-	if (strncmp(data.id, "JUNK", 4) == 0) {
-		// 読み取り位置をJUNKチャンクの終わりまで進める
-		file.seekg(data.size, std::ios_base::cur);
-
-		// 再読み込み
-		file.read((char*)&data, sizeof(data));
-	}
-
-	if (strncmp(data.id, "data", 4) != 0) {
-		assert(0);
-	}
-
-	// Dataチャンクのデータ部（波形データ）の読み込み
-	std::vector<BYTE> buffer(data.size);
-	file.read(reinterpret_cast<char*>(buffer.data()), data.size);
-
-	// Waveファイルを閉じる
 	file.close();
 
 	// returnする為の音声データ
 	SoundData soundData = {};
-
 	soundData.wfex = format.fmt;
 	soundData.buffer = std::move(buffer);
 

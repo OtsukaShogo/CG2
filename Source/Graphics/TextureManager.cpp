@@ -1,5 +1,4 @@
 #include "TextureManager.h"
-#include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include "externals/DirectXTex/DirectXTex.h"
 #include <cassert>
@@ -11,7 +10,12 @@ TextureManager* TextureManager::GetInstance() {
     return &instance;
 }
 
-TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
+TextureHandle TextureManager::LoadTexture(
+    const std::string& filePath,
+    ID3D12Device* device,
+    ID3D12GraphicsCommandList* commandList,
+    ID3D12DescriptorHeap* srvHeap,
+    uint32_t descriptorSizeSRV) {
     TextureHandle handle{};
 
     // 1. 画像読み込み
@@ -29,26 +33,19 @@ TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
 
     const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 
-    // 2. DX12 オブジェクト取得
-    DirectXCommon* dx = DirectXCommon::GetInstance();
-    ID3D12Device* device = dx->GetDevice();
-    ID3D12GraphicsCommandList* commandList = dx->GetCommandList();
-    ID3D12DescriptorHeap* srvHeap = dx->GetSrvDescriptorHeap();
-
-    // 3. テクスチャリソース作成
+    // 2. テクスチャリソース作成
     handle.texture = CreateTextureResource(device, metadata);
 
-    // 4. アップロード
+    // 3. アップロード
     handle.intermediate = UploadTextureData(handle.texture.Get(), mipImages, device, commandList);
 
-    // 5. SRV の空きスロットを自動割り当て
+    // 4. SRV の空きスロットを自動割り当て
     uint32_t index = srvIndex_++;
-    uint32_t descriptorSize = dx->GetDescriptorSizeSRV();
 
-    handle.cpuHandle = GetCPUDescriptorHandle(srvHeap, descriptorSize, index);
-    handle.gpuHandle = GetGPUDescriptorHandle(srvHeap, descriptorSize, index);
+    handle.cpuHandle = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
+    handle.gpuHandle = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
 
-    // 6. SRV 作成
+    // 5. SRV 作成
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Format = metadata.format;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

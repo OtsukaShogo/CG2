@@ -11,6 +11,8 @@
 #include "ShaderManager.h"
 #include "PipelineStateManager.h"
 #include "TextureManager.h"
+#include "AssetFactory.h"
+#include "AssetManager.h"
 #include "Model.h"
 #include "Sprite.h"
 #include "ImGuiManager.h"
@@ -56,8 +58,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === DirectX初期化 ============================================================================
 
-	DirectXCommon* dx = DirectXCommon::GetInstance();
+	auto dx = std::make_unique<DirectXCommon>();
 	dx->Initialize(winApp->GetHwnd(), WinApp::kClientWidth, WinApp::kClientHeight);
+
+	AssetFactory assetFactory;
+	assetFactory.Initialize(dx.get());
 
 	// === Input初期化 =======================================================================
 
@@ -85,13 +90,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	imgui->Initialize(winApp->GetHwnd(), dx->GetDevice(), dx->GetSrvDescriptorHeap());
 #endif
 
-	// === TextureManager初期化 ==========================================================
-
-	TextureManager* texMgr = TextureManager::GetInstance();
-
 	// === テクスチャ ======================================================================================
 
-	TextureHandle tex = texMgr->LoadTexture("resources/uvChecker.png");
+	TextureHandle tex = assetFactory.LoadTexture("resources/uvChecker.png");
 
 	// === 音声データ =====================================================================================
 
@@ -111,12 +112,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === オブジェクト ===========================================================================================
 
-	// モデル
-	auto axisModel = Model::CreateFromObj("resources", "axis.obj");
+	// モデル（resources以下のモデルをAssetManagerが一括読み込みし、パス指定でインスタンスを生成する）
+	AssetManager assetManager;
+	assetManager.Initialize(&assetFactory);
+
+	auto axisModel = assetManager.CreateModel("resources/axis.obj");
 	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
 
 	// スプライト
-	auto sprite = Sprite::Create(640.0f, 360.0f);
+	auto sprite = assetFactory.CreateSprite(640.0f, 360.0f);
 	sprite->SetTextureHandle(tex.gpuHandle);
 
 	// === ライト ================================================================================
@@ -197,14 +201,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 3D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D);
 		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
-		axisModel->Draw(cameraMgr->GetViewProjection());
+		axisModel->Draw(cameraMgr->GetViewProjection(), commandList);
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);
 		commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), tex.gpuHandle);
 
 #ifdef USE_IMGUI
-		imgui->EndFrame(dx->GetCommandList());
+		imgui->EndFrame(commandList);
 #endif
 
 		dx->EndFrame();
@@ -219,6 +223,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	light.reset();        // ~Light() で Unmap + Release
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
 	axisModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
+	assetManager.Clear(); // ModelData（メッシュ・テクスチャ）を解放
 	audioMgr->Unload(&soundData1);
 	audioMgr->Finalize();
 	input->Finalize();

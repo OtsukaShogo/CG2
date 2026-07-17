@@ -38,7 +38,8 @@ public:
     /// <summary>
     /// マテリアル用の定数バッファリソースを生成する
     /// </summary>
-    void Create();
+    /// <param name="device">D3D12デバイス</param>
+    void Create(ID3D12Device* device);
 
     /// <summary>
     /// マテリアルの定数バッファとテクスチャをコマンドリストにバインドする

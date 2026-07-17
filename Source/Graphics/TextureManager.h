@@ -30,8 +30,17 @@ public:
     /// テクスチャファイルを読み込み、GPUへ転送してSRVを作成しハンドルを返す
     /// </summary>
     /// <param name="filePath">読み込むテクスチャファイルのパス</param>
+    /// <param name="device">D3D12デバイス</param>
+    /// <param name="commandList">アップロードに使うコマンドリスト</param>
+    /// <param name="srvHeap">SRV用ディスクリプタヒープ</param>
+    /// <param name="descriptorSizeSRV">SRVディスクリプタ1個分のサイズ</param>
     /// <returns>読み込んだテクスチャのハンドル</returns>
-    [[nodiscard]] TextureHandle LoadTexture(const std::string& filePath);
+    [[nodiscard]] TextureHandle LoadTexture(
+        const std::string& filePath,
+        ID3D12Device* device,
+        ID3D12GraphicsCommandList* commandList,
+        ID3D12DescriptorHeap* srvHeap,
+        uint32_t descriptorSizeSRV);
 
 private:
     TextureManager() = default;

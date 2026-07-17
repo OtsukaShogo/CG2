@@ -31,9 +31,10 @@ public:
 private:
 	Camera camera_;
 
-	static constexpr float kMoveSpeed   = 0.1f;
 	static constexpr float kRotateSpeed = 0.005f;
 	static constexpr float kZoomSpeed   = 0.01f;
+	static constexpr float kPanSpeed    = 0.01f;
+	static constexpr float kMoveSpeed   = 0.1f;
 };
 
 } // namespace Engine

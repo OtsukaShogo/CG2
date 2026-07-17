@@ -5,11 +5,6 @@
 
 namespace Engine {
 
-DirectXCommon* DirectXCommon::GetInstance() {
-	static DirectXCommon instance;
-	return &instance;
-}
-
 void DirectXCommon::Initialize(HWND hwnd, uint32_t width, uint32_t height) {
     device_ = std::make_unique<D3D12Device>();
     device_->Initialize();
