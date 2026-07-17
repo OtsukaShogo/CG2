@@ -4,13 +4,15 @@
 #include <memory>
 #include "TransformMatrix.h"
 #include "WorldTransform.h"
-#include "Mesh.h"
 #include "Material.h"
 
 namespace Engine {
 
+class ModelData;
+
 /// <summary>
-/// メッシュ・マテリアル・ワールドトランスフォームを持つ3Dモデルを表すクラス
+/// ModelDataが持つ描画データを参照し、マテリアル・ワールドトランスフォームなど
+/// インスタンス固有のデータを保持する3Dモデルのインスタンス
 /// </summary>
 class Model {
 public:
@@ -25,18 +27,12 @@ public:
 	~Model();
 
 	/// <summary>
-	/// 球メッシュを持つモデルを生成する
+	/// ModelDataを参照するモデルインスタンスを生成する
 	/// </summary>
+	/// <param name="modelData">参照する共有描画データ（shared_ptrで保持するため、AssetManagerより先に破棄されても問題ない）</param>
+	/// <param name="device">D3D12デバイス</param>
 	/// <returns>生成したモデル</returns>
-	[[nodiscard]] static std::unique_ptr<Model> CreateSphere();
-
-	/// <summary>
-	/// objファイルを読み込んでモデルを生成する
-	/// </summary>
-	/// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
-	/// <param name="filename">読み込むobjファイル名</param>
-	/// <returns>生成したモデル</returns>
-	[[nodiscard]] static std::unique_ptr<Model> CreateFromObj(const std::string& directoryPath, const std::string& filename);
+	[[nodiscard]] static std::unique_ptr<Model> CreateInstance(std::shared_ptr<const ModelData> modelData, ID3D12Device* device);
 
 	/// <summary>
 	/// ワールド行列・WVP行列を更新する
@@ -47,7 +43,8 @@ public:
 	/// モデルを描画する
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
-	void Draw(const Matrix4x4& viewProjection);
+	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
+	void Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList);
 
 public:
 
@@ -92,10 +89,11 @@ private:
 	/// <summary>
 	/// WVP行列用の定数バッファリソースを生成する
 	/// </summary>
-	void CreateWvpBuffer();
+	/// <param name="device">D3D12デバイス</param>
+	void CreateWvpBuffer(ID3D12Device* device);
 
 private:
-	Mesh mesh_;
+	std::shared_ptr<const ModelData> modelData_; // 参照カウント方式。AssetManagerが破棄されてもModelが生きている限りデータは解放されない
 	Material material_;
 	WorldTransform worldTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 

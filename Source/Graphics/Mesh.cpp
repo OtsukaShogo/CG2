@@ -4,7 +4,6 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
-#include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include"Material.h"
 
@@ -110,85 +109,101 @@ void Mesh::CreateRect(float width, float height) {
 	indices_ = { 0, 1, 3, 1, 2, 3 };
 }
 
+void Mesh::ParseVertexLine(std::istringstream& s, std::vector<Vector4>& positions) {
+	Vector4 position;
+	s >> position.x >> position.y >> position.z;
+	position.x *= -1.0f;
+	position.w = 1.0f;
+	positions.push_back(position);
+}
+
+void Mesh::ParseTexcoordLine(std::istringstream& s, std::vector<Vector2>& texcoords) {
+	Vector2 texcoord;
+	s >> texcoord.x >> texcoord.y;
+	texcoord.y = 1.0f - texcoord.y;
+	texcoords.push_back(texcoord);
+}
+
+void Mesh::ParseNormalLine(std::istringstream& s, std::vector<Vector3>& normals) {
+	Vector3 normal;
+	s >> normal.x >> normal.y >> normal.z;
+	normal.x *= -1.0f;
+	normals.push_back(normal);
+}
+
+void Mesh::ParseFaceLine(
+	std::istringstream& s,
+	const std::vector<Vector4>& positions,
+	const std::vector<Vector2>& texcoords,
+	const std::vector<Vector3>& normals) {
+	// 面は三角形限定。面を構成する頂点を逆順に登録することで、回り順を反転させる
+	VertexData triangle[3];
+	for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
+		std::string vertexDefinition;
+		s >> vertexDefinition;
+
+		// 頂点の要素へのインデックスは「位置/UV/法線」の形式で書かれているので分解する
+		std::istringstream v(vertexDefinition);
+		uint32_t elementIndices[3];
+		for (int32_t element = 0; element < 3; ++element) {
+			std::string index;
+			std::getline(v, index, '/');
+			elementIndices[element] = static_cast<uint32_t>(std::stoi(index));
+		}
+
+		// 要素のインデックスから、実際の要素の値を取得して頂点を構築する
+		Vector4 position = positions[elementIndices[0] - 1];
+		Vector2 texcoord = texcoords[elementIndices[1] - 1];
+		Vector3 normal   = normals[elementIndices[2] - 1];
+		triangle[faceVertex] = VertexData{ position, texcoord, normal };
+	}
+
+	// 頂点を逆順で登録する
+	vertices_.push_back(triangle[2]);
+	vertices_.push_back(triangle[1]);
+	vertices_.push_back(triangle[0]);
+}
+
+void Mesh::ParseMtllibLine(std::istringstream& s, const std::string& directoryPath) {
+	// materialTemplateLibraryファイルの名前を取得する
+	std::string materialFilename;
+	s >> materialFilename;
+	// Materialを生成し、mtlファイルを読み込ませる（基本的にobjファイルと同一階層にmtlは存在する）
+	material_ = std::make_unique<Material>();
+	material_->LoadMaterialTemplateFile(directoryPath, materialFilename);
+}
+
 void Mesh::LoadObjFile(const std::string& directoryPath, const std::string& filename) {
-	//1.中で必要となる変数の宣言
 	std::vector<Vector4> positions; // 位置
 	std::vector<Vector3> normals;   // 法線
 	std::vector<Vector2> texcoords; // テクスチャ座標
 	std::string line;               // ファイルから読んだ1行を格納する
 
-	//2.ファイルを開く
 	std::ifstream file(directoryPath + "/" + filename);
 	assert(file.is_open());
 
-	//3.実際にファイルを読み、vertices_に代入する
+	// 1行ずつ読み、先頭の識別子に応じて対応するパーサーへ振り分ける
 	while (std::getline(file, line)) {
 		std::string identifier;
 		std::istringstream s(line);
 		s >> identifier;
 
-		// identifierに応じた処理
 		if (identifier == "v") {
-			Vector4 position;
-			s >> position.x >> position.y >> position.z;
-			position.x *= -1.0f;
-			position.w = 1.0f;
-			positions.push_back(position);
-
+			ParseVertexLine(s, positions);
 		} else if (identifier == "vt") {
-			Vector2 texcoord;
-			s >> texcoord.x >> texcoord.y;
-			texcoord.y = 1.0f - texcoord.y;
-			texcoords.push_back(texcoord);
-
+			ParseTexcoordLine(s, texcoords);
 		} else if (identifier == "vn") {
-			Vector3 normal;
-			s >> normal.x >> normal.y >> normal.z;
-			normal.x *= -1.0f;
-			normals.push_back(normal);
-
+			ParseNormalLine(s, normals);
 		} else if (identifier == "f") {
-			// 面は三角形限定。面を構成する頂点を逆順に登録することで、回り順を反転させる
-			VertexData triangle[3];
-			for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-				std::string vertexDefinition;
-				s >> vertexDefinition;
-
-				// 頂点の要素へのインデックスは「位置/UV/法線」の形式で書かれているので分解する
-				std::istringstream v(vertexDefinition);
-				uint32_t elementIndices[3];
-				for (int32_t element = 0; element < 3; ++element) {
-					std::string index;
-					std::getline(v, index, '/');
-					elementIndices[element] = static_cast<uint32_t>(std::stoi(index));
-				}
-
-				// 要素のインデックスから、実際の要素の値を取得して頂点を構築する
-				Vector4 position = positions[elementIndices[0] - 1];
-				Vector2 texcoord = texcoords[elementIndices[1] - 1];
-				Vector3 normal   = normals[elementIndices[2] - 1];
-				triangle[faceVertex] = VertexData{ position, texcoord, normal };
-			}
-
-			// 頂点を逆順で登録する
-			vertices_.push_back(triangle[2]);
-			vertices_.push_back(triangle[1]);
-			vertices_.push_back(triangle[0]);
-
+			ParseFaceLine(s, positions, texcoords, normals);
 		} else if (identifier == "mtllib") {
-			// materialTemplateLibraryファイルの名前を取得する
-			std::string materialFilename;
-			s >> materialFilename;
-			// Materialを生成し、mtlファイルを読み込ませる（基本的にobjファイルと同一階層にmtlは存在する）
-			material_ = std::make_unique<Material>();
-			material_->LoadMaterialTemplateFile(directoryPath, materialFilename);
+			ParseMtllibLine(s, directoryPath);
 		}
 	}
 }
 
 // CPU上に構築した頂点・インデックスデータをGPUバッファへコピーし、各種ビューを作成する
-void Mesh::Upload() {
-	ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
+void Mesh::Upload(ID3D12Device* device) {
 	uint32_t vertexCount = GetVertexCount();
 
 	vertexResource_ = CreateBufferResource(device, sizeof(VertexData) * vertexCount);
@@ -217,7 +232,7 @@ void Mesh::Upload() {
 }
 
 // インデックスバッファがあればインデックス付き描画、なければ通常描画を行う
-void Mesh::Draw(ID3D12GraphicsCommandList* commandList) {
+void Mesh::Draw(ID3D12GraphicsCommandList* commandList) const {
 	commandList->IASetVertexBuffers(0, 1, &vbv_);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

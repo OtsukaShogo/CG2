@@ -1,5 +1,4 @@
 #include "Sprite.h"
-#include "DirectXCommon.h"
 #include "D3D12Util.h"
 #include "TransformMatrix.h"
 #include "PipelineStateManager.h"
@@ -14,28 +13,25 @@ Sprite::~Sprite() {
     }
 }
 
-std::unique_ptr<Sprite> Sprite::Create(float width, float height) {
+std::unique_ptr<Sprite> Sprite::Create(float width, float height, ID3D12Device* device) {
     auto sprite = std::make_unique<Sprite>();
     sprite->mesh_.CreateRect(width, height);
-    sprite->mesh_.Upload();
-    sprite->material_.Create();
+    sprite->mesh_.Upload(device);
+    sprite->material_.Create(device);
     sprite->material_.SetEnableLighting(false);
-    sprite->CreateWvpBuffer();
+    sprite->CreateWvpBuffer(device);
     return sprite;
 }
 
 // WVP行列用の定数バッファを作成してCPUから書き込める状態にし、単位行列で初期化しておく
-void Sprite::CreateWvpBuffer() {
-    ID3D12Device* device = DirectXCommon::GetInstance()->GetDevice();
+void Sprite::CreateWvpBuffer(ID3D12Device* device) {
     wvpResource_ = CreateBufferResource(device, sizeof(TransformationMatrix));
     wvpResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpData_));
     wvpData_->WVP = MakeIdentity4x4();
     wvpData_->World = MakeIdentity4x4();
 }
 
-void Sprite::Draw(const Matrix4x4& viewProjection) {
-    auto* commandList = DirectXCommon::GetInstance()->GetCommandList();
-
+void Sprite::Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList) {
     // worldTransform_ から行列を生成してからViewProjectionと合成
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform_.scale,

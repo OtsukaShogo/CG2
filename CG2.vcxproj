@@ -100,6 +100,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\Audio\AudioManager.cpp" />
+    <ClCompile Include="Source\Graphics\AssetFactory.cpp" />
+    <ClCompile Include="Source\Graphics\AssetManager.cpp" />
     <ClCompile Include="Source\Graphics\Camera.cpp" />
     <ClCompile Include="Source\Graphics\CameraManager.cpp" />
     <ClCompile Include="Source\Core\ConvertString.cpp" />
@@ -136,11 +138,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Core\ImGuiManager.cpp" />
     <ClCompile Include="Source\Input\Input.cpp" />
     <ClCompile Include="Source\Graphics\Light.cpp" />
-    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\Application\main.cpp" />
     <ClCompile Include="Source\Graphics\Material.cpp" />
     <ClCompile Include="Source\Math\Matrix4x4.cpp" />
     <ClCompile Include="Source\Graphics\Mesh.cpp" />
     <ClCompile Include="Source\Graphics\Model.cpp" />
+    <ClCompile Include="Source\Graphics\ModelData.cpp" />
     <ClCompile Include="Source\Core\PipelineStateManager.cpp" />
     <ClCompile Include="Source\Core\ShaderManager.cpp" />
     <ClCompile Include="Source\Graphics\Sprite.cpp" />
@@ -150,6 +153,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Audio\AudioManager.h" />
+    <ClInclude Include="Source\Graphics\AssetFactory.h" />
+    <ClInclude Include="Source\Graphics\AssetManager.h" />
     <ClInclude Include="Source\Graphics\Camera.h" />
     <ClInclude Include="Source\Graphics\CameraManager.h" />
     <ClInclude Include="Source\Core\ConvertString.h" />
@@ -178,6 +183,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Math\Matrix4x4.h" />
     <ClInclude Include="Source\Graphics\Mesh.h" />
     <ClInclude Include="Source\Graphics\Model.h" />
+    <ClInclude Include="Source\Graphics\ModelData.h" />
     <ClInclude Include="Source\Core\PipelineStateManager.h" />
     <ClInclude Include="Source\Core\ShaderManager.h" />
     <ClInclude Include="Source\Graphics\Sprite.h" />

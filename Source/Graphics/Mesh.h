@@ -4,6 +4,7 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 #include <string>
+#include <sstream>
 #include "VertexData.h"
 
 namespace Engine {
@@ -48,13 +49,14 @@ public:
 	/// <summary>
 	/// 頂点・インデックスデータをGPUへ転送する
 	/// </summary>
-	void Upload();
+	/// <param name="device">D3D12デバイス</param>
+	void Upload(ID3D12Device* device);
 
 	/// <summary>
 	/// メッシュを描画する
 	/// </summary>
 	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
-	void Draw(ID3D12GraphicsCommandList* commandList);
+	void Draw(ID3D12GraphicsCommandList* commandList) const;
 
 	/// <summary>
 	/// 頂点数を取得する
@@ -67,6 +69,36 @@ public:
 	/// </summary>
 	/// <returns>テクスチャファイルパス</returns>
 	const std::string& GetTextureFilePath() const;
+
+private:
+	/// <summary>
+	/// "v"行（頂点座標）を解析し、positionsへ追加する
+	/// </summary>
+	static void ParseVertexLine(std::istringstream& s, std::vector<Vector4>& positions);
+
+	/// <summary>
+	/// "vt"行（UV座標）を解析し、texcoordsへ追加する
+	/// </summary>
+	static void ParseTexcoordLine(std::istringstream& s, std::vector<Vector2>& texcoords);
+
+	/// <summary>
+	/// "vn"行（法線）を解析し、normalsへ追加する
+	/// </summary>
+	static void ParseNormalLine(std::istringstream& s, std::vector<Vector3>& normals);
+
+	/// <summary>
+	/// "f"行（面）を解析し、対応する頂点をvertices_へ追加する
+	/// </summary>
+	void ParseFaceLine(
+		std::istringstream& s,
+		const std::vector<Vector4>& positions,
+		const std::vector<Vector2>& texcoords,
+		const std::vector<Vector3>& normals);
+
+	/// <summary>
+	/// "mtllib"行（マテリアルテンプレートライブラリ）を解析し、material_を読み込む
+	/// </summary>
+	void ParseMtllibLine(std::istringstream& s, const std::string& directoryPath);
 
 private:
 	std::vector<VertexData> vertices_;

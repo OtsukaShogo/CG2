@@ -30,14 +30,16 @@ public:
 	/// </summary>
 	/// <param name="width">スプライトの幅</param>
 	/// <param name="height">スプライトの高さ</param>
+	/// <param name="device">D3D12デバイス</param>
 	/// <returns>生成したスプライト</returns>
-	[[nodiscard]] static std::unique_ptr<Sprite> Create(float width, float height);
+	[[nodiscard]] static std::unique_ptr<Sprite> Create(float width, float height, ID3D12Device* device);
 
 	/// <summary>
 	/// スプライトを描画する
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
-	void Draw(const Matrix4x4& viewProjection);
+	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
+	void Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList);
 
 public:
 
@@ -76,7 +78,8 @@ private:
 	/// <summary>
 	/// WVP行列用の定数バッファリソースを生成する
 	/// </summary>
-	void CreateWvpBuffer();
+	/// <param name="device">D3D12デバイス</param>
+	void CreateWvpBuffer(ID3D12Device* device);
 
 private:
 
