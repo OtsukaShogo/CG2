@@ -2,6 +2,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <Windows.h>
+#include <wrl/client.h>
 
 namespace Engine {
 
@@ -100,9 +101,9 @@ private:
 	Input() = default;
 	~Input() = default;
 
-	IDirectInput8* directInput_ = nullptr;
-	IDirectInputDevice8* keyboard_ = nullptr;
-	IDirectInputDevice8* mouseDevice_ = nullptr;
+	Microsoft::WRL::ComPtr<IDirectInput8> directInput_;
+	Microsoft::WRL::ComPtr<IDirectInputDevice8> keyboard_;
+	Microsoft::WRL::ComPtr<IDirectInputDevice8> mouseDevice_;
 	BYTE key_[256] = {};
 	BYTE keyPrev_[256] = {};
 	DIMOUSESTATE mouseStatePrev_ = {};
