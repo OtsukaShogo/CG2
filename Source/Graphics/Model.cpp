@@ -14,7 +14,10 @@ Model::~Model() {
     }
 }
 
-std::unique_ptr<Model> Model::CreateInstance(std::shared_ptr<const ModelData> modelData, ID3D12Device* device) {
+std::unique_ptr<Model> Model::CreateInstance(
+    std::shared_ptr<const ModelData> modelData,
+    ID3D12Device* device,
+    std::shared_ptr<const FrameContext> frameContext) {
     auto model = std::make_unique<Model>();
 
     // Material生成（インスタンス固有。色やUV変換を個別に持たせるため、モデルごとに作成する）
@@ -22,6 +25,7 @@ std::unique_ptr<Model> Model::CreateInstance(std::shared_ptr<const ModelData> mo
     model->material_.SetTexture(modelData->GetTexture());
 
     model->modelData_ = std::move(modelData);
+    model->frameContext_ = std::move(frameContext);
 
     // WVP生成
     model->CreateWvpBuffer(device);
@@ -41,7 +45,9 @@ void Model::Update() {
     worldTransform_.rotate.y += 0.01f;
 }
 
-void Model::Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList) {
+void Model::Draw(const Matrix4x4& viewProjection) {
+    ID3D12GraphicsCommandList* commandList = frameContext_->commandList;
+
     // ワールド行列を作り直し、ビュープロジェクションと合成してWVP定数バッファへ書き込む
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform_.scale,

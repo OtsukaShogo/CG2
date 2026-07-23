@@ -5,6 +5,7 @@
 #include "TransformMatrix.h"
 #include "WorldTransform.h"
 #include "Material.h"
+#include "FrameContext.h"
 
 namespace Engine {
 
@@ -31,8 +32,12 @@ public:
 	/// </summary>
 	/// <param name="modelData">参照する共有描画データ（shared_ptrで保持するため、AssetManagerより先に破棄されても問題ない）</param>
 	/// <param name="device">D3D12デバイス</param>
+	/// <param name="frameContext">「今フレームで使うべきコマンドリスト」を保持する共有オブジェクト</param>
 	/// <returns>生成したモデル</returns>
-	[[nodiscard]] static std::unique_ptr<Model> CreateInstance(std::shared_ptr<const ModelData> modelData, ID3D12Device* device);
+	[[nodiscard]] static std::unique_ptr<Model> CreateInstance(
+		std::shared_ptr<const ModelData> modelData,
+		ID3D12Device* device,
+		std::shared_ptr<const FrameContext> frameContext);
 
 	/// <summary>
 	/// ワールド行列・WVP行列を更新する
@@ -43,8 +48,7 @@ public:
 	/// モデルを描画する
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
-	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
-	void Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList);
+	void Draw(const Matrix4x4& viewProjection);
 
 public:
 
@@ -94,6 +98,7 @@ private:
 
 private:
 	std::shared_ptr<const ModelData> modelData_; // 参照カウント方式。AssetManagerが破棄されてもModelが生きている限りデータは解放されない
+	std::shared_ptr<const FrameContext> frameContext_; // Draw()時に「今フレームのcommandList」を都度参照するための共有オブジェクト
 	Material material_;
 	WorldTransform worldTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 

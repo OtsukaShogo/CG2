@@ -209,6 +209,9 @@
     <ClInclude Include="Source\Core\FrameSync.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Core\FrameContext.h">
+      <Filter>ソース ファイル\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Core\DebugUtil.h">
       <Filter>ソース ファイル\Core</Filter>
     </ClInclude>

@@ -201,7 +201,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 3D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D);
 		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
-		axisModel->Draw(cameraMgr->GetViewProjection(), commandList);
+		axisModel->Draw(cameraMgr->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);

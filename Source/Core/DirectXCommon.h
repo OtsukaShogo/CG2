@@ -10,6 +10,7 @@
 #include "CommandContext.h"
 #include "SwapChain.h"
 #include "FrameSync.h"
+#include "FrameContext.h"
 
 namespace Engine {
 
@@ -90,6 +91,13 @@ public:
     /// <returns>DSVディスクリプタ1個分のサイズ</returns>
     uint32_t GetDescriptorSizeDSV() const { return descriptorSizeDSV_; }
 
+    /// <summary>
+    /// 「今フレームで使うべきコマンドリスト」を保持する共有オブジェクトを取得する。
+    /// 中身はBeginFrame()のたびに最新の状態へ更新される。
+    /// </summary>
+    /// <returns>FrameContextの共有ポインタ</returns>
+    std::shared_ptr<const FrameContext> GetFrameContext() const { return frameContext_; }
+
 private:
     /// <summary>
     /// 汎用SRVヒープと深度ステンシルリソース・DSVヒープを生成する
@@ -103,6 +111,7 @@ private:
     std::unique_ptr<CommandContext> commandContext_;
     std::unique_ptr<SwapChain> swapChain_;
     std::unique_ptr<FrameSync> frameSync_;
+    std::shared_ptr<FrameContext> frameContext_;
 
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap_;
