@@ -13,12 +13,16 @@ Sprite::~Sprite() {
     }
 }
 
-std::unique_ptr<Sprite> Sprite::Create(float width, float height, ID3D12Device* device) {
+std::unique_ptr<Sprite> Sprite::Create(
+    float width, float height,
+    ID3D12Device* device,
+    std::shared_ptr<const FrameContext> frameContext) {
     auto sprite = std::make_unique<Sprite>();
     sprite->mesh_.CreateRect(width, height);
     sprite->mesh_.Upload(device);
     sprite->material_.Create(device);
     sprite->material_.SetEnableLighting(false);
+    sprite->frameContext_ = std::move(frameContext);
     sprite->CreateWvpBuffer(device);
     return sprite;
 }
@@ -31,7 +35,9 @@ void Sprite::CreateWvpBuffer(ID3D12Device* device) {
     wvpData_->World = MakeIdentity4x4();
 }
 
-void Sprite::Draw(const Matrix4x4& viewProjection, ID3D12GraphicsCommandList* commandList) {
+void Sprite::Draw(const Matrix4x4& viewProjection) {
+    ID3D12GraphicsCommandList* commandList = frameContext_->commandList;
+
     // worldTransform_ から行列を生成してからViewProjectionと合成
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform_.scale,

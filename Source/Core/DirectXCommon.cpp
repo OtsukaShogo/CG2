@@ -12,6 +12,9 @@ void DirectXCommon::Initialize(HWND hwnd, uint32_t width, uint32_t height) {
     commandContext_ = std::make_unique<CommandContext>();
     commandContext_->Initialize(device_->Get());
 
+    frameContext_ = std::make_shared<FrameContext>();
+    frameContext_->commandList = commandContext_->GetCommandList();
+
     swapChain_ = std::make_unique<SwapChain>();
     swapChain_->Initialize(device_->GetFactory(), device_->Get(), commandContext_->GetCommandQueue(), hwnd, width, height);
 
@@ -64,6 +67,10 @@ void DirectXCommon::BeginFrame() {
 
     ID3D12GraphicsCommandList* commandList = commandContext_->GetCommandList();
 
+    // 今フレームで使うコマンドリストをFrameContextへ反映する
+    // （将来コマンドリストをフレームごとに切り替える設計になっても、ここの更新だけで済む）
+    frameContext_->commandList = commandList;
+
     // バリア: Present → RenderTarget
     swapChain_->TransitionToRenderTarget(commandList);
 
@@ -113,6 +120,9 @@ void DirectXCommon::Finalize() {
     // Present後にDXGIが投入したGPU作業（バックバッファのcomposite等）も含めて完了を待つ
     frameSync_->SignalAndWait(commandContext_->GetCommandQueue());
     frameSync_->Finalize();
+
+    // コマンドリスト解放後にダングリングポインタが残らないようにする
+    frameContext_->commandList = nullptr;
 
     // シングルトンの ComPtr は main() 返却後まで破棄されないため、明示的に解放してからリークチェックを行う
     depthStencilResource_.Reset();

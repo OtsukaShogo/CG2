@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "FrameContext.h"
 #include "Model.h"
 #include "ModelData.h"
 #include "Sprite.h"
@@ -66,9 +67,9 @@ public:
 
 private:
     ID3D12Device* device_ = nullptr;
-    ID3D12GraphicsCommandList* commandList_ = nullptr;
     ID3D12DescriptorHeap* srvHeap_ = nullptr;
     uint32_t descriptorSizeSRV_ = 0;
+    std::shared_ptr<const FrameContext> frameContext_;
 };
 
 } // namespace Engine

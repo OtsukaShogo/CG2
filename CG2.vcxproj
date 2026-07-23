@@ -166,6 +166,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Core\DebugUtil.h" />
     <ClInclude Include="Source\Core\DirectXCommon.h" />
     <ClInclude Include="Source\Core\FrameSync.h" />
+    <ClInclude Include="Source\Core\FrameContext.h" />
     <ClInclude Include="Source\Core\SwapChain.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />

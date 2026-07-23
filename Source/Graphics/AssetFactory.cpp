@@ -5,13 +5,13 @@ namespace Engine {
 
 void AssetFactory::Initialize(DirectXCommon* dx) {
     device_ = dx->GetDevice();
-    commandList_ = dx->GetCommandList();
     srvHeap_ = dx->GetSrvDescriptorHeap();
     descriptorSizeSRV_ = dx->GetDescriptorSizeSRV();
+    frameContext_ = dx->GetFrameContext();
 }
 
 std::shared_ptr<ModelData> AssetFactory::CreateModelData(const std::string& directoryPath, const std::string& filename) {
-    return ModelData::CreateFromObj(directoryPath, filename, device_, commandList_, srvHeap_, descriptorSizeSRV_);
+    return ModelData::CreateFromObj(directoryPath, filename, device_, frameContext_->commandList, srvHeap_, descriptorSizeSRV_);
 }
 
 std::shared_ptr<ModelData> AssetFactory::CreateSphereModelData() {
@@ -19,15 +19,15 @@ std::shared_ptr<ModelData> AssetFactory::CreateSphereModelData() {
 }
 
 std::unique_ptr<Model> AssetFactory::CreateModelInstance(std::shared_ptr<const ModelData> modelData) {
-    return Model::CreateInstance(std::move(modelData), device_);
+    return Model::CreateInstance(std::move(modelData), device_, frameContext_);
 }
 
 std::unique_ptr<Sprite> AssetFactory::CreateSprite(float width, float height) {
-    return Sprite::Create(width, height, device_);
+    return Sprite::Create(width, height, device_, frameContext_);
 }
 
 TextureHandle AssetFactory::LoadTexture(const std::string& filePath) {
-    return TextureManager::GetInstance()->LoadTexture(filePath, device_, commandList_, srvHeap_, descriptorSizeSRV_);
+    return TextureManager::GetInstance()->LoadTexture(filePath, device_, frameContext_->commandList, srvHeap_, descriptorSizeSRV_);
 }
 
 } // namespace Engine
