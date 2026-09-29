@@ -116,7 +116,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	AssetManager assetManager;
 	assetManager.Initialize(&assetFactory);
 
-	auto axisModel = assetManager.CreateModel("resources/axis.obj");
+	// 斜めに交差する2枚のfenceを描画する
+	auto fenceModelA = assetManager.CreateModel("resources/fence.obj");
+	fenceModelA->GetRotate().x = 3.0f;
+	fenceModelA->GetRotate().z = 3.0f;
+
+	auto fenceModelB = assetManager.CreateModel("resources/fence.obj");
+	fenceModelB->GetRotate().x = 3.0f;
+	fenceModelB->GetRotate().z = 3.0f;
+
 	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
 
 	// スプライト
@@ -138,7 +146,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === ブレンドモード ==================================================================================
 
-	int currentBlendMode = static_cast<int>(BlendMode::kNormal);
+	int currentBlendMode = static_cast<int>(BlendMode::kNone);
 
 	// === メインループ ====================================================================================
 
@@ -162,10 +170,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::Separator();
 
 		//モデル
-		ImGui::ColorEdit4("Axis Color", &axisModel->GetColor().x);
-		ImGui::DragFloat3("Axis Translate", &axisModel->GetTranslate().x, 0.1f);
-		ImGui::DragFloat3("Axis Scale", &axisModel->GetScale().x, 0.1f);
-		ImGui::DragFloat3("Axis Rotate", &axisModel->GetRotate().x, 0.1f);
+		ImGui::ColorEdit4("Fence A Color", &fenceModelA->GetColor().x);
+		ImGui::DragFloat3("Fence A Translate", &fenceModelA->GetTranslate().x, 0.1f);
+		ImGui::DragFloat3("Fence A Scale", &fenceModelA->GetScale().x, 0.1f);
+		ImGui::DragFloat3("Fence A Rotate", &fenceModelA->GetRotate().x, 0.1f);
+
+		ImGui::ColorEdit4("Fence B Color", &fenceModelB->GetColor().x);
+		ImGui::DragFloat3("Fence B Translate", &fenceModelB->GetTranslate().x, 0.1f);
+		ImGui::DragFloat3("Fence B Scale", &fenceModelB->GetScale().x, 0.1f);
+		ImGui::DragFloat3("Fence B Rotate", &fenceModelB->GetRotate().x, 0.1f);
+
 		ImGui::Combo("Blend Mode", &currentBlendMode, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
 		//ライト
@@ -208,7 +222,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 3D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D, blendMode);
 		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
-		axisModel->Draw(cameraMgr->GetViewProjection());
+		fenceModelA->Draw(cameraMgr->GetViewProjection());
+		fenceModelB->Draw(cameraMgr->GetViewProjection());
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
@@ -229,7 +244,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
 	light.reset();        // ~Light() で Unmap + Release
 	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
-	axisModel.reset();  // ID3D12Resource x3 (vertex, material, wvp)
+	fenceModelA.reset(); // ID3D12Resource x3 (vertex, material, wvp)
+	fenceModelB.reset(); // ID3D12Resource x3 (vertex, material, wvp)
 	assetManager.Clear(); // ModelData（メッシュ・テクスチャ）を解放
 	audioMgr->Unload(&soundData1);
 	audioMgr->Finalize();

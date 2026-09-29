@@ -7,7 +7,7 @@ void AssetManager::Initialize(AssetFactory* factory) {
     factory_ = factory;
 
     // === 読み込むモデルをここに登録する ===
-    RegisterModel("resources", "axis.obj");
+    RegisterModel("resources", "fence.obj");
 }
 
 void AssetManager::RegisterModel(const std::string& directoryPath, const std::string& filename) {
