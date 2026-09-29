@@ -11,6 +11,26 @@ namespace Engine {
 class ShaderManager;
 
 /// <summary>
+/// ブレンドモード（描画時の合成方法）の種類
+/// </summary>
+enum class BlendMode {
+    kNone,             // ブレンドなし
+    kNormal,           // 通常のブレンド（アルファブレンド）
+    kAdd,              // 加算
+    kSubtract,         // 減算
+    kMultiply,         // 乗算
+    kScreen,           // スクリーン
+    kCountOfBlendMode, // ブレンドモードの数
+};
+
+/// <summary>
+/// BlendModeの表示名一覧（ImGui等での表示用、BlendModeの並び順と対応）
+/// </summary>
+static constexpr const char* kBlendModeNames[] = {
+    "None", "Normal", "Add", "Subtract", "Multiply", "Screen",
+};
+
+/// <summary>
 /// グラフィックスパイプラインステート(PSO)とルートシグネチャの生成・管理を行うクラス
 /// </summary>
 class PipelineStateManager {
@@ -18,6 +38,13 @@ public:
     // PSO名
     static constexpr const char* kObject3D = "Object3D";
     static constexpr const char* kSprite   = "Sprite";
+
+    /// <summary>
+    /// ブレンドモードに応じたブレンドステート設定を作成する
+    /// </summary>
+    /// <param name="blendMode">ブレンドモード</param>
+    /// <returns>対応するブレンドステート設定</returns>
+    [[nodiscard]] static D3D12_BLEND_DESC MakeBlendDesc(BlendMode blendMode);
 
     /// <summary>
     /// 共通ルートシグネチャにおけるルートパラメータのスロット番号
@@ -65,14 +92,14 @@ public:
         DXGI_FORMAT dsvFormat);
 
     /// <summary>
-    /// Object3D用のPSOを作成してキャッシュする
+    /// Object3D用のPSOを、全ブレンドモード分作成してキャッシュする
     /// </summary>
     /// <param name="device">D3D12デバイス</param>
     /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
     void CreateObject3DPipeline(ID3D12Device* device, ShaderManager* shaderMgr);
 
     /// <summary>
-    /// Sprite(2D)用のPSOを作成してキャッシュする
+    /// Sprite(2D)用のPSOを、全ブレンドモード分作成してキャッシュする
     /// </summary>
     /// <param name="device">D3D12デバイス</param>
     /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
@@ -98,11 +125,12 @@ public:
     void InitializeRootSignature(ID3D12Device* device);
 
     /// <summary>
-    /// 指定した名前のPSOとルートシグネチャをコマンドリストにセットする
+    /// 指定した名前・ブレンドモードのPSOとルートシグネチャをコマンドリストにセットする
     /// </summary>
     /// <param name="commandList">セット対象のコマンドリスト</param>
     /// <param name="name">セットするPSOの名前</param>
-    void SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name);
+    /// <param name="blendMode">セットするブレンドモード</param>
+    void SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name, BlendMode blendMode);
 
 private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
