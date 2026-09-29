@@ -28,22 +28,6 @@ D3D12_INPUT_LAYOUT_DESC MakeStandardInputLayout() {
 }
 
 /// <summary>
-/// 不透明描画用のブレンドステート（アルファブレンドなし、全チャンネル書き込み）を作成する
-/// </summary>
-D3D12_BLEND_DESC MakeOpaqueBlendDesc() {
-	D3D12_BLEND_DESC blendDesc{};
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	blendDesc.RenderTarget[0].BlendEnable = TRUE;
-	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-	return blendDesc;
-}
-
-/// <summary>
 /// 標準的なラスタライザステート（背面カリング・塗りつぶし）を作成する
 /// </summary>
 D3D12_RASTERIZER_DESC MakeStandardRasterizerDesc() {
@@ -53,7 +37,69 @@ D3D12_RASTERIZER_DESC MakeStandardRasterizerDesc() {
 	return rasterDesc;
 }
 
+/// <summary>
+/// PSOをキャッシュする際の名前に、ブレンドモードを表すサフィックスを付加する
+/// </summary>
+std::string MakePipelineName(const std::string& baseName, BlendMode blendMode) {
+	return baseName + "_" + kBlendModeNames[static_cast<size_t>(blendMode)];
+}
+
 } // namespace
+
+D3D12_BLEND_DESC PipelineStateManager::MakeBlendDesc(BlendMode blendMode) {
+	D3D12_BLEND_DESC blendDesc{};
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+	switch (blendMode) {
+	case BlendMode::kNone:
+		blendDesc.RenderTarget[0].BlendEnable = FALSE;
+		break;
+	case BlendMode::kNormal:
+		// 通常のブレンド（アルファブレンド） : dest*(1-srcA) + src*srcA
+		blendDesc.RenderTarget[0].BlendEnable = TRUE;
+		blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		break;
+	case BlendMode::kAdd:
+		// 加算 : dest + src*srcA
+		blendDesc.RenderTarget[0].BlendEnable = TRUE;
+		blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+		blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		break;
+	case BlendMode::kSubtract:
+		// 減算 : dest - src*srcA
+		blendDesc.RenderTarget[0].BlendEnable = TRUE;
+		blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+		blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+		break;
+	case BlendMode::kMultiply:
+		// 乗算 : dest*src
+		blendDesc.RenderTarget[0].BlendEnable = TRUE;
+		blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ZERO;
+		blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_COLOR;
+		blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		break;
+	case BlendMode::kScreen:
+		// スクリーン : dest + src*(1-dest)
+		blendDesc.RenderTarget[0].BlendEnable = TRUE;
+		blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+		blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+		blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		break;
+	default:
+		assert(false);
+		break;
+	}
+
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+
+	return blendDesc;
+}
 
 PipelineStateManager::PipelineStateManager() {}
 
@@ -190,7 +236,6 @@ void PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderMa
 	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
-	D3D12_BLEND_DESC blendDesc = MakeOpaqueBlendDesc();
 	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
 
 	D3D12_DEPTH_STENCIL_DESC depthDesc{};
@@ -198,18 +243,21 @@ void PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderMa
 	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-	CreateGraphicsPipeline(
-		kObject3D,
-		device,
-		vs,
-		ps,
-		inputLayout,
-		blendDesc,
-		rasterDesc,
-		depthDesc,
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-		DXGI_FORMAT_D24_UNORM_S8_UINT
-	);
+	for (size_t i = 0; i < static_cast<size_t>(BlendMode::kCountOfBlendMode); ++i) {
+		BlendMode blendMode = static_cast<BlendMode>(i);
+		CreateGraphicsPipeline(
+			MakePipelineName(kObject3D, blendMode),
+			device,
+			vs,
+			ps,
+			inputLayout,
+			MakeBlendDesc(blendMode),
+			rasterDesc,
+			depthDesc,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			DXGI_FORMAT_D24_UNORM_S8_UINT
+		);
+	}
 }
 
 void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
@@ -217,7 +265,6 @@ void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderMana
 	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Object3d.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
-	D3D12_BLEND_DESC blendDesc = MakeOpaqueBlendDesc();
 	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
 
 	D3D12_DEPTH_STENCIL_DESC depthNone{};
@@ -225,22 +272,25 @@ void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderMana
 	depthNone.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	depthNone.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	CreateGraphicsPipeline(
-		kSprite,
-		device,
-		vs,
-		ps,
-		inputLayout,
-		blendDesc,
-		rasterDesc,
-		depthNone,
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-		DXGI_FORMAT_UNKNOWN
-	);
+	for (size_t i = 0; i < static_cast<size_t>(BlendMode::kCountOfBlendMode); ++i) {
+		BlendMode blendMode = static_cast<BlendMode>(i);
+		CreateGraphicsPipeline(
+			MakePipelineName(kSprite, blendMode),
+			device,
+			vs,
+			ps,
+			inputLayout,
+			MakeBlendDesc(blendMode),
+			rasterDesc,
+			depthNone,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			DXGI_FORMAT_UNKNOWN
+		);
+	}
 }
 
-void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name) {
-	auto* pso = GetPipelineState(name);
+void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name, BlendMode blendMode) {
+	auto* pso = GetPipelineState(MakePipelineName(name, blendMode));
 	assert(pso != nullptr);
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
 	commandList->SetPipelineState(pso);

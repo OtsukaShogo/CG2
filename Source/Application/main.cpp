@@ -136,6 +136,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{ 0.0f, 0.0f, 0.0f },
 	};
 
+	// === ブレンドモード ==================================================================================
+
+	int currentBlendMode = static_cast<int>(BlendMode::kNormal);
+
 	// === メインループ ====================================================================================
 
 	MSG msg{};
@@ -162,6 +166,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::DragFloat3("Axis Translate", &axisModel->GetTranslate().x, 0.1f);
 		ImGui::DragFloat3("Axis Scale", &axisModel->GetScale().x, 0.1f);
 		ImGui::DragFloat3("Axis Rotate", &axisModel->GetRotate().x, 0.1f);
+		ImGui::Combo("Blend Mode", &currentBlendMode, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
@@ -198,13 +203,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ID3D12DescriptorHeap* heaps[] = { dx->GetSrvDescriptorHeap() };
 		commandList->SetDescriptorHeaps(1, heaps);
 
+		BlendMode blendMode = static_cast<BlendMode>(currentBlendMode);
+
 		// 3D描画
-		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D);
+		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D, blendMode);
 		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
 		axisModel->Draw(cameraMgr->GetViewProjection());
 
 		// 2D描画
-		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite);
+		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
 		commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), tex.gpuHandle);
 
 #ifdef USE_IMGUI
