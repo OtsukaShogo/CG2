@@ -56,7 +56,8 @@ public:
 	/// メッシュを描画する
 	/// </summary>
 	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
-	void Draw(ID3D12GraphicsCommandList* commandList) const;
+	/// <param name="instanceCount">インスタンシング描画するインスタンス数</param>
+	void Draw(ID3D12GraphicsCommandList* commandList, uint32_t instanceCount = 1) const;
 
 	/// <summary>
 	/// 頂点数を取得する

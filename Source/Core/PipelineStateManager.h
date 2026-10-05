@@ -38,6 +38,7 @@ public:
     // PSO名
     static constexpr const char* kObject3D = "Object3D";
     static constexpr const char* kSprite   = "Sprite";
+    static constexpr const char* kParticle = "Particle";
 
     /// <summary>
     /// ブレンドモードに応じたブレンドステート設定を作成する
@@ -51,7 +52,8 @@ public:
     /// </summary>
     enum class RootParameter : UINT {
         kMaterial         = 0, // PixelShader用CBV (b0)
-        kWVP              = 1, // VertexShader用CBV (b0)
+        kWVP              = 1, // VertexShader用CBV (b0) ※Object3D/Sprite用ルートシグネチャ
+        kInstancing       = 1, // VertexShader用SRVテーブル (t0) ※Particle用ルートシグネチャ
         kTexture          = 2, // SRVテーブル (t0)
         kDirectionalLight = 3, // PixelShader用CBV (b1)
     };
@@ -79,6 +81,7 @@ public:
     /// <param name="depthStencilDesc">深度ステンシルステート設定</param>
     /// <param name="rtvFormat">レンダーターゲットのフォーマット</param>
     /// <param name="dsvFormat">深度ステンシルのフォーマット</param>
+    /// <param name="rootSignature">使用するルートシグネチャ（nullptrの場合は共通のルートシグネチャを使う）</param>
     void CreateGraphicsPipeline(
         const std::string& name,
         ID3D12Device* device,
@@ -89,7 +92,8 @@ public:
         const D3D12_RASTERIZER_DESC& rasterizerDesc,
         const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
         DXGI_FORMAT rtvFormat,
-        DXGI_FORMAT dsvFormat);
+        DXGI_FORMAT dsvFormat,
+        ID3D12RootSignature* rootSignature = nullptr);
 
     /// <summary>
     /// Object3D用のPSOを、全ブレンドモード分作成してキャッシュする
@@ -104,6 +108,13 @@ public:
     /// <param name="device">D3D12デバイス</param>
     /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
     void CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
+
+    /// <summary>
+    /// Particle(インスタンシング)用のPSOを、全ブレンドモード分作成してキャッシュする
+    /// </summary>
+    /// <param name="device">D3D12デバイス</param>
+    /// <param name="shaderMgr">シェーダーのコンパイルに使用するShaderManager</param>
+    void CreateParticlePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
 
     /// <summary>
     /// 既に作成済みのPSOを名前から取得する
@@ -125,6 +136,19 @@ public:
     void InitializeRootSignature(ID3D12Device* device);
 
     /// <summary>
+    /// パーティクル用のルートシグネチャを取得する
+    /// </summary>
+    /// <returns>パーティクル用ルートシグネチャ</returns>
+    [[nodiscard]] ID3D12RootSignature* GetParticleRootSignature() const { return particleRootSignature_.Get(); }
+
+    /// <summary>
+    /// パーティクル用のルートシグネチャを初期化する（最初に一度だけ呼ぶ）
+    /// インスタンシング描画のため、VertexShader用のCBVの代わりにSRVテーブル(StructuredBuffer)を使う
+    /// </summary>
+    /// <param name="device">D3D12デバイス</param>
+    void InitializeParticleRootSignature(ID3D12Device* device);
+
+    /// <summary>
     /// 指定した名前・ブレンドモードのPSOとルートシグネチャをコマンドリストにセットする
     /// </summary>
     /// <param name="commandList">セット対象のコマンドリスト</param>
@@ -134,6 +158,7 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> particleRootSignature_;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelineStates_;
 };
 

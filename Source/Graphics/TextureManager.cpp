@@ -40,7 +40,7 @@ TextureHandle TextureManager::LoadTexture(
     handle.intermediate = UploadTextureData(handle.texture.Get(), mipImages, device, commandList);
 
     // 4. SRV の空きスロットを自動割り当て
-    uint32_t index = srvIndex_++;
+    uint32_t index = AllocateSrvIndex();
 
     handle.cpuHandle = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
     handle.gpuHandle = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);

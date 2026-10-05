@@ -111,6 +111,9 @@
     <ClCompile Include="Source\Graphics\ModelData.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Graphics\Particle.cpp">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Graphics\Sprite.cpp">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClCompile>
@@ -239,6 +242,9 @@
     <ClInclude Include="Source\Graphics\ModelData.h">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Graphics\Particle.h">
+      <Filter>ソース ファイル\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Graphics\Sprite.h">
       <Filter>ソース ファイル\Graphics</Filter>
     </ClInclude>
@@ -292,6 +298,12 @@
     <FxCompile Include="Shaders\Object3d.PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Particle.VS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Particle.PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">
@@ -300,6 +312,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Object3d.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Particle.hlsli">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
