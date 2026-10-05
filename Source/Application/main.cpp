@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <d3d12.h>
 #include<memory>
+#include<cassert>
 
 #include "WinApp.h"
 #include "DirectXCommon.h"
