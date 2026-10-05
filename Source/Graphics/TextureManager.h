@@ -42,6 +42,13 @@ public:
         ID3D12DescriptorHeap* srvHeap,
         uint32_t descriptorSizeSRV);
 
+    /// <summary>
+    /// SRV用ディスクリプタヒープ内の空きインデックスを1つ割り当てる
+    /// （テクスチャ以外のSRV・StructuredBufferなどでも、ヒープ内でインデックスが重複しないよう共通で利用する）
+    /// </summary>
+    /// <returns>割り当てたインデックス</returns>
+    [[nodiscard]] uint32_t AllocateSrvIndex() { return srvIndex_++; }
+
 private:
     TextureManager() = default;
     ~TextureManager() = default;

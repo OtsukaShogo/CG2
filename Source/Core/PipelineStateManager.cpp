@@ -180,6 +180,88 @@ void PipelineStateManager::InitializeRootSignature(ID3D12Device* device) {
 	assert(SUCCEEDED(hr));
 }
 
+void PipelineStateManager::InitializeParticleRootSignature(ID3D12Device* device) {
+	if (particleRootSignature_) return;
+
+	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
+	// PixelShader 用 CBV (b0) - Material
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[0].Descriptor.ShaderRegister = 0;
+
+	// インスタンシング用 SRV テーブル (t0) - StructuredBuffer<TransformationMatrix>
+	D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
+	descriptorRangeForInstancing[0].BaseShaderRegister = 0;   // 0から始まる
+	descriptorRangeForInstancing[0].NumDescriptors = 1;   // 数は1つ
+	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;   // SRVを使う
+	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;   // DescriptorTableを使う
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;   // VertexShaderで使う
+	rootParameters[1].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;   // Tableの中身の配列を指定
+	rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);   // Tableで利用する数
+
+	// SRV テーブル (t0) - Texture
+	D3D12_DESCRIPTOR_RANGE descriptorRangeForTexture{};
+	descriptorRangeForTexture.BaseShaderRegister = 0;
+	descriptorRangeForTexture.NumDescriptors = 1;
+	descriptorRangeForTexture.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeForTexture.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[2].DescriptorTable.pDescriptorRanges = &descriptorRangeForTexture;
+	rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
+
+	// PixelShader 用 CBV (b1) - DirectionalLight
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].Descriptor.ShaderRegister = 1;
+
+	descriptionRootSignature.pParameters = rootParameters;
+	descriptionRootSignature.NumParameters = _countof(rootParameters);
+
+	// Sampler
+	D3D12_STATIC_SAMPLER_DESC staticSampler{};
+	staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	staticSampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	staticSampler.MaxLOD = D3D12_FLOAT32_MAX;
+	staticSampler.ShaderRegister = 0;
+	staticSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	descriptionRootSignature.pStaticSamplers = &staticSampler;
+	descriptionRootSignature.NumStaticSamplers = 1;
+
+	// シリアライズ
+	Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+	HRESULT hr = D3D12SerializeRootSignature(
+		&descriptionRootSignature,
+		D3D_ROOT_SIGNATURE_VERSION_1,
+		&signatureBlob,
+		&errorBlob);
+	if (FAILED(hr)) {
+		if (errorBlob) {
+			DebugUtil::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+		}
+		assert(false);
+	}
+
+	// RootSignature 作成
+	hr = device->CreateRootSignature(
+		0,
+		signatureBlob->GetBufferPointer(),
+		signatureBlob->GetBufferSize(),
+		IID_PPV_ARGS(&particleRootSignature_));
+	assert(SUCCEEDED(hr));
+}
+
 void PipelineStateManager::CreateGraphicsPipeline(
 	const std::string& name,
 	ID3D12Device* device,
@@ -190,18 +272,22 @@ void PipelineStateManager::CreateGraphicsPipeline(
 	const D3D12_RASTERIZER_DESC& rasterizerDesc,
 	const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
 	DXGI_FORMAT rtvFormat,
-	DXGI_FORMAT dsvFormat)
+	DXGI_FORMAT dsvFormat,
+	ID3D12RootSignature* rootSignature)
 {
 	// 既にあるなら何もしない
 	if (pipelineStates_.contains(name)) {
 		return;
 	}
 
-	// RootSignature がまだなら作る
-	InitializeRootSignature(device);
+	// rootSignature未指定なら、共通のルートシグネチャを使う（まだなら作る）
+	if (!rootSignature) {
+		InitializeRootSignature(device);
+		rootSignature = rootSignature_.Get();
+	}
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-	desc.pRootSignature = rootSignature_.Get();
+	desc.pRootSignature = rootSignature;
 	desc.InputLayout = inputLayout;
 	desc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
 	desc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
@@ -289,10 +375,47 @@ void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderMana
 	}
 }
 
+void PipelineStateManager::CreateParticlePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+	InitializeParticleRootSignature(device);
+
+	IDxcBlob* vs = shaderMgr->Compile(L"Shaders/Particle.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Particle.PS.hlsl", L"ps_6_0");
+
+	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
+
+	// パーティクルは板ポリゴン1枚を様々な向きに回転させて使うため、裏面カリングを無効にする
+	D3D12_RASTERIZER_DESC rasterDesc{};
+	rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
+	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+	D3D12_DEPTH_STENCIL_DESC depthDesc{};
+	depthDesc.DepthEnable = true;
+	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+	for (size_t i = 0; i < static_cast<size_t>(BlendMode::kCountOfBlendMode); ++i) {
+		BlendMode blendMode = static_cast<BlendMode>(i);
+		CreateGraphicsPipeline(
+			MakePipelineName(kParticle, blendMode),
+			device,
+			vs,
+			ps,
+			inputLayout,
+			MakeBlendDesc(blendMode),
+			rasterDesc,
+			depthDesc,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			DXGI_FORMAT_D24_UNORM_S8_UINT,
+			particleRootSignature_.Get()
+		);
+	}
+}
+
 void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name, BlendMode blendMode) {
 	auto* pso = GetPipelineState(MakePipelineName(name, blendMode));
 	assert(pso != nullptr);
-	commandList->SetGraphicsRootSignature(rootSignature_.Get());
+	ID3D12RootSignature* rootSignature = (name == kParticle) ? particleRootSignature_.Get() : rootSignature_.Get();
+	commandList->SetGraphicsRootSignature(rootSignature);
 	commandList->SetPipelineState(pso);
 }
 

@@ -232,15 +232,15 @@ void Mesh::Upload(ID3D12Device* device) {
 }
 
 // インデックスバッファがあればインデックス付き描画、なければ通常描画を行う
-void Mesh::Draw(ID3D12GraphicsCommandList* commandList) const {
+void Mesh::Draw(ID3D12GraphicsCommandList* commandList, uint32_t instanceCount) const {
 	commandList->IASetVertexBuffers(0, 1, &vbv_);
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	if (!indices_.empty()) {
 		commandList->IASetIndexBuffer(&ibv_);
-		commandList->DrawIndexedInstanced(static_cast<UINT>(indices_.size()), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(static_cast<UINT>(indices_.size()), instanceCount, 0, 0, 0);
 	} else {
-		commandList->DrawInstanced(GetVertexCount(), 1, 0, 0);
+		commandList->DrawInstanced(GetVertexCount(), instanceCount, 0, 0);
 	}
 }
 

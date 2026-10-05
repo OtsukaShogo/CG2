@@ -15,6 +15,7 @@
 #include "AssetManager.h"
 #include "Model.h"
 #include "Sprite.h"
+#include "Particle.h"
 #include "ImGuiManager.h"
 #include "CameraManager.h"
 #include "AudioManager.h"
@@ -82,6 +83,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	psoMgr->CreateObject3DPipeline(device, shaderMgr.get());
 	psoMgr->CreateSpritePipeline(device, shaderMgr.get());
+	psoMgr->CreateParticlePipeline(device, shaderMgr.get());
 
 	// === ImGui初期化 ==========================================================
 
@@ -116,20 +118,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	AssetManager assetManager;
 	assetManager.Initialize(&assetFactory);
 
-	// 斜めに交差する2枚のfenceを描画する
-	auto fenceModelA = assetManager.CreateModel("resources/fence.obj");
-	fenceModelA->GetRotate().x = 3.0f;
-	fenceModelA->GetRotate().z = 3.0f;
-
-	auto fenceModelB = assetManager.CreateModel("resources/fence.obj");
-	fenceModelB->GetRotate().x = 3.0f;
-	fenceModelB->GetRotate().z = 3.0f;
+	// パーティクルの描画形状（板）を読み込む
+	auto particleModelData = assetFactory.CreateModelData("resources", "plane.obj");
 
 	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
 
 	// スプライト
 	auto sprite = assetFactory.CreateSprite(640.0f, 360.0f);
 	sprite->SetTextureHandle(tex.gpuHandle);
+
+	// === パーティクル ===========================================================================================
+
+	auto particle = std::make_unique<Particle>();
+	particle->CreateInstancingResource(device, dx->GetSrvDescriptorHeap(), dx->GetDescriptorSizeSRV());
+	particle->SetModelData(particleModelData);
+	particle->SetTextureHandle(tex.gpuHandle); // uvCheckerを使う
 
 	// === ライト ================================================================================
 
@@ -169,17 +172,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		cameraMgr->DrawImGui();
 		ImGui::Separator();
 
-		//モデル
-		ImGui::ColorEdit4("Fence A Color", &fenceModelA->GetColor().x);
-		ImGui::DragFloat3("Fence A Translate", &fenceModelA->GetTranslate().x, 0.1f);
-		ImGui::DragFloat3("Fence A Scale", &fenceModelA->GetScale().x, 0.1f);
-		ImGui::DragFloat3("Fence A Rotate", &fenceModelA->GetRotate().x, 0.1f);
-
-		ImGui::ColorEdit4("Fence B Color", &fenceModelB->GetColor().x);
-		ImGui::DragFloat3("Fence B Translate", &fenceModelB->GetTranslate().x, 0.1f);
-		ImGui::DragFloat3("Fence B Scale", &fenceModelB->GetScale().x, 0.1f);
-		ImGui::DragFloat3("Fence B Rotate", &fenceModelB->GetRotate().x, 0.1f);
-
 		ImGui::Combo("Blend Mode", &currentBlendMode, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
 		//ライト
@@ -212,6 +204,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// カメラ更新（F1切り替え含む）
 		cameraMgr->Update();
 
+		// パーティクルのWVP等を計算してResourceに書き込む
+		particle->Update(cameraMgr->GetViewProjection());
+
 		// DescriptorHeap・RootSignature・PSOのセット
 		auto* commandList = dx->GetCommandList();
 		ID3D12DescriptorHeap* heaps[] = { dx->GetSrvDescriptorHeap() };
@@ -219,11 +214,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		BlendMode blendMode = static_cast<BlendMode>(currentBlendMode);
 
-		// 3D描画
-		psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D, blendMode);
+		// 3D描画（パーティクル）
+		psoMgr->SetPipeline(commandList, PipelineStateManager::kParticle, blendMode);
 		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
-		fenceModelA->Draw(cameraMgr->GetViewProjection());
-		fenceModelB->Draw(cameraMgr->GetViewProjection());
+		particle->Draw(commandList);
 
 		// 2D描画
 		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
@@ -242,10 +236,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// D3D12リソースをデバイス解放より前に明示的に解放する
 	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
-	light.reset();        // ~Light() で Unmap + Release
-	sprite.reset();       // ID3D12Resource x3 (vertex, material, wvp)
-	fenceModelA.reset(); // ID3D12Resource x3 (vertex, material, wvp)
-	fenceModelB.reset(); // ID3D12Resource x3 (vertex, material, wvp)
+	light.reset();          // ~Light() で Unmap + Release
+	particle.reset();       // ID3D12Resource x2 (instancing, material)
+	particleModelData.reset(); // ID3D12Resource x3 (vertex, index, texture)
+	sprite.reset();         // ID3D12Resource x3 (vertex, material, wvp)
 	assetManager.Clear(); // ModelData（メッシュ・テクスチャ）を解放
 	audioMgr->Unload(&soundData1);
 	audioMgr->Finalize();
