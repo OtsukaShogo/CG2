@@ -382,11 +382,7 @@ void PipelineStateManager::CreateParticlePipeline(ID3D12Device* device, ShaderMa
 	IDxcBlob* ps = shaderMgr->Compile(L"Shaders/Particle.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
-
-	// パーティクルは板ポリゴン1枚を様々な向きに回転させて使うため、裏面カリングを無効にする
-	D3D12_RASTERIZER_DESC rasterDesc{};
-	rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
-	rasterDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
 
 	D3D12_DEPTH_STENCIL_DESC depthDesc{};
 	depthDesc.DepthEnable = true;

@@ -4,6 +4,7 @@
 #include "TextureManager.h"
 #include "ModelData.h"
 #include "PipelineStateManager.h"
+#include <numbers>
 
 namespace Engine {
 
@@ -29,9 +30,10 @@ void Particle::CreateInstancingResource(ID3D12Device* device, ID3D12DescriptorHe
 	}
 
 	// 各インスタンスの位置が少しずつずれるように初期化する
+	// 板ポリゴン（plane.obj）は法線がカメラと逆向きのため、Y軸に180度回転させてカメラへ向ける
 	for (uint32_t index = 0; index < kNumInstance; ++index) {
 		transforms_[index].scale = { 1.0f, 1.0f, 1.0f };
-		transforms_[index].rotate = { 0.0f, 0.0f, 0.0f };
+		transforms_[index].rotate = { 0.0f, std::numbers::pi_v<float>, 0.0f };
 		transforms_[index].translate = { index * 0.1f, index * 0.1f, index * 0.1f };
 	}
 
