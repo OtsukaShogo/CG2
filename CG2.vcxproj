@@ -200,8 +200,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Graphics\Mesh.cpp" />
     <ClCompile Include="Source\Graphics\Model.cpp" />
     <ClCompile Include="Source\Graphics\ModelData.cpp" />
-    <ClCompile Include="Source\Graphics\Particle.cpp" />
+    <ClCompile Include="Source\Graphics\ParticleSystem.cpp" />
     <ClCompile Include="Source\Core\PipelineStateManager.cpp" />
+    <ClCompile Include="Source\Core\Random.cpp" />
     <ClCompile Include="Source\Core\ShaderManager.cpp" />
     <ClCompile Include="Source\Graphics\Sprite.cpp" />
     <ClCompile Include="Source\Graphics\TextureManager.cpp" />
@@ -242,8 +243,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Graphics\Mesh.h" />
     <ClInclude Include="Source\Graphics\Model.h" />
     <ClInclude Include="Source\Graphics\ModelData.h" />
-    <ClInclude Include="Source\Graphics\Particle.h" />
+    <ClInclude Include="Source\Graphics\ParticleSystem.h" />
     <ClInclude Include="Source\Core\PipelineStateManager.h" />
+    <ClInclude Include="Source\Core\Random.h" />
     <ClInclude Include="Source\Core\ShaderManager.h" />
     <ClInclude Include="Source\Graphics\Sprite.h" />
     <ClInclude Include="Source\Graphics\TextureManager.h" />
