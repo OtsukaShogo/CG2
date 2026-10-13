@@ -16,7 +16,7 @@
 #include "AssetManager.h"
 #include "Model.h"
 #include "Sprite.h"
-#include "Particle.h"
+#include "ParticleSystem.h"
 #include "ImGuiManager.h"
 #include "CameraManager.h"
 #include "AudioManager.h"
@@ -93,9 +93,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	imgui->Initialize(winApp->GetHwnd(), dx->GetDevice(), dx->GetSrvDescriptorHeap());
 #endif
 
+	// === 定数 ===========================================================================================
+
+	const float kDeltaTime = 1.0f / 60.0f;
+
 	// === テクスチャ ======================================================================================
 
 	TextureHandle tex = assetFactory.LoadTexture("resources/uvChecker.png");
+	TextureHandle particleTex = assetFactory.LoadTexture("resources/circle.png");
 
 	// === 音声データ =====================================================================================
 
@@ -130,10 +135,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === パーティクル ===========================================================================================
 
-	auto particle = std::make_unique<Particle>();
+	auto particle = std::make_unique<ParticleSystem>();
 	particle->CreateInstancingResource(device, dx->GetSrvDescriptorHeap(), dx->GetDescriptorSizeSRV());
 	particle->SetModelData(particleModelData);
-	particle->SetTextureHandle(tex.gpuHandle); // uvCheckerを使う
+	particle->SetTextureHandle(particleTex.gpuHandle); // circleを使う
 
 	// === ライト ================================================================================
 
@@ -151,6 +156,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// === ブレンドモード ==================================================================================
 
 	int currentBlendMode = static_cast<int>(BlendMode::kNone);
+
+	// === パーティクル移動フラグ ==========================================================================
+
+	bool isParticleMoving = false;
 
 	// === メインループ ====================================================================================
 
@@ -177,6 +186,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		ImGui::Combo("Blend Mode", &currentBlendMode, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
+		//パーティクル
+		if (ImGui::Button("Particle Start")) {
+			particle->Respawn(); // 今あるパーティクルを破棄し、再度ランダムに生成し直す
+			isParticleMoving = true;
+		}
+
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
 		ImGui::DragFloat3("Light Direction", &light->GetDirectionalLight()->direction.x, 0.1f);
@@ -195,6 +210,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 		sprite->GetMaterial().GetUVTransform() = uvTransformMatrix;
 
+		// パーティクル移動（ボタンが押されてから速度を反映）
+		if (isParticleMoving) {
+			for (uint32_t index = 0; index < ParticleSystem::kNumMaxInstance; ++index) {
+				Particle& p = particle->GetParticle(index);
+				if (p.currentTime < p.lifeTime) {
+					p.transform.translate += p.velocity * kDeltaTime;
+				}
+			}
+		}
+
 		// ====================================================================================================
 		// 描画処理
 		// ====================================================================================================
@@ -208,7 +233,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		cameraMgr->Update();
 
 		// パーティクルのWVP等を計算してResourceに書き込む
-		particle->Update(cameraMgr->GetViewProjection());
+		particle->Update(cameraMgr->GetViewProjection(), isParticleMoving ? kDeltaTime : 0.0f);
 
 		// DescriptorHeap・RootSignature・PSOのセット
 		auto* commandList = dx->GetCommandList();

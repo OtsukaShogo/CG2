@@ -386,7 +386,7 @@ void PipelineStateManager::CreateParticlePipeline(ID3D12Device* device, ShaderMa
 
 	D3D12_DEPTH_STENCIL_DESC depthDesc{};
 	depthDesc.DepthEnable = true;
-	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // パーティクルは深度を書き込まない（深度テストのみ行う）
 	depthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
 	for (size_t i = 0; i < static_cast<size_t>(BlendMode::kCountOfBlendMode); ++i) {
