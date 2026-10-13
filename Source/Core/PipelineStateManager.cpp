@@ -383,6 +383,7 @@ void PipelineStateManager::CreateParticlePipeline(ID3D12Device* device, ShaderMa
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
 	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
+	rasterDesc.CullMode = D3D12_CULL_MODE_NONE; // パーティクルは両面描画
 
 	D3D12_DEPTH_STENCIL_DESC depthDesc{};
 	depthDesc.DepthEnable = true;
