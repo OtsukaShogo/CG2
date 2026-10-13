@@ -22,6 +22,11 @@ void Camera::AddRotation(float deltaX, float deltaY) {
     rotateMatrix_ = Multiply(matRotDelta, rotateMatrix_);
 }
 
+// オイラー角から回転行列を作り直す
+void Camera::SetRotation(const Vector3& rotate) {
+    rotateMatrix_ = Multiply(Multiply(MakeRotateXMatrix(rotate.x), MakeRotateYMatrix(rotate.y)), MakeRotateZMatrix(rotate.z));
+}
+
 void Camera::Update() {
     //移動行列
     Matrix4x4 translateMatrix = MakeTranslateMatrix(translate_);

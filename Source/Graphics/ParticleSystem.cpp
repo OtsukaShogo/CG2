@@ -94,7 +94,15 @@ void ParticleSystem::CreateInstancingResource(ID3D12Device* device, ID3D12Descri
 }
 
 // 各インスタンスのワールド行列・WVP行列を計算し、インスタンシング用リソースへ書き込む
-void ParticleSystem::Update(const Matrix4x4& viewProjection, float deltaTime) {
+void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime) {
+	// 板ポリの裏表を反転させた上でカメラの回転に追従させる（ビルボード）
+	Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
+	// ビルボード無効時はカメラ回転を掛けず、板ポリを元の向き（-Z側から見て表）のままにする
+	Matrix4x4 billboardMatrix = useBillboard_ ? Multiply(backToFrontMatrix, cameraRotate) : backToFrontMatrix;
+	billboardMatrix.m[3][0] = 0.0f; // 平行移動成分は使わない
+	billboardMatrix.m[3][1] = 0.0f;
+	billboardMatrix.m[3][2] = 0.0f;
+
 	numInstance = 0;
 	for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
 		Particle& particle = particles_[index];
@@ -109,7 +117,9 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, float deltaTime) {
 		float t = std::clamp(particle.currentTime / particle.lifeTime, 0.0f, 1.0f);
 		float alpha = 1.0f - EaseInCubic(t);
 
-		Matrix4x4 worldMatrix = MakeAffineMatrix(particle.transform.scale, particle.transform.rotate, particle.transform.translate);
+		Matrix4x4 scaleMatrix = MakeScaleMatrix(particle.transform.scale);
+		Matrix4x4 translateMatrix = MakeTranslateMatrix(particle.transform.translate);
+		Matrix4x4 worldMatrix = Multiply(Multiply(scaleMatrix, billboardMatrix), translateMatrix);
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjection);
 		// 死んだものを詰めて、先頭から numInstance 個を描画できるようにする
 		instancingData_[numInstance].WVP = worldViewProjectionMatrix;
@@ -140,8 +150,6 @@ void ParticleSystem::Respawn() {
 void ParticleSystem::InitializeParticles() {
 	for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
 		particles_[index] = MakeNewParticle(Random::GetInstance()->GetEngine());
-		// 板ポリゴン（plane.obj）は法線がカメラと逆向きのため、Y軸に180度回転させてカメラへ向ける
-		particles_[index].transform.rotate.y = std::numbers::pi_v<float>;
 	}
 }
 

@@ -64,8 +64,9 @@ public:
 	/// 各インスタンスのワールド行列・WVP行列を計算し、インスタンシング用リソースへ書き込む
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
+	/// <param name="cameraRotate">カメラのワールド回転行列（ビルボード用）</param>
 	/// <param name="deltaTime">経過時間（秒）。0を渡すと寿命が進まない</param>
-	void Update(const Matrix4x4& viewProjection, float deltaTime);
+	void Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime);
 
 	/// <summary>
 	/// 描画に使うメッシュデータ（共有描画データ）を設定する
@@ -117,6 +118,12 @@ public:
 	/// </summary>
 	void Respawn();
 
+	/// <summary>
+	/// ビルボード（常にカメラへ向ける）の有効/無効フラグを取得する（変更可能）
+	/// </summary>
+	/// <returns>ビルボード有効フラグ</returns>
+	bool& GetUseBillboard() { return useBillboard_; }
+
 private:
 	/// <summary>
 	/// 全パーティクルをランダムな位置・速度・色で初期化する
@@ -128,6 +135,7 @@ private:
 	ParticleForGPU* instancingData_ = nullptr;
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};
 	uint32_t numInstance = 0;
+	bool useBillboard_ = true;
 	Particle particles_[kNumMaxInstance]{};
 
 	Material material_;

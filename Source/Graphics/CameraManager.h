@@ -43,6 +43,12 @@ public:
 	const Matrix4x4& GetSpriteViewProjection() const;
 
 	/// <summary>
+	/// 現在有効なカメラの回転行列を取得する
+	/// </summary>
+	/// <returns>カメラの回転行列</returns>
+	const Matrix4x4& GetRotateMatrix() const;
+
+	/// <summary>
 	/// 通常カメラを取得する
 	/// </summary>
 	/// <returns>通常カメラ</returns>
@@ -68,6 +74,7 @@ private:
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<DebugCamera> debugCamera_;
 	bool isDebugCamera_ = false;
+	Vector3 cameraRotate_ = { 0.0f, 0.0f, 0.0f }; // ImGuiで編集する通常カメラの回転（オイラー角）
 };
 
 } // namespace Engine

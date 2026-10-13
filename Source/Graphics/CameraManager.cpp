@@ -43,6 +43,13 @@ const Matrix4x4& CameraManager::GetViewProjection() const {
 	return camera_->GetViewProjection();
 }
 
+const Matrix4x4& CameraManager::GetRotateMatrix() const {
+	if (isDebugCamera_) {
+		return debugCamera_->GetRotateMatrix();
+	}
+	return camera_->GetRotateMatrix();
+}
+
 const Matrix4x4& CameraManager::GetSpriteViewProjection() const {
 	return camera_->GetSpriteViewProjection();
 }
@@ -52,6 +59,12 @@ void CameraManager::DrawImGui() {
 	ImGui::Checkbox("Debug Camera (F1)", &isDebugCamera_);
 	if (!isDebugCamera_) {
 		ImGui::DragFloat3("Camera Translate", &camera_->GetTranslate().x, 0.1f);
+		if (ImGui::DragFloat3("Camera Rotate", &cameraRotate_.x, 0.01f)) {
+			camera_->SetRotation(cameraRotate_);
+		}
+		ImGui::SliderFloat("Camera FovY", &camera_->GetFovY(), 0.1f, 3.0f);
+		ImGui::DragFloat("Camera NearZ", &camera_->GetNearZ(), 0.01f, 0.01f, camera_->GetFarZ() - 0.01f);
+		ImGui::DragFloat("Camera FarZ", &camera_->GetFarZ(), 0.1f, camera_->GetNearZ() + 0.01f, 1000.0f);
 	}
 }
 #endif

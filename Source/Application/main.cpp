@@ -191,6 +191,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			particle->Respawn(); // 今あるパーティクルを破棄し、再度ランダムに生成し直す
 			isParticleMoving = true;
 		}
+		ImGui::Checkbox("Billboard", &particle->GetUseBillboard());
 
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
@@ -233,7 +234,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		cameraMgr->Update();
 
 		// パーティクルのWVP等を計算してResourceに書き込む
-		particle->Update(cameraMgr->GetViewProjection(), isParticleMoving ? kDeltaTime : 0.0f);
+		particle->Update(cameraMgr->GetViewProjection(), cameraMgr->GetRotateMatrix(), isParticleMoving ? kDeltaTime : 0.0f);
 
 		// DescriptorHeap・RootSignature・PSOのセット
 		auto* commandList = dx->GetCommandList();

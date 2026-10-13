@@ -28,6 +28,12 @@ public:
 	/// <returns>ビュープロジェクション行列</returns>
 	const Matrix4x4& GetViewProjection() const { return camera_.GetViewProjection(); }
 
+	/// <summary>
+	/// カメラの回転行列を取得する
+	/// </summary>
+	/// <returns>カメラの回転行列</returns>
+	const Matrix4x4& GetRotateMatrix() const { return camera_.GetRotateMatrix(); }
+
 private:
 	Camera camera_;
 

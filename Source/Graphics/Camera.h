@@ -49,6 +49,30 @@ public:
 	void AddRotation(float deltaX, float deltaY);
 
 	/// <summary>
+	/// カメラの回転をオイラー角で直接設定する（累積した回転は上書きされる）
+	/// </summary>
+	/// <param name="rotate">X・Y・Z軸の回転角（ラジアン）</param>
+	void SetRotation(const Vector3& rotate);
+
+	/// <summary>
+	/// 垂直方向の視野角を取得する（変更可能）
+	/// </summary>
+	/// <returns>視野角（ラジアン）</returns>
+	float& GetFovY() { return fovY_; }
+
+	/// <summary>
+	/// ニアクリップ距離を取得する（変更可能）
+	/// </summary>
+	/// <returns>ニアクリップ距離</returns>
+	float& GetNearZ() { return nearZ_; }
+
+	/// <summary>
+	/// ファークリップ距離を取得する（変更可能）
+	/// </summary>
+	/// <returns>ファークリップ距離</returns>
+	float& GetFarZ() { return farZ_; }
+
+	/// <summary>
 	/// カメラの座標を取得する（変更可能）
 	/// </summary>
 	/// <returns>カメラ座標</returns>
