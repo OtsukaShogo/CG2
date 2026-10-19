@@ -9,6 +9,9 @@ namespace Engine {
 /// </summary>
 class WinApp
 {
+public://静的メンバ関数
+	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
 public:
 
 	/// <summary>
@@ -22,15 +25,20 @@ public:
 	WinApp& operator=(const WinApp&) = delete;
 
 	/// <summary>
-	/// ウィンドウを生成し表示する
+	/// COMを初期化し、ウィンドウを生成し表示する
 	/// </summary>
 	void Initialize();
 
 	/// <summary>
-	/// OSのメッセージを1件処理する。終了メッセージを受け取った場合はfalseを返す
+	/// OSのメッセージを1件処理する。終了メッセージを受け取った場合はtrueを返す
 	/// </summary>
-	/// <returns>継続する場合はtrue、終了メッセージを受け取った場合はfalse</returns>
+	/// <returns>終了メッセージを受け取った場合はtrue、継続する場合はfalse</returns>
 	bool ProcessMessage();
+
+	/// <summary>
+	/// ウィンドウの破棄、ウィンドウクラスの登録解除、COMの終了処理を行う
+	/// </summary>
+	void Finalize();
 
 	// クライアント領域のサイズ
 	static constexpr int32_t kClientWidth = 1280;
@@ -52,6 +60,9 @@ private:
 
 	WinApp() = default;
 	~WinApp() = default;
+
+	// ウィンドウクラス名（登録と登録解除で同じ名前を使う）
+	static constexpr const wchar_t* kWindowClassName = L"CG2WindowClass";
 
 	HWND hwnd_ = nullptr;
 	HINSTANCE hInstance_ = nullptr;

@@ -28,7 +28,7 @@ WinApp* WinApp::GetInstance() {
 /// <param name="wparam">メッセージの追加情報</param>
 /// <param name="lparam">メッセージの追加情報</param>
 /// <returns>メッセージ処理結果</returns>
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 #ifdef USE_IMGUI
 
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
@@ -52,6 +52,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 void WinApp::Initialize() {
 
+	// COM初期化（Finalize の CoUninitialize と対応）
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	(void)hr;
+
+	//ウィンドウクラスの設定
 	WNDCLASS wc{};
 
 	// インスタンスハンドル
@@ -61,7 +66,7 @@ void WinApp::Initialize() {
 	wc.lpfnWndProc = WindowProc;
 
 	// ウィンドウクラス名
-	wc.lpszClassName = L"CG2WindowClass";
+	wc.lpszClassName = kWindowClassName;
 
 	// インスタンスハンドル
 	wc.hInstance = hInstance_;
@@ -103,12 +108,25 @@ bool WinApp::ProcessMessage() {
 	MSG msg{};
 	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 		if (msg.message == WM_QUIT) {
-			return false;
+			return true;
 		}
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	return true;
+	return false;
+}
+
+void WinApp::Finalize() {
+	// ×ボタンで閉じた場合は WM_DESTROY の時点で破棄済みなので、まだ存在するときだけ破棄する
+	if (hwnd_ && IsWindow(hwnd_)) {
+		DestroyWindow(hwnd_);
+	}
+	hwnd_ = nullptr;
+
+	// ウィンドウを破棄した後でないと登録解除できない
+	UnregisterClass(kWindowClassName, hInstance_);
+
+	CoUninitialize();
 }
 
 } // namespace Engine

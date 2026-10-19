@@ -45,11 +45,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	D3DResourceLeakChecker leakCheck;
 
-	// === COM初期化 ============================================================================
-
-	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-	(void)hr;
-
 	SetUnhandledExceptionFilter(DebugUtil::ExportDump);
 	DebugUtil::CreateLogFile();
 
@@ -69,7 +64,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// === Input初期化 =======================================================================
 
 	Input* input = Input::GetInstance();
-	input->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
+	input->Initialize(winApp);
 
 	// === Shader初期化 =============================================================================================
 
@@ -163,15 +158,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === メインループ ====================================================================================
 
-	MSG msg{};
 	while (true) {
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-			if (msg.message == WM_QUIT) {
-				break;
-			}
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-			continue;
+		// Windowsのメッセージ処理（終了メッセージを受け取ったらゲームループを抜ける）
+		if (winApp->ProcessMessage()) {
+			break;
 		}
 
 #ifdef USE_IMGUI
@@ -268,7 +258,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
 
 	dx->Finalize();
-	CoUninitialize();
+	winApp->Finalize();
 
 	return 0;
 }
