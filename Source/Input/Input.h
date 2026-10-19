@@ -11,6 +11,11 @@ namespace Engine {
 /// </summary>
 class Input {
 public:
+	//namespace省略
+	template<class T>using ComPtr = Microsoft::WRL::ComPtr<T>;
+
+public:
+
 	/// <summary>
 	/// シングルトンインスタンスを取得する
 	/// </summary>
@@ -101,9 +106,9 @@ private:
 	Input() = default;
 	~Input() = default;
 
-	Microsoft::WRL::ComPtr<IDirectInput8> directInput_;
-	Microsoft::WRL::ComPtr<IDirectInputDevice8> keyboard_;
-	Microsoft::WRL::ComPtr<IDirectInputDevice8> mouseDevice_;
+	ComPtr<IDirectInput8> directInput_;
+	ComPtr<IDirectInputDevice8> keyboard_;
+	ComPtr<IDirectInputDevice8> mouseDevice_;
 	BYTE key_[256] = {};
 	BYTE keyPrev_[256] = {};
 	DIMOUSESTATE mouseStatePrev_ = {};
