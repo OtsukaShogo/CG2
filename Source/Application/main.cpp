@@ -188,7 +188,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//パーティクル
 		if (ImGui::Button("Particle Start")) {
-			particle->Respawn(); // 今あるパーティクルを破棄し、再度ランダムに生成し直す
+			particle->EmitParticles(); // エミッタ（count=3）に従ってパーティクルを追加する
 			isParticleMoving = true;
 		}
 		ImGui::Checkbox("Billboard", &particle->GetUseBillboard());
@@ -210,16 +210,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
 		uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 		sprite->GetMaterial().GetUVTransform() = uvTransformMatrix;
-
-		// パーティクル移動（ボタンが押されてから速度を反映）
-		if (isParticleMoving) {
-			for (uint32_t index = 0; index < ParticleSystem::kNumMaxInstance; ++index) {
-				Particle& p = particle->GetParticle(index);
-				if (p.currentTime < p.lifeTime) {
-					p.transform.translate += p.velocity * kDeltaTime;
-				}
-			}
-		}
 
 		// ====================================================================================================
 		// 描画処理
