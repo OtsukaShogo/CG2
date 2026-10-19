@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 #include <cstdint>
+#include <list>
 #include <memory>
 #include "TransformMatrix.h"
 #include "WorldTransform.h"
@@ -19,6 +20,13 @@ struct Particle {
 	float currentTime;
 };
 
+struct Emitter {
+	WorldTransform transform;//エミッタのTransform
+	uint32_t count;//発生数
+	float frequency;//発生頻度
+	float frequencyTime;//頻度用時刻
+};
+
 /// <summary>
 /// インスタンシング用StructuredBufferに渡す1パーティクル分のデータ（Particle.hlsliのParticleForGPUと対応）
 /// </summary>
@@ -33,7 +41,7 @@ struct ParticleForGPU {
 /// </summary>
 class ParticleSystem {
 public:
-	// インスタンス数
+	// インスタンシング用バッファに確保する最大インスタンス数
 	static constexpr uint32_t kNumMaxInstance = 10;
 
 	/// <summary>
@@ -87,36 +95,15 @@ public:
 	Vector4& GetColor() { return material_.GetColor(); }
 
 	/// <summary>
-	/// 指定インデックスのパーティクルを取得する（変更可能）
-	/// </summary>
-	/// <param name="index">パーティクルのインデックス（0 ～ kNumInstance-1）</param>
-	/// <returns>パーティクル</returns>
-	[[nodiscard]] Particle& GetParticle(uint32_t index) { return particles_[index]; }
-
-	/// <summary>
-	/// 指定インデックスのパーティクルを取得する
-	/// </summary>
-	/// <param name="index">パーティクルのインデックス（0 ～ kNumInstance-1）</param>
-	/// <returns>パーティクル</returns>
-	[[nodiscard]] const Particle& GetParticle(uint32_t index) const { return particles_[index]; }
-
-	/// <summary>
-	/// 指定インデックスのパーティクルを設定する
-	/// </summary>
-	/// <param name="index">パーティクルのインデックス（0 ～ kNumInstance-1）</param>
-	/// <param name="particle">設定するパーティクル</param>
-	void SetParticle(uint32_t index, const Particle& particle) { particles_[index] = particle; }
-
-	/// <summary>
 	/// パーティクルをインスタンシング描画する
 	/// </summary>
 	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
 	/// <summary>
-	/// 今あるパーティクルを破棄し、ランダムな位置・速度・色で生成し直す
+	/// エミッタの設定（発生数など）に従ってパーティクルを生成し、リストの末尾へ追加する
 	/// </summary>
-	void Respawn();
+	void EmitParticles();
 
 	/// <summary>
 	/// ビルボード（常にカメラへ向ける）の有効/無効フラグを取得する（変更可能）
@@ -125,18 +112,13 @@ public:
 	bool& GetUseBillboard() { return useBillboard_; }
 
 private:
-	/// <summary>
-	/// 全パーティクルをランダムな位置・速度・色で初期化する
-	/// </summary>
-	void InitializeParticles();
-
-private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource_;
 	ParticleForGPU* instancingData_ = nullptr;
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};
 	uint32_t numInstance = 0;
 	bool useBillboard_ = true;
-	Particle particles_[kNumMaxInstance]{};
+	std::list<Particle> particles_;
+	Emitter emitter_{};
 
 	Material material_;
 	std::shared_ptr<const ModelData> modelData_;

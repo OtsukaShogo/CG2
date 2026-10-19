@@ -44,9 +44,33 @@ Particle MakeNewParticle(std::mt19937& randomEngine) {
 	return particle;
 }
 
+/// <summary>
+/// エミッタの設定に従ってパーティクルを emitter.count 個生成する。生成位置はエミッタ位置が基準になる
+/// </summary>
+/// <param name="emitter">エミッタ</param>
+/// <param name="randomEngine">乱数エンジン</param>
+/// <returns>生成したパーティクルのリスト</returns>
+std::list<Particle> Emit(const Emitter& emitter, std::mt19937& randomEngine) {
+	std::list<Particle> particles;
+	for (uint32_t count = 0; count < emitter.count; ++count) {
+		Particle particle = MakeNewParticle(randomEngine);
+		particle.transform.translate += emitter.transform.translate;
+		particles.push_back(particle);
+	}
+	return particles;
+}
+
 } // namespace
 
-ParticleSystem::ParticleSystem() {}
+ParticleSystem::ParticleSystem() {
+	// 一度に3個発生させるエミッタ
+	emitter_.transform.scale = { 1.0f, 1.0f, 1.0f };
+	emitter_.transform.rotate = { 0.0f, 0.0f, 0.0f };
+	emitter_.transform.translate = { 0.0f, 0.0f, 0.0f };
+	emitter_.count = 3;
+	emitter_.frequency = 0.5f;
+	emitter_.frequencyTime = 0.0f;
+}
 
 ParticleSystem::~ParticleSystem() {
 	if (instancingResource_) {
@@ -67,8 +91,6 @@ void ParticleSystem::CreateInstancingResource(ID3D12Device* device, ID3D12Descri
 		instancingData_[index].World = MakeIdentity4x4();
 		instancingData_[index].color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	}
-
-	InitializeParticles();
 
 	// SRV の空きスロットを自動割り当て（テクスチャと同じヒープ・同じカウンタを共有する）
 	uint32_t index = TextureManager::GetInstance()->AllocateSrvIndex();
@@ -104,29 +126,38 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 	billboardMatrix.m[3][2] = 0.0f;
 
 	numInstance = 0;
-	for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
-		Particle& particle = particles_[index];
-		//生存時間を過ぎていたら描画しない
-		if (particle.lifeTime <= particle.currentTime) {
+	for (std::list<Particle>::iterator particleIterator = particles_.begin(); particleIterator != particles_.end();) {
+		//生存時間を過ぎていたらリストから削除する（erase は次の要素のイテレータを返す）
+		if ((*particleIterator).lifeTime <= (*particleIterator).currentTime) {
+			particleIterator = particles_.erase(particleIterator);
 			continue;
 		}
-		// 経過時間を進める
-		particle.currentTime += deltaTime;
+		// 速度を反映して移動し、経過時間を進める
+		(*particleIterator).transform.translate += (*particleIterator).velocity * deltaTime;
+		(*particleIterator).currentTime += deltaTime;
 
 		//徐々に透明に（イージングで序盤は残り、終盤に急に消える）
-		float t = std::clamp(particle.currentTime / particle.lifeTime, 0.0f, 1.0f);
+		float t = std::clamp((*particleIterator).currentTime / (*particleIterator).lifeTime, 0.0f, 1.0f);
 		float alpha = 1.0f - EaseInCubic(t);
 
-		Matrix4x4 scaleMatrix = MakeScaleMatrix(particle.transform.scale);
-		Matrix4x4 translateMatrix = MakeTranslateMatrix(particle.transform.translate);
-		Matrix4x4 worldMatrix = Multiply(Multiply(scaleMatrix, billboardMatrix), translateMatrix);
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjection);
-		// 死んだものを詰めて、先頭から numInstance 個を描画できるようにする
-		instancingData_[numInstance].WVP = worldViewProjectionMatrix;
-		instancingData_[numInstance].World = worldMatrix;
-		instancingData_[numInstance].color = particle.color;
-		instancingData_[numInstance].color.w = alpha;
-		++numInstance;
+		if (numInstance < kNumMaxInstance) {
+			Matrix4x4 scaleMatrix = MakeScaleMatrix((*particleIterator).transform.scale);
+			Matrix4x4 translateMatrix = MakeTranslateMatrix((*particleIterator).transform.translate);
+			Matrix4x4 worldMatrix = Multiply(Multiply(scaleMatrix, billboardMatrix), translateMatrix);
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjection);
+			// 死んだものを詰めて、先頭から numInstance 個を描画できるようにする
+			instancingData_[numInstance].WVP = worldViewProjectionMatrix;
+			instancingData_[numInstance].World = worldMatrix;
+			instancingData_[numInstance].color = (*particleIterator).color;
+			instancingData_[numInstance].color.w = alpha;
+			++numInstance;
+		}
+		++particleIterator;
+
+		// インスタンシング用バッファの容量を超える分は描画しない
+		if (numInstance >= kNumMaxInstance) {
+			break;
+		}
 	}
 }
 
@@ -141,16 +172,9 @@ void ParticleSystem::Draw(ID3D12GraphicsCommandList* commandList) {
 	modelData_->GetMesh().Draw(commandList, numInstance);
 }
 
-// 今あるパーティクルを破棄し、再度ランダムな位置・速度・色で生成し直す
-void ParticleSystem::Respawn() {
-	InitializeParticles();
-}
-
-// 各インスタンスの位置・速度・色をランダムに初期化する
-void ParticleSystem::InitializeParticles() {
-	for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
-		particles_[index] = MakeNewParticle(Random::GetInstance()->GetEngine());
-	}
+// エミッタの設定に従って、パーティクルを emitter.count 個生成する
+void ParticleSystem::EmitParticles() {
+	particles_.splice(particles_.end(), Emit(emitter_, Random::GetInstance()->GetEngine()));
 }
 
 } // namespace Engine
