@@ -42,7 +42,7 @@ struct ParticleForGPU {
 class ParticleSystem {
 public:
 	// インスタンシング用バッファに確保する最大インスタンス数
-	static constexpr uint32_t kNumMaxInstance = 10;
+	static constexpr uint32_t kNumMaxInstance = 100;
 
 	/// <summary>
 	/// コンストラクタ
@@ -104,6 +104,12 @@ public:
 	/// エミッタの設定（発生数など）に従ってパーティクルを生成し、リストの末尾へ追加する
 	/// </summary>
 	void EmitParticles();
+
+	/// <summary>
+	/// エミッタを取得する（変更可能）
+	/// </summary>
+	/// <returns>エミッタ</returns>
+	Emitter& GetEmitter() { return emitter_; }
 
 	/// <summary>
 	/// ビルボード（常にカメラへ向ける）の有効/無効フラグを取得する（変更可能）

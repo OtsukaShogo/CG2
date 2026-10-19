@@ -26,8 +26,9 @@ float EaseInCubic(float t) {
 /// ランダムな位置・速度を持つパーティクルを1つ生成する
 /// </summary>
 /// <param name="randomEngine">乱数エンジン</param>
+/// <param name="translate">生成位置の基準（この位置にランダムなずれを足す）</param>
 /// <returns>生成したパーティクル</returns>
-Particle MakeNewParticle(std::mt19937& randomEngine) {
+Particle MakeNewParticle(std::mt19937& randomEngine,const Vector3& translate) {
 	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
 	std::uniform_real_distribution<float> distTime(1.0f, 3.0f);
@@ -35,7 +36,8 @@ Particle MakeNewParticle(std::mt19937& randomEngine) {
 	Particle particle;
 	particle.transform.scale = { 1.0f, 1.0f, 1.0f };
 	particle.transform.rotate = { 0.0f, 0.0f, 0.0f };
-	particle.transform.translate = { distribution(randomEngine), distribution(randomEngine), distribution(randomEngine) };
+	Vector3 randomTranslate{ distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+	particle.transform.translate = translate + randomTranslate;
 	particle.velocity = { distribution(randomEngine), distribution(randomEngine), distribution(randomEngine) };
 	particle.color = { distColor(randomEngine),distColor(randomEngine) ,distColor(randomEngine) ,1.0f };
 	particle.lifeTime = distTime(randomEngine);
@@ -53,9 +55,7 @@ Particle MakeNewParticle(std::mt19937& randomEngine) {
 std::list<Particle> Emit(const Emitter& emitter, std::mt19937& randomEngine) {
 	std::list<Particle> particles;
 	for (uint32_t count = 0; count < emitter.count; ++count) {
-		Particle particle = MakeNewParticle(randomEngine);
-		particle.transform.translate += emitter.transform.translate;
-		particles.push_back(particle);
+		particles.push_back(MakeNewParticle(randomEngine, emitter.transform.translate));
 	}
 	return particles;
 }
@@ -126,6 +126,15 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 	billboardMatrix.m[3][2] = 0.0f;
 
 	numInstance = 0;
+	
+	//時刻を進める
+	emitter_.frequencyTime += deltaTime;
+	//頻度より大きいなら発生
+	if (emitter_.frequency <= emitter_.frequencyTime) {
+		EmitParticles();
+		emitter_.frequencyTime -= emitter_.frequency;//余計に過ぎた時間も加味して頻度計算する
+	}
+
 	for (std::list<Particle>::iterator particleIterator = particles_.begin(); particleIterator != particles_.end();) {
 		//生存時間を過ぎていたらリストから削除する（erase は次の要素のイテレータを返す）
 		if ((*particleIterator).lifeTime <= (*particleIterator).currentTime) {

@@ -192,6 +192,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			isParticleMoving = true;
 		}
 		ImGui::Checkbox("Billboard", &particle->GetUseBillboard());
+		ImGui::DragFloat("Emitter X", &particle->GetEmitter().transform.translate.x, 0.1f);
 
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
