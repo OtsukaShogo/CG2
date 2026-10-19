@@ -12,11 +12,14 @@ Input* Input::GetInstance() {
 	return &instance;
 }
 
-void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
+void Input::Initialize(WinApp* winApp) {
+	//借りてきたWinAppのインスタンスを記録
+	this->winApp_ = winApp;
+
 	HRESULT result;
 
 	result = DirectInput8Create(
-		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
+		winApp_->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8,
 		reinterpret_cast<void**>(directInput_.GetAddressOf()), nullptr
 	);
 	assert(SUCCEEDED(result));
@@ -27,7 +30,7 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	result = keyboard_->SetDataFormat(&c_dfDIKeyboard);
 	assert(SUCCEEDED(result));
 	result = keyboard_->SetCooperativeLevel(
-		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY
+		winApp_->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY
 	);
 	assert(SUCCEEDED(result));
 
@@ -37,7 +40,7 @@ void Input::Initialize(HINSTANCE hInstance, HWND hwnd) {
 	result = mouseDevice_->SetDataFormat(&c_dfDIMouse);
 	assert(SUCCEEDED(result));
 	result = mouseDevice_->SetCooperativeLevel(
-		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE
+		winApp_->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE
 	);
 	assert(SUCCEEDED(result));
 }

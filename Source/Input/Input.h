@@ -3,6 +3,7 @@
 #include <dinput.h>
 #include <Windows.h>
 #include <wrl/client.h>
+#include"WinApp.h"
 
 namespace Engine {
 
@@ -30,7 +31,7 @@ public:
 	/// </summary>
 	/// <param name="hInstance">アプリケーションのインスタンスハンドル</param>
 	/// <param name="hwnd">対象のウィンドウハンドル</param>
-	void Initialize(HINSTANCE hInstance, HWND hwnd);
+	void Initialize(WinApp* winApp);
 
 	/// <summary>
 	/// キーボード・マウスの状態を最新のものに更新する
@@ -113,6 +114,8 @@ private:
 	BYTE keyPrev_[256] = {};
 	DIMOUSESTATE mouseStatePrev_ = {};
 	DIMOUSESTATE mouseState_ = {};
+
+	WinApp* winApp_ = nullptr;
 };
 
 } // namespace Engine
