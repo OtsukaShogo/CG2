@@ -7,6 +7,10 @@
 
 #include"DebugUtil.h"
 
+#include <timeapi.h>
+
+#pragma comment(lib,"winmm.lib")
+
 #ifdef USE_IMGUI
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -102,6 +106,9 @@ void WinApp::Initialize() {
 	ShowWindow(hwnd_, SW_SHOW);
 
 	DebugUtil::Log("ShowWindow called\n");
+
+	//システムタイマーの分解能を上げる
+	timeBeginPeriod(1);
 }
 
 bool WinApp::ProcessMessage() {

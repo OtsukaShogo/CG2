@@ -5,6 +5,7 @@
 #include <wrl/client.h>
 #include <cstdint>
 #include <memory>
+#include <chrono>
 
 #include "D3D12Device.h"
 #include "CommandContext.h"
@@ -105,6 +106,15 @@ private:
     /// <param name="width">深度ステンシルテクスチャの幅</param>
     /// <param name="height">深度ステンシルテクスチャの高さ</param>
     void InitializeHeapsAndDepthStencil(uint32_t width, uint32_t height);
+
+    //FPS固定初期化
+    void InitializeFixFPS();
+
+    //FPS固定更新
+    void UpdateFixFPS();
+
+    //記録時間(FPS固定用)
+    std::chrono::steady_clock::time_point reference_;
 
 private:
     std::unique_ptr<D3D12Device> device_;
