@@ -1,0 +1,264 @@
+#include <Windows.h>
+#include <d3d12.h>
+#include<memory>
+#include<cassert>
+
+#include "../Engine/Core/WinApp.h"
+#include "../Engine/Core/DirectXCommon.h"
+#include "../Engine/Core/DebugUtil.h"
+#include "../Engine/Core/D3DResourceLeakChecker.h"
+#include "../Engine/Graphics/Light.h"
+#include "../Engine/Math/TransformMatrix.h"
+#include "../Engine/Core/ShaderManager.h"
+#include "../Engine/Core/PipelineStateManager.h"
+#include "../Engine/Graphics/TextureManager.h"
+#include "../Engine/Graphics/AssetFactory.h"
+#include "../Engine/Graphics/AssetManager.h"
+#include "../Engine/Graphics/Model.h"
+#include "../Engine/Graphics/Sprite.h"
+#include "../Engine/Graphics/ParticleSystem.h"
+#include "../Engine/Core/ImGuiManager.h"
+#include "../Engine/Graphics/CameraManager.h"
+#include "../Engine/Audio/AudioManager.h"
+#include "../Engine/Input/Input.h"
+
+#ifdef USE_IMGUI
+#include "External/imgui/imgui.h"
+#endif
+#include "../Engine/Math/Matrix4x4.h"
+#include "../Engine/Math/WorldTransform.h"
+
+using namespace Engine;
+
+/// <summary>
+/// アプリケーションのエントリーポイント。各種システムの初期化・メインループ・終了処理を行う
+/// </summary>
+/// <param name="hInstance">アプリケーションのインスタンスハンドル</param>
+/// <param name="hPrevInstance">未使用（常にnullptr）</param>
+/// <param name="lpCmdLine">コマンドライン文字列</param>
+/// <param name="nCmdShow">ウィンドウの表示状態</param>
+/// <returns>アプリケーションの終了コード</returns>
+// WinMain の定義にヘッダと整合する SAL 注釈を追加
+int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
+	// === リソースリークチェッカー生成 ====================================================================
+
+	D3DResourceLeakChecker leakCheck;
+
+	SetUnhandledExceptionFilter(DebugUtil::ExportDump);
+	DebugUtil::CreateLogFile();
+
+	// === WinApp初期化 ============================================================================
+
+	WinApp* winApp = WinApp::GetInstance();
+	winApp->Initialize();
+
+	// === DirectX初期化 ============================================================================
+
+	auto dx = std::make_unique<DirectXCommon>();
+	dx->Initialize(winApp->GetHwnd(), WinApp::kClientWidth, WinApp::kClientHeight);
+
+	AssetFactory assetFactory;
+	assetFactory.Initialize(dx.get());
+
+	// === Input初期化 =======================================================================
+
+	Input* input = Input::GetInstance();
+	input->Initialize(winApp);
+
+	// === Shader初期化 =============================================================================================
+
+	auto shaderMgr = std::make_unique<ShaderManager>();
+	shaderMgr->InitializeDXC();
+
+	// === PSO初期化 =============================================================================================
+
+	auto psoMgr = std::make_unique<PipelineStateManager>();
+	ID3D12Device* device = dx->GetDevice();
+	psoMgr->InitializeRootSignature(device);
+
+	psoMgr->CreateObject3DPipeline(device, shaderMgr.get());
+	psoMgr->CreateSpritePipeline(device, shaderMgr.get());
+	psoMgr->CreateParticlePipeline(device, shaderMgr.get());
+
+	// === ImGui初期化 ==========================================================
+
+#ifdef USE_IMGUI
+	ImGuiManager* imgui = ImGuiManager::GetInstance();
+	imgui->Initialize(winApp->GetHwnd(), dx->GetDevice(), dx->GetSrvDescriptorHeap());
+#endif
+
+	// === 定数 ===========================================================================================
+
+	const float kDeltaTime = 1.0f / 60.0f;
+
+	// === テクスチャ ======================================================================================
+
+	TextureHandle tex = assetFactory.LoadTexture("Resource/uvChecker.png");
+	TextureHandle particleTex = assetFactory.LoadTexture("Resource/circle.png");
+
+	// === 音声データ =====================================================================================
+
+	AudioManager* audioMgr = AudioManager::GetInstance();
+	audioMgr->Initialize();
+
+	// 音声読み込み
+	SoundData soundData1 = audioMgr->LoadWave("Resource/Alarm01.wav");
+
+	// 音声再生
+	audioMgr->Play(soundData1);
+
+	// === カメラ ==========================================================================================
+
+	CameraManager* cameraMgr = CameraManager::GetInstance();
+	cameraMgr->Initialize();
+
+	// === オブジェクト ===========================================================================================
+
+	// モデル（resources以下のモデルをAssetManagerが一括読み込みし、パス指定でインスタンスを生成する）
+	AssetManager assetManager;
+	assetManager.Initialize(&assetFactory);
+
+	// パーティクルの描画形状（板）を読み込む
+	auto particleModelData = assetFactory.CreateModelData("Resource", "plane.obj");
+
+	dx->FlushCommands(); // コマンドリストをGPUに送信し完了を待つ
+
+	// スプライト
+	auto sprite = assetFactory.CreateSprite(640.0f, 360.0f);
+	sprite->SetTextureHandle(tex.gpuHandle);
+
+	// === パーティクル ===========================================================================================
+
+	auto particle = std::make_unique<ParticleSystem>();
+	particle->CreateInstancingResource(device, dx->GetSrvDescriptorHeap(), dx->GetDescriptorSizeSRV());
+	particle->SetModelData(particleModelData);
+	particle->SetTextureHandle(particleTex.gpuHandle); // circleを使う
+
+	// === ライト ================================================================================
+
+	auto light = std::make_unique<Light>();
+	light->Initialize(device);
+
+	// === UV Transform ====================================================================================
+
+	WorldTransform uvTransformSprite{
+		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f, 0.0f },
+	};
+
+	// === ブレンドモード ==================================================================================
+
+	int currentBlendMode = static_cast<int>(BlendMode::kNone);
+
+	// === パーティクル移動フラグ ==========================================================================
+
+	bool isParticleMoving = false;
+
+	// === メインループ ====================================================================================
+
+	while (true) {
+		// Windowsのメッセージ処理（終了メッセージを受け取ったらゲームループを抜ける）
+		if (winApp->ProcessMessage()) {
+			break;
+		}
+
+#ifdef USE_IMGUI
+		imgui->BeginFrame();
+
+		ImGui::Begin("Debug");
+
+		ImGui::Text("%f", ImGui::GetIO().Framerate);
+
+		cameraMgr->DrawImGui();
+		ImGui::Separator();
+
+		ImGui::Combo("Blend Mode", &currentBlendMode, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
+
+		//パーティクル
+		if (ImGui::Button("Particle Start")) {
+			particle->EmitParticles(); // エミッタ（count=3）に従ってパーティクルを追加する
+			isParticleMoving = true;
+		}
+		ImGui::Checkbox("Billboard", &particle->GetUseBillboard());
+		ImGui::DragFloat("Emitter X", &particle->GetEmitter().transform.translate.x, 0.1f);
+
+		//ライト
+		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);
+		ImGui::DragFloat3("Light Direction", &light->GetDirectionalLight()->direction.x, 0.1f);
+		ImGui::DragFloat("Light Intensity", &light->GetDirectionalLight()->intensity, 0.1f);
+
+		ImGui::End();
+#endif
+
+		// ====================================================================================================
+		// 更新処理
+		// ====================================================================================================
+
+		// スプライトUV更新
+		Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+		uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+		uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
+		sprite->GetMaterial().GetUVTransform() = uvTransformMatrix;
+
+		// ====================================================================================================
+		// 描画処理
+		// ====================================================================================================
+
+		dx->BeginFrame();
+
+		// キー状態更新
+		input->Update();
+
+		// カメラ更新（F1切り替え含む）
+		cameraMgr->Update();
+
+		// パーティクルのWVP等を計算してResourceに書き込む
+		particle->Update(cameraMgr->GetViewProjection(), cameraMgr->GetRotateMatrix(), isParticleMoving ? kDeltaTime : 0.0f);
+
+		// DescriptorHeap・RootSignature・PSOのセット
+		auto* commandList = dx->GetCommandList();
+		ID3D12DescriptorHeap* heaps[] = { dx->GetSrvDescriptorHeap() };
+		commandList->SetDescriptorHeaps(1, heaps);
+
+		BlendMode blendMode = static_cast<BlendMode>(currentBlendMode);
+
+		// 3D描画（パーティクル）
+		psoMgr->SetPipeline(commandList, PipelineStateManager::kParticle, blendMode);
+		commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light->GetDirectionalLightAddress());
+		particle->Draw(commandList);
+
+		// 2D描画
+		psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
+		commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), tex.gpuHandle);
+
+#ifdef USE_IMGUI
+		imgui->EndFrame(commandList);
+#endif
+
+		dx->EndFrame();
+	}
+
+#ifdef USE_IMGUI
+	imgui->Finalize();
+#endif
+
+	// D3D12リソースをデバイス解放より前に明示的に解放する
+	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
+	light.reset();          // ~Light() で Unmap + Release
+	particle.reset();       // ID3D12Resource x2 (instancing, material)
+	particleModelData.reset(); // ID3D12Resource x3 (vertex, index, texture)
+	sprite.reset();         // ID3D12Resource x3 (vertex, material, wvp)
+	assetManager.Clear(); // ModelData（メッシュ・テクスチャ）を解放
+	audioMgr->Unload(&soundData1);
+	audioMgr->Finalize();
+	input->Finalize();
+	tex = {};             // ID3D12Resource x2 (texture, intermediate)
+	psoMgr.reset();       // ID3D12PipelineState x2 + ID3D12RootSignature x1
+
+	dx->Finalize();
+	winApp->Finalize();
+
+	return 0;
+}

@@ -1,0 +1,133 @@
+#pragma once
+#include <d3d12.h>
+#include <wrl/client.h>
+#include <cstdint>
+#include <list>
+#include <memory>
+#include "../Math/TransformMatrix.h"
+#include "../Math/WorldTransform.h"
+#include "../Graphics/Material.h"
+
+namespace Engine {
+
+class ModelData;
+
+struct Particle {
+	WorldTransform transform;
+	Vector3 velocity;
+	Vector4 color;
+	float lifeTime;
+	float currentTime;
+};
+
+struct Emitter {
+	WorldTransform transform;//エミッタのTransform
+	uint32_t count;//発生数
+	float frequency;//発生頻度
+	float frequencyTime;//頻度用時刻
+};
+
+/// <summary>
+/// インスタンシング用StructuredBufferに渡す1パーティクル分のデータ（Particle.hlsliのParticleForGPUと対応）
+/// </summary>
+struct ParticleForGPU {
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+	Vector4   color;
+};
+
+/// <summary>
+/// インスタンシング描画によるパーティクル群を表すクラス
+/// </summary>
+class ParticleSystem {
+public:
+	// インスタンシング用バッファに確保する最大インスタンス数
+	static constexpr uint32_t kNumMaxInstance = 100;
+
+	/// <summary>
+	/// コンストラクタ
+	/// </summary>
+	ParticleSystem();
+
+	/// <summary>
+	/// デストラクタ
+	/// </summary>
+	~ParticleSystem();
+
+	/// <summary>
+	/// インスタンシング用のTransformationMatrixリソースを生成し、単位行列で初期化した上でSRVを作成する
+	/// </summary>
+	/// <param name="device">D3D12デバイス</param>
+	/// <param name="srvHeap">SRV用ディスクリプタヒープ</param>
+	/// <param name="descriptorSizeSRV">SRVディスクリプタ1個分のサイズ</param>
+	void CreateInstancingResource(ID3D12Device* device, ID3D12DescriptorHeap* srvHeap, uint32_t descriptorSizeSRV);
+
+	/// <summary>
+	/// インスタンシング用SRVのGPUディスクリプタハンドルを取得する
+	/// </summary>
+	/// <returns>GPUディスクリプタハンドル</returns>
+	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetInstancingSrvHandleGPU() const { return instancingSrvHandleGPU_; }
+
+	/// <summary>
+	/// 各インスタンスのワールド行列・WVP行列を計算し、インスタンシング用リソースへ書き込む
+	/// </summary>
+	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
+	/// <param name="cameraRotate">カメラのワールド回転行列（ビルボード用）</param>
+	/// <param name="deltaTime">経過時間（秒）。0を渡すと寿命が進まない</param>
+	void Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime);
+
+	/// <summary>
+	/// 描画に使うメッシュデータ（共有描画データ）を設定する
+	/// </summary>
+	/// <param name="modelData">参照するModelData</param>
+	void SetModelData(std::shared_ptr<const ModelData> modelData) { modelData_ = std::move(modelData); }
+
+	/// <summary>
+	/// テクスチャのGPUディスクリプタハンドルを設定する
+	/// </summary>
+	/// <param name="handle">設定するGPUディスクリプタハンドル</param>
+	void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { material_.SetTextureHandle(handle); }
+
+	/// <summary>
+	/// マテリアルの色を取得する（変更可能）
+	/// </summary>
+	/// <returns>マテリアルの色</returns>
+	Vector4& GetColor() { return material_.GetColor(); }
+
+	/// <summary>
+	/// パーティクルをインスタンシング描画する
+	/// </summary>
+	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
+	void Draw(ID3D12GraphicsCommandList* commandList);
+
+	/// <summary>
+	/// エミッタの設定（発生数など）に従ってパーティクルを生成し、リストの末尾へ追加する
+	/// </summary>
+	void EmitParticles();
+
+	/// <summary>
+	/// エミッタを取得する（変更可能）
+	/// </summary>
+	/// <returns>エミッタ</returns>
+	Emitter& GetEmitter() { return emitter_; }
+
+	/// <summary>
+	/// ビルボード（常にカメラへ向ける）の有効/無効フラグを取得する（変更可能）
+	/// </summary>
+	/// <returns>ビルボード有効フラグ</returns>
+	bool& GetUseBillboard() { return useBillboard_; }
+
+private:
+	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource_;
+	ParticleForGPU* instancingData_ = nullptr;
+	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};
+	uint32_t numInstance = 0;
+	bool useBillboard_ = true;
+	std::list<Particle> particles_;
+	Emitter emitter_{};
+
+	Material material_;
+	std::shared_ptr<const ModelData> modelData_;
+};
+
+} // namespace Engine
