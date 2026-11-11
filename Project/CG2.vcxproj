@@ -170,6 +170,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Engine\Core\DebugUtil.cpp" />
     <ClCompile Include="Source\Engine\Core\DirectXCommon.cpp" />
     <ClCompile Include="Source\Engine\Core\FrameSync.cpp" />
+    <ClCompile Include="Source\Engine\Core\Framework.cpp" />
     <ClCompile Include="Source\Engine\Core\SwapChain.cpp" />
     <ClCompile Include="External\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -207,6 +208,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\Material.cpp" />
     <ClCompile Include="Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Mesh.cpp" />
@@ -236,6 +242,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Core\DebugUtil.h" />
     <ClInclude Include="Source\Engine\Core\DirectXCommon.h" />
     <ClInclude Include="Source\Engine\Core\FrameSync.h" />
+    <ClInclude Include="Source\Engine\Core\Framework.h" />
+    <ClInclude Include="Source\Application\Game.h" />
     <ClInclude Include="Source\Engine\Core\FrameContext.h" />
     <ClInclude Include="Source\Engine\Core\SwapChain.h" />
     <ClInclude Include="External\imgui\imconfig.h" />

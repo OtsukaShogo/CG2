@@ -121,6 +121,12 @@
     <ClCompile Include="Source\Engine\Core\ImGuiManager.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game.cpp">
+      <Filter>Source\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Core\Framework.cpp">
+      <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Application\main.cpp">
       <Filter>Source\Application</Filter>
     </ClCompile>
@@ -242,6 +248,12 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\AssetManager.h">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game.h">
+      <Filter>Source\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Core\Framework.h">
+      <Filter>Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\WinApp.h">
       <Filter>Source\Engine\Core</Filter>
