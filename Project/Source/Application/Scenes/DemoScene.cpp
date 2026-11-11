@@ -80,8 +80,9 @@ void DemoScene::Update() {
 	if (ImGui::TreeNode("Input")) {
 		Input* input = framework->GetInput();
 
-		Vector2 mouse = input->GetMousePosition();
-		ImGui::Text("Mouse: (%.1f, %.1f) inside=%d", mouse.x, mouse.y, input->IsMouseInsideWindow());
+		const Mouse& mouseDevice = input->GetMouse();
+		Vector2 mouse = mouseDevice.GetPosition();
+		ImGui::Text("Mouse: (%.1f, %.1f) inside=%d", mouse.x, mouse.y, mouseDevice.IsInsideWindow());
 		Vector3 ground{};
 		if (framework->GetCameraManager()->GetActiveCamera()->ScreenToWorldOnPlane(mouse, 0.0f, &ground)) {
 			ImGui::Text("Mouse on ground(y=0): (%.2f, %.2f, %.2f)", ground.x, ground.y, ground.z);

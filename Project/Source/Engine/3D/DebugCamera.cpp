@@ -9,14 +9,16 @@ void DebugCamera::Initialize() {
 
 void DebugCamera::Update() {
 	Input* input = Input::GetInstance();
+	const Keyboard& keyboard = input->GetKeyboard();
+	const Mouse& mouse = input->GetMouse();
 	Vector3& translate = camera_.GetTranslate();
 
-	bool rightButtonPushed = input->PushMouseButton(1);
+	bool rightButtonPushed = mouse.PushButton(MouseButton::kRight);
 
 	// 右ドラッグで回転を累積
 	if (rightButtonPushed) {
-		float deltaX = input->GetMouseDeltaY() * kRotateSpeed;
-		float deltaY = input->GetMouseDeltaX() * kRotateSpeed;
+		float deltaX = mouse.GetDeltaY() * kRotateSpeed;
+		float deltaY = mouse.GetDeltaX() * kRotateSpeed;
 		camera_.AddRotation(deltaX, deltaY);
 	}
 
@@ -28,14 +30,14 @@ void DebugCamera::Update() {
 
 	// 右クリック押し込み中はWASDで上下左右に移動（Unityのシーンビュー操作と同様）
 	if (rightButtonPushed) {
-		if (input->PushKey(DIK_W)) { translate.x += up.x * kMoveSpeed; translate.y += up.y * kMoveSpeed; translate.z += up.z * kMoveSpeed; }
-		if (input->PushKey(DIK_S)) { translate.x -= up.x * kMoveSpeed; translate.y -= up.y * kMoveSpeed; translate.z -= up.z * kMoveSpeed; }
-		if (input->PushKey(DIK_A)) { translate.x -= right.x * kMoveSpeed; translate.y -= right.y * kMoveSpeed; translate.z -= right.z * kMoveSpeed; }
-		if (input->PushKey(DIK_D)) { translate.x += right.x * kMoveSpeed; translate.y += right.y * kMoveSpeed; translate.z += right.z * kMoveSpeed; }
+		if (keyboard.PushKey(DIK_W)) { translate.x += up.x * kMoveSpeed; translate.y += up.y * kMoveSpeed; translate.z += up.z * kMoveSpeed; }
+		if (keyboard.PushKey(DIK_S)) { translate.x -= up.x * kMoveSpeed; translate.y -= up.y * kMoveSpeed; translate.z -= up.z * kMoveSpeed; }
+		if (keyboard.PushKey(DIK_A)) { translate.x -= right.x * kMoveSpeed; translate.y -= right.y * kMoveSpeed; translate.z -= right.z * kMoveSpeed; }
+		if (keyboard.PushKey(DIK_D)) { translate.x += right.x * kMoveSpeed; translate.y += right.y * kMoveSpeed; translate.z += right.z * kMoveSpeed; }
 	}
 
 	// ホイール回転で前後移動（カメラの向き方向）
-	long wheel = input->GetMouseDeltaWheel();
+	long wheel = mouse.GetDeltaWheel();
 	if (wheel != 0) {
 		float step = wheel * kZoomSpeed;
 		translate.x += forward.x * step;
@@ -44,9 +46,9 @@ void DebugCamera::Update() {
 	}
 
 	// ホイール押し込み（中ボタン）ドラッグで上下左右に平行移動
-	if (input->PushMouseButton(2)) {
-		float dx = input->GetMouseDeltaX() * kPanSpeed;
-		float dy = input->GetMouseDeltaY() * kPanSpeed;
+	if (mouse.PushButton(MouseButton::kMiddle)) {
+		float dx = mouse.GetDeltaX() * kPanSpeed;
+		float dy = mouse.GetDeltaY() * kPanSpeed;
 		translate.x -= right.x * dx - up.x * dy;
 		translate.y -= right.y * dx - up.y * dy;
 		translate.z -= right.z * dx - up.z * dy;

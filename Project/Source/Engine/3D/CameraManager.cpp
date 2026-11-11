@@ -27,7 +27,7 @@ void CameraManager::Update() {
 	Input* input = Input::GetInstance();
 
 	// F1キーで通常カメラ/デバッグカメラを切り替える
-	if (input->TriggerKey(DIK_F1)) {
+	if (input->GetKeyboard().TriggerKey(DIK_F1)) {
 		isDebugCamera_ = !isDebugCamera_;
 	}
 

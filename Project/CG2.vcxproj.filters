@@ -157,6 +157,12 @@
     <ClCompile Include="Source\Engine\Audio\AudioManager.cpp">
       <Filter>Source\Engine\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Input\Keyboard.cpp">
+      <Filter>Source\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Input\Mouse.cpp">
+      <Filter>Source\Engine\Input</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Input\Gamepad.cpp">
       <Filter>Source\Engine\Input</Filter>
     </ClCompile>
@@ -326,6 +332,12 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Audio\AudioManager.h">
       <Filter>Source\Engine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Input\Keyboard.h">
+      <Filter>Source\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Input\Mouse.h">
+      <Filter>Source\Engine\Input</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Input\Gamepad.h">
       <Filter>Source\Engine\Input</Filter>
