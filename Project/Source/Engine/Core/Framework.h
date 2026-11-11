@@ -8,6 +8,7 @@
 #include "PipelineStateManager.h"
 #include "../Graphics/AssetFactory.h"
 #include "../Graphics/AssetManager.h"
+#include "../Scene/SceneManager.h"
 
 namespace Engine {
 
@@ -47,30 +48,30 @@ public:
 
 protected:
 	/// <summary>
-	/// エンジン初期化後に1度だけ呼ばれる。アセット読み込みやゲームオブジェクト生成を行う
+	/// エンジン初期化後に1度だけ呼ばれる。シーンの登録や最初のシーンの指定、共通アセットの読み込みを行う
 	/// （ここで行ったテクスチャ読み込み等は呼び出し後に自動でGPUへ反映される）
 	/// </summary>
 	virtual void OnInitialize() = 0;
 
 	/// <summary>
-	/// 毎フレーム呼ばれる更新処理。入力・カメラは更新済みで、ImGuiのフレームも開始済み
+	/// 毎フレーム、シーンの更新より先に呼ばれる共通の更新処理。入力・カメラは更新済みで、ImGuiのフレームも開始済み
 	/// </summary>
-	virtual void OnUpdate() = 0;
+	virtual void OnUpdate() {}
 
 	/// <summary>
-	/// 毎フレーム呼ばれる描画処理。SRVヒープはセット済みで、ImGuiの描画はこの後に行われる
+	/// 毎フレーム、シーンの描画より先に呼ばれる共通の描画処理。SRVヒープはセット済みで、ImGuiの描画はシーンの描画後に行われる
 	/// </summary>
 	/// <param name="commandList">今フレームのコマンドリスト</param>
-	virtual void OnDraw(ID3D12GraphicsCommandList* commandList) = 0;
+	virtual void OnDraw(ID3D12GraphicsCommandList* commandList) { (void)commandList; }
 
 	/// <summary>
-	/// 終了時に1度だけ呼ばれる。D3D12リソースを保持している場合はここで解放する
-	/// （デバイス解放より前に呼ばれる）
+	/// 終了時に1度だけ呼ばれる（シーンの終了後、デバイス解放より前）。
+	/// D3D12リソースを保持している場合はここで解放する
 	/// </summary>
-	virtual void OnFinalize() = 0;
+	virtual void OnFinalize() {}
 
-protected:
-	//サブシステムへのアクセサ
+public:
+	//サブシステムへのアクセサ（シーンからも利用する）
 	[[nodiscard]] DirectXCommon* GetDirectX() const { return dx_.get(); }
 	[[nodiscard]] PipelineStateManager* GetPipelineStateManager() const { return psoMgr_.get(); }
 	[[nodiscard]] AssetFactory* GetAssetFactory() { return &assetFactory_; }
@@ -79,6 +80,7 @@ protected:
 	[[nodiscard]] Input* GetInput() const { return input_; }
 	[[nodiscard]] AudioManager* GetAudio() const { return audio_; }
 	[[nodiscard]] CameraManager* GetCameraManager() const { return cameraMgr_; }
+	[[nodiscard]] SceneManager* GetSceneManager() { return &sceneMgr_; }
 
 private:
 	void Initialize();
@@ -108,6 +110,7 @@ private:
 	std::unique_ptr<PipelineStateManager> psoMgr_;
 	AssetFactory assetFactory_;
 	AssetManager assetManager_;
+	SceneManager sceneMgr_;
 
 	std::chrono::steady_clock::time_point lastFrameTime_;
 	float deltaTime_ = 1.0f / 60.0f;

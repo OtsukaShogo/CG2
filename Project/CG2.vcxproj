@@ -213,6 +213,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="Source\Application\Scenes\DemoScene.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Scene\SceneManager.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Material.cpp" />
     <ClCompile Include="Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Mesh.cpp" />
@@ -244,6 +250,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Core\FrameSync.h" />
     <ClInclude Include="Source\Engine\Core\Framework.h" />
     <ClInclude Include="Source\Application\Game.h" />
+    <ClInclude Include="Source\Application\Scenes\DemoScene.h" />
+    <ClInclude Include="Source\Engine\Scene\Scene.h" />
+    <ClInclude Include="Source\Engine\Scene\SceneManager.h" />
     <ClInclude Include="Source\Engine\Core\FrameContext.h" />
     <ClInclude Include="Source\Engine\Core\SwapChain.h" />
     <ClInclude Include="External\imgui\imconfig.h" />

@@ -8,6 +8,12 @@
     <Filter Include="Source\Application">
       <UniqueIdentifier>{8d4c3e5f-6071-4c8d-ae1f-203b4c5d6e7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Application\Scenes">
+      <UniqueIdentifier>{5e1d7a42-93b6-4c0f-8a2e-6b7f1c3d9e04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Engine\Scene">
+      <UniqueIdentifier>{a9c4e2b7-3d58-4f61-b0a9-2e7c5d8f1a36}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource">
       <UniqueIdentifier>{051cf40f-0985-4482-a4f6-3e34a92ad526}</UniqueIdentifier>
     </Filter>
@@ -126,6 +132,12 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Core\Framework.cpp">
       <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Scenes\DemoScene.cpp">
+      <Filter>Source\Application\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Scene\SceneManager.cpp">
+      <Filter>Source\Engine\Scene</Filter>
     </ClCompile>
     <ClCompile Include="Source\Application\main.cpp">
       <Filter>Source\Application</Filter>
@@ -248,6 +260,15 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\AssetManager.h">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Scenes\DemoScene.h">
+      <Filter>Source\Application\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Scene\Scene.h">
+      <Filter>Source\Engine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Scene\SceneManager.h">
+      <Filter>Source\Engine\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Game.h">
       <Filter>Source\Application</Filter>

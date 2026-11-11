@@ -157,6 +157,12 @@ namespace Engine {
 		// リセットは次の BeginFrame() に委ねる（Close 済みなので安全）
 	}
 
+	// フレーム外でコマンドを記録できるよう、Close済みのコマンドリストをリセットして開く
+	void DirectXCommon::BeginUpload() {
+		commandContext_->Reset();
+		frameContext_->commandList = commandContext_->GetCommandList();
+	}
+
 	void DirectXCommon::Finalize() {
 		// Present後にDXGIが投入したGPU作業（バックバッファのcomposite等）も含めて完了を待つ
 		frameSync_->SignalAndWait(commandContext_->GetCommandQueue());

@@ -84,7 +84,6 @@ ParticleSystem::ParticleSystem() {
 	emitter_.transform.scale = { 1.0f, 1.0f, 1.0f };
 	emitter_.transform.rotate = { 0.0f, 0.0f, 0.0f };
 	emitter_.transform.translate = { 0.0f, 0.0f, 0.0f };
-	emitter_.transform.translate = { 2.0f, -2.0f, 0.0f };
 	emitter_.count = 4;
 	emitter_.frequency = 1.0f / 60.0f; // 毎フレーム発生させる
 	emitter_.frequencyTime = 0.0f;

@@ -57,6 +57,12 @@ public:
     void FlushCommands();
 
     /// <summary>
+    /// フレーム外（描画開始前）でアップロード等のコマンドを記録するため、コマンドリストを開く。
+    /// 前フレームのGPU完了後（EndFrame後）に呼び、記録後は FlushCommands() で投入して完了を待つ
+    /// </summary>
+    void BeginUpload();
+
+    /// <summary>
     /// D3D12デバイスを取得する
     /// </summary>
     /// <returns>D3D12デバイス</returns>

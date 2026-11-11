@@ -70,10 +70,15 @@ void Framework::Initialize() {
 	// === Asset ===
 	assetManager_.Initialize(&assetFactory_);
 
+	sceneMgr_.Initialize(this);
+
 	initialized_ = true;
 
-	// === ゲーム側の初期化 ===
+	// === ゲーム側の初期化（シーン登録・最初のシーン指定） ===
 	OnInitialize();
+
+	// 最初のシーンを生成する（コマンドリストは初期化直後で開いているのでそのままアップロードできる）
+	sceneMgr_.ApplyPendingChange();
 
 	// 初期化中に積まれたアップロード等のコマンドをGPUに送信し完了を待つ
 	dx_->FlushCommands();
@@ -99,6 +104,17 @@ void Framework::Update() {
 
 	UpdateDeltaTime();
 
+	// シーン切り替え要求があれば、描画開始前に行う
+	// （前フレームのGPU完了後なので、旧シーンのリソースを安全に解放でき、新シーンの読み込みもここでGPUへ反映する）
+	if (sceneMgr_.HasPendingChange()) {
+		dx_->BeginUpload();
+		sceneMgr_.ApplyPendingChange();
+		dx_->FlushCommands();
+
+		// 読み込み時間が次フレームのdtに混ざらないようにする
+		lastFrameTime_ = std::chrono::steady_clock::now();
+	}
+
 #ifdef USE_IMGUI
 	imgui_->BeginFrame();
 #endif
@@ -109,6 +125,7 @@ void Framework::Update() {
 	cameraMgr_->Update();
 
 	OnUpdate();
+	sceneMgr_.Update();
 }
 
 void Framework::Draw() {
@@ -120,6 +137,7 @@ void Framework::Draw() {
 	commandList->SetDescriptorHeaps(1, heaps);
 
 	OnDraw(commandList);
+	sceneMgr_.Draw(commandList);
 
 #ifdef USE_IMGUI
 	imgui_->EndFrame(commandList);
@@ -139,6 +157,7 @@ void Framework::Finalize() {
 
 	// D3D12リソースをデバイス解放より前に明示的に解放する
 	// これらが生きていると device の参照カウントが残り LIVE_DEVICE 警告でクラッシュする
+	sceneMgr_.Finalize();
 	OnFinalize();
 
 	assetManager_.Clear(); // ModelData（メッシュ・テクスチャ）を解放
