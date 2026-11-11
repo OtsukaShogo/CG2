@@ -54,6 +54,58 @@ void Input::Update() {
 	mouseStatePrev_ = mouseState_;
 	mouseDevice_->Acquire();
 	mouseDevice_->GetDeviceState(sizeof(DIMOUSESTATE), &mouseState_);
+
+	UpdateMousePosition();
+
+	for (int i = 0; i < kMaxGamepads; ++i) {
+		gamepads_[i].Update(static_cast<DWORD>(i));
+	}
+}
+
+void Input::UpdateMousePosition() {
+	POINT cursor{};
+	RECT clientRect{};
+	if (!GetCursorPos(&cursor) ||
+		!ScreenToClient(winApp_->GetHwnd(), &cursor) ||
+		!GetClientRect(winApp_->GetHwnd(), &clientRect)) {
+		mouseInside_ = false;
+		return;
+	}
+
+	float clientWidth = static_cast<float>(clientRect.right - clientRect.left);
+	float clientHeight = static_cast<float>(clientRect.bottom - clientRect.top);
+	if (clientWidth <= 0.0f || clientHeight <= 0.0f) {
+		mouseInside_ = false;
+		return;
+	}
+
+	mouseInside_ = cursor.x >= 0 && cursor.y >= 0 &&
+		static_cast<float>(cursor.x) < clientWidth && static_cast<float>(cursor.y) < clientHeight;
+
+	// ウィンドウが描画解像度と違うサイズに拡大縮小されていても、描画解像度基準の座標にそろえる
+	mousePosition_ = {
+		static_cast<float>(cursor.x) * static_cast<float>(WinApp::kClientWidth) / clientWidth,
+		static_cast<float>(cursor.y) * static_cast<float>(WinApp::kClientHeight) / clientHeight,
+	};
+}
+
+const Gamepad& Input::GetGamepad(int index) const {
+	assert(index >= 0 && index < kMaxGamepads);
+	return gamepads_[index];
+}
+
+Gamepad& Input::GetGamepad(int index) {
+	assert(index >= 0 && index < kMaxGamepads);
+	return gamepads_[index];
+}
+
+int Input::GetFirstConnectedGamepadIndex() const {
+	for (int i = 0; i < kMaxGamepads; ++i) {
+		if (gamepads_[i].IsConnected()) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 bool Input::PushKey(BYTE keyCode) const {
@@ -82,6 +134,11 @@ bool Input::TriggerMouseButton(int button) const {
 }
 
 void Input::Finalize() {
+	// 振動したまま終了しないようにする
+	for (int i = 0; i < kMaxGamepads; ++i) {
+		gamepads_[i].SetVibration(0.0f, 0.0f);
+	}
+
 	mouseDevice_.Reset();
 	keyboard_.Reset();
 	directInput_.Reset();

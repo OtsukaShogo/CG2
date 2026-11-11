@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <wrl/client.h>
 #include"../Core/WinApp.h"
+#include "../Math/Vector2.h"
+#include "Gamepad.h"
 
 namespace Engine {
 
@@ -103,9 +105,52 @@ public:
 	/// <returns>今フレームで押された場合はtrue</returns>
 	bool TriggerMouseButton(int button) const;
 
+	/// <summary>
+	/// マウスカーソルの位置をスクリーン座標（クライアント領域の左上原点、描画解像度基準のピクセル）で取得する。
+	/// ウィンドウが拡大縮小されていても、描画解像度（WinApp::kClientWidth/Height）に合わせた値になる
+	/// </summary>
+	/// <returns>マウスカーソルのスクリーン座標</returns>
+	[[nodiscard]] Vector2 GetMousePosition() const { return mousePosition_; }
+
+	/// <summary>
+	/// マウスカーソルがウィンドウのクライアント領域の内側にあるかを取得する
+	/// </summary>
+	/// <returns>内側にある場合はtrue</returns>
+	[[nodiscard]] bool IsMouseInsideWindow() const { return mouseInside_; }
+
+	/// <summary>
+	/// ゲームパッドを取得する。未接続でも取得でき、その場合は入力がすべて無効（IsConnected()がfalse）になる
+	/// </summary>
+	/// <param name="index">パッド番号（0〜3）</param>
+	/// <returns>ゲームパッド</returns>
+	[[nodiscard]] const Gamepad& GetGamepad(int index = 0) const;
+
+	/// <summary>
+	/// ゲームパッドを取得する（振動の設定など、状態を変更する操作用）
+	/// </summary>
+	/// <param name="index">パッド番号（0〜3）</param>
+	/// <returns>ゲームパッド</returns>
+	[[nodiscard]] Gamepad& GetGamepad(int index = 0);
+
+	/// <summary>
+	/// 接続されているゲームパッドの最初の番号を取得する（なければ-1）。1人用ゲームで接続中のパッドを自動選択するのに使う
+	/// </summary>
+	/// <returns>パッド番号または-1</returns>
+	[[nodiscard]] int GetFirstConnectedGamepadIndex() const;
+
+	/// <summary>
+	/// 同時に扱えるゲームパッドの最大数
+	/// </summary>
+	static constexpr int kMaxGamepads = XUSER_MAX_COUNT;
+
 private:
 	Input() = default;
 	~Input() = default;
+
+	/// <summary>
+	/// マウスカーソル位置を取得し、描画解像度基準のスクリーン座標へ変換する
+	/// </summary>
+	void UpdateMousePosition();
 
 	ComPtr<IDirectInput8> directInput_;
 	ComPtr<IDirectInputDevice8> keyboard_;
@@ -114,6 +159,11 @@ private:
 	BYTE keyPrev_[256] = {};
 	DIMOUSESTATE mouseStatePrev_ = {};
 	DIMOUSESTATE mouseState_ = {};
+
+	Vector2 mousePosition_ = {};
+	bool mouseInside_ = false;
+
+	Gamepad gamepads_[kMaxGamepads];
 
 	WinApp* winApp_ = nullptr;
 };
