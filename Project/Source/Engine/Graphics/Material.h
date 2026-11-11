@@ -91,7 +91,7 @@ public:
     void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { textureSrvHandleGPU_ = handle; }
 
     /// <summary>
-    /// テクスチャを保持する（GPUへのアップロードが完了するまでtexture_/intermediateを生かしておく必要があるため）
+    /// テクスチャを保持する（GPUへのアップロードが完了するまでtexture_を生かしておく必要があるため）
     /// </summary>
     /// <param name="texture">保持するテクスチャハンドル</param>
     void SetTexture(const TextureHandle& texture) {

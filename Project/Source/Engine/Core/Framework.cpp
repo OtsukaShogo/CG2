@@ -39,6 +39,10 @@ void Framework::Initialize() {
 	TextureManager::GetInstance()->Initialize(DirectXCommon::kSrvHeapSize);
 	assetFactory_.Initialize(dx_.get());
 
+	// デフォルトテクスチャ（白）を作成する。初期化直後でコマンドリストが開いているのでそのままアップロードできる
+	TextureManager::GetInstance()->CreateDefaultTextures(
+		dx_->GetDevice(), dx_->GetFrameContext()->commandList, dx_->GetSrvDescriptorHeap(), dx_->GetDescriptorSizeSRV());
+
 	// === Input ===
 	input_ = Input::GetInstance();
 	input_->Initialize(winApp_);
@@ -83,6 +87,7 @@ void Framework::Initialize() {
 
 	// 初期化中に積まれたアップロード等のコマンドをGPUに送信し完了を待つ
 	dx_->FlushCommands();
+	TextureManager::GetInstance()->ReleaseUploadBuffers(); // 転送完了後なのでアップロード用バッファを解放できる
 
 	// 最初のフレームの dt が初期化時間を含まないようにする
 	lastFrameTime_ = std::chrono::steady_clock::now();
@@ -111,6 +116,7 @@ void Framework::Update() {
 		dx_->BeginUpload();
 		sceneMgr_.ApplyPendingChange();
 		dx_->FlushCommands();
+		TextureManager::GetInstance()->ReleaseUploadBuffers();
 
 		// 読み込み時間が次フレームのdtに混ざらないようにする
 		lastFrameTime_ = std::chrono::steady_clock::now();
@@ -162,6 +168,7 @@ void Framework::Finalize() {
 	OnFinalize();
 
 	assetManager_.Clear(); // ModelData（メッシュ・テクスチャ）を解放
+	TextureManager::GetInstance()->Finalize(); // デフォルトテクスチャ・キャッシュを解放
 	audio_->Finalize();
 	input_->Finalize();
 	psoMgr_.reset();       // ID3D12PipelineState + ID3D12RootSignature

@@ -174,6 +174,6 @@ void DemoScene::Finalize() {
 	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
 	sprite_.reset();            // ID3D12Resource x3 (vertex, material, wvp)
 	GetFramework()->GetAudio()->Unload(&soundData1_);
-	tex_ = {};                  // ID3D12Resource x2 (texture, intermediate)
+	tex_ = {};                  // ID3D12Resource (texture) と SRV スロット
 	particleTex_ = {};
 }

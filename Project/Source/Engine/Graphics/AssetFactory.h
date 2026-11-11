@@ -65,6 +65,11 @@ public:
     /// <returns>読み込んだテクスチャのハンドル</returns>
     [[nodiscard]] TextureHandle LoadTexture(const std::string& filePath);
 
+    /// <summary>
+    /// 白い1x1のデフォルトテクスチャを取得する（テクスチャなしで色だけで描画したいときに使う）
+    /// </summary>
+    [[nodiscard]] const TextureHandle& GetWhiteTexture() const { return TextureManager::GetInstance()->GetWhiteTexture(); }
+
 private:
     ID3D12Device* device_ = nullptr;
     ID3D12DescriptorHeap* srvHeap_ = nullptr;

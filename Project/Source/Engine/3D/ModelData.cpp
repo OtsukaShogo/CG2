@@ -16,7 +16,7 @@ std::shared_ptr<ModelData> ModelData::CreateFromObj(
     modelData->mesh_.Upload(device);
 
     // OBJのmtlで指定されたテクスチャを読み込む
-    // （GPUへのアップロードが完了するまでtexture/intermediateを生かしておく必要があるため、ModelData側で保持する）
+    // （GPUへのアップロードが完了するまでtextureを生かしておく必要があるため、ModelData側で保持する）
     modelData->texture_ = TextureManager::GetInstance()->LoadTexture(
         modelData->mesh_.GetTextureFilePath(), device, commandList, srvHeap, descriptorSizeSRV);
 
