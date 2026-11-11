@@ -117,7 +117,7 @@ namespace Engine {
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart();
 
 		// クリア
-		float clearColor[] = { 0.1f, 0.25f, 0.5f, 1.0f };
+		float clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
 			1.0f, 0, 0, nullptr);

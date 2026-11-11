@@ -5,9 +5,9 @@
 #include <string>
 
 #include "../Core/FrameContext.h"
-#include "Model.h"
-#include "ModelData.h"
-#include "Sprite.h"
+#include "../3D/Model.h"
+#include "../3D/ModelData.h"
+#include "../2D/Sprite.h"
 #include "TextureManager.h"
 
 namespace Engine {

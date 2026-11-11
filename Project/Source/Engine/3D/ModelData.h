@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "Mesh.h"
-#include "TextureManager.h"
+#include "../Graphics/Mesh.h"
+#include "../Graphics/TextureManager.h"
 
 namespace Engine {
 

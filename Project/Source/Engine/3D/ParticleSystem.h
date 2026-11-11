@@ -7,6 +7,7 @@
 #include "../Math/TransformMatrix.h"
 #include "../Math/WorldTransform.h"
 #include "../Graphics/Material.h"
+#include "Wind.h"
 
 namespace Engine {
 
@@ -42,7 +43,7 @@ struct ParticleForGPU {
 class ParticleSystem {
 public:
 	// インスタンシング用バッファに確保する最大インスタンス数
-	static constexpr uint32_t kNumMaxInstance = 100;
+	static constexpr uint32_t kNumMaxInstance = 1024;
 
 	/// <summary>
 	/// コンストラクタ
@@ -117,7 +118,14 @@ public:
 	/// <returns>ビルボード有効フラグ</returns>
 	bool& GetUseBillboard() { return useBillboard_; }
 
+	/// <summary>
+	/// パーティクルに影響を与える風を設定する（所有しない。nullptrで風なし）
+	/// </summary>
+	/// <param name="wind">風。呼び出し側が寿命を管理する</param>
+	void SetWind(const Wind* wind) { wind_ = wind; }
+
 private:
+	const Wind* wind_ = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource_;
 	ParticleForGPU* instancingData_ = nullptr;
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};

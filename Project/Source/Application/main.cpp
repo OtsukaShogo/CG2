@@ -14,11 +14,12 @@
 #include "../Engine/Graphics/TextureManager.h"
 #include "../Engine/Graphics/AssetFactory.h"
 #include "../Engine/Graphics/AssetManager.h"
-#include "../Engine/Graphics/Model.h"
-#include "../Engine/Graphics/Sprite.h"
-#include "../Engine/Graphics/ParticleSystem.h"
+#include "../Engine/3D/Model.h"
+#include "../Engine/2D/Sprite.h"
+#include "../Engine/3D/ParticleSystem.h"
+#include "../Engine/3D/Wind.h"
 #include "../Engine/Core/ImGuiManager.h"
-#include "../Engine/Graphics/CameraManager.h"
+#include "../Engine/3D/CameraManager.h"
 #include "../Engine/Audio/AudioManager.h"
 #include "../Engine/Input/Input.h"
 
@@ -135,6 +136,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	particle->SetModelData(particleModelData);
 	particle->SetTextureHandle(particleTex.gpuHandle); // circleを使う
 
+	// 風（パーティクル以外のゲームオブジェクトからも参照できる）
+	Wind wind;
+	wind.SetAcceleration({ -6.0f, 5.0f, 0.0f }); // 左上へ流す
+	wind.SetArea({ { -8.0f, -8.0f, -2.0f }, { 8.0f, 8.0f, 2.0f } });
+	particle->SetWind(&wind);
+
 	// === ライト ================================================================================
 
 	auto light = std::make_unique<Light>();
@@ -150,11 +157,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// === ブレンドモード ==================================================================================
 
-	int currentBlendMode = static_cast<int>(BlendMode::kNone);
+	int currentBlendMode = static_cast<int>(BlendMode::kAdd); // 炎は加算ブレンド
 
 	// === パーティクル移動フラグ ==========================================================================
 
-	bool isParticleMoving = false;
+	bool isParticleMoving = true; // 起動直後から燃やす
 
 	// === メインループ ====================================================================================
 
@@ -183,6 +190,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 		ImGui::Checkbox("Billboard", &particle->GetUseBillboard());
 		ImGui::DragFloat3("Emitter X", &particle->GetEmitter().transform.translate.x, 0.1f);
+
+		//風
+		ImGui::Checkbox("Wind Enabled", &wind.GetEnabled());
+		ImGui::DragFloat3("Wind Acceleration", &wind.GetField().acceleration.x, 0.1f);
+		ImGui::DragFloat3("Wind Area Min", &wind.GetField().area.min.x, 0.1f);
+		ImGui::DragFloat3("Wind Area Max", &wind.GetField().area.max.x, 0.1f);
 
 		//ライト
 		ImGui::ColorEdit4("Light Color", &light->GetDirectionalLight()->color.x);

@@ -38,6 +38,12 @@
     <Filter Include="External\Imgui">
       <UniqueIdentifier>{29ed65fb-6b59-48c5-bcdf-fa469d5302cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\2D">
+      <UniqueIdentifier>{565ad5b1-1a62-4581-bfdc-8f1117b9a57a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Engine\3D">
+      <UniqueIdentifier>{fd785216-70af-44df-baf6-0a4f3c041d64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\Math\Matrix4x4.cpp">
@@ -106,18 +112,6 @@
     <ClCompile Include="Source\Engine\Core\PipelineStateManager.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\Model.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\ModelData.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\ParticleSystem.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\Sprite.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\Material.cpp">
       <Filter>Source\Engine\Graphics</Filter>
     </ClCompile>
@@ -126,9 +120,6 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Core\ImGuiManager.cpp">
       <Filter>Source\Engine\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\Camera.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Source\Application\main.cpp">
       <Filter>Source\Application</Filter>
@@ -148,14 +139,29 @@
     <ClCompile Include="Source\Engine\Input\Input.cpp">
       <Filter>Source\Engine\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\DebugCamera.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Engine\Graphics\CameraManager.cpp">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Engine\Math\Random.cpp">
       <Filter>Source\Engine\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\Camera.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\CameraManager.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\DebugCamera.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\Model.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\ModelData.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\ParticleSystem.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\2D\Sprite.cpp">
+      <Filter>Source\Engine\2D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +170,12 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Math\Matrix4x4.h">
       <Filter>Source\Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Math\AABB.h">
+      <Filter>Source\Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\Wind.h">
+      <Filter>Source\Engine\3D</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Math\Vector3.h">
       <Filter>Source\Engine\Math</Filter>
@@ -240,18 +252,6 @@
     <ClInclude Include="Source\Engine\Core\PipelineStateManager.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\Model.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\ModelData.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\ParticleSystem.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\Sprite.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\Material.h">
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
@@ -260,9 +260,6 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\ImGuiManager.h">
       <Filter>Source\Engine\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\Camera.h">
-      <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\ConvertString.h">
       <Filter>Source\Engine\Core</Filter>
@@ -288,14 +285,29 @@
     <ClInclude Include="Source\Engine\Input\Input.h">
       <Filter>Source\Engine\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\DebugCamera.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Graphics\CameraManager.h">
-      <Filter>Source\Engine\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Engine\Math\Random.h">
       <Filter>Source\Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\Camera.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\CameraManager.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\DebugCamera.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\Model.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\ModelData.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\ParticleSystem.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\2D\Sprite.h">
+      <Filter>Source\Engine\2D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #include "ParticleSystem.h"
 #include "../Core/D3D12Util.h"
 #include "../Math/Matrix4x4.h"
-#include "TextureManager.h"
+#include "../Graphics/TextureManager.h"
 #include "ModelData.h"
 #include "../Core/PipelineStateManager.h"
 #include "../Math/Random.h"
@@ -29,21 +29,38 @@ float EaseInCubic(float t) {
 /// <param name="translate">生成位置の基準（この位置にランダムなずれを足す）</param>
 /// <returns>生成したパーティクル</returns>
 Particle MakeNewParticle(std::mt19937& randomEngine,const Vector3& translate) {
-	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
-	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
-	std::uniform_real_distribution<float> distTime(1.0f, 3.0f);
+	std::uniform_real_distribution<float> distPosition(-0.25f, 0.25f);
+	std::uniform_real_distribution<float> distVelocity(-0.4f, 0.4f);
+	std::uniform_real_distribution<float> distScale(0.5f, 1.0f);
+	std::uniform_real_distribution<float> distTime(0.6f, 1.4f);
 
+	// 炎の粒：エミッタ付近に小さくばらけて発生し、あとは風で流される
 	Particle particle;
-	particle.transform.scale = { 1.0f, 1.0f, 1.0f };
+	float scale = distScale(randomEngine);
+	particle.transform.scale = { scale, scale, scale };
 	particle.transform.rotate = { 0.0f, 0.0f, 0.0f };
-	Vector3 randomTranslate{ distribution(randomEngine),distribution(randomEngine),distribution(randomEngine) };
+	Vector3 randomTranslate{ distPosition(randomEngine), distPosition(randomEngine), distPosition(randomEngine) * 0.2f };
 	particle.transform.translate = translate + randomTranslate;
-	particle.velocity = { distribution(randomEngine), distribution(randomEngine), distribution(randomEngine) };
-	particle.color = { distColor(randomEngine),distColor(randomEngine) ,distColor(randomEngine) ,1.0f };
+	particle.velocity = { distVelocity(randomEngine), distVelocity(randomEngine), 0.0f };
+	particle.color = { 1.0f, 1.0f, 1.0f, 1.0f }; // 色は経過時間から毎フレーム決める（FireColor）
 	particle.lifeTime = distTime(randomEngine);
 	particle.currentTime = 0.0f;
 
 	return particle;
+}
+
+/// <summary>
+/// 炎の色を寿命の進行度から求める（白っぽい黄 → 橙 → 暗い赤）
+/// </summary>
+/// <param name="t">進行度（0.0～1.0）</param>
+/// <returns>RGB（アルファは1.0）</returns>
+Vector4 FireColor(float t) {
+	if (t < 0.4f) {
+		float k = t / 0.4f; // 黄 → 橙
+		return { 1.0f, 0.95f - 0.5f * k, 0.55f - 0.45f * k, 1.0f };
+	}
+	float k = (t - 0.4f) / 0.6f; // 橙 → 赤
+	return { 1.0f - 0.5f * k, 0.45f - 0.4f * k, 0.1f - 0.1f * k, 1.0f };
 }
 
 /// <summary>
@@ -67,8 +84,9 @@ ParticleSystem::ParticleSystem() {
 	emitter_.transform.scale = { 1.0f, 1.0f, 1.0f };
 	emitter_.transform.rotate = { 0.0f, 0.0f, 0.0f };
 	emitter_.transform.translate = { 0.0f, 0.0f, 0.0f };
-	emitter_.count = 3;
-	emitter_.frequency = 0.5f;
+	emitter_.transform.translate = { 2.0f, -2.0f, 0.0f };
+	emitter_.count = 4;
+	emitter_.frequency = 1.0f / 60.0f; // 毎フレーム発生させる
 	emitter_.frequencyTime = 0.0f;
 }
 
@@ -141,6 +159,10 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 			particleIterator = particles_.erase(particleIterator);
 			continue;
 		}
+		// 風の範囲内にいれば加速度を速度へ加える
+		if (wind_) {
+			(*particleIterator).velocity += wind_->GetAccelerationAt((*particleIterator).transform.translate) * deltaTime;
+		}
 		// 速度を反映して移動し、経過時間を進める
 		(*particleIterator).transform.translate += (*particleIterator).velocity * deltaTime;
 		(*particleIterator).currentTime += deltaTime;
@@ -150,14 +172,16 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 		float alpha = 1.0f - EaseInCubic(t);
 
 		if (numInstance < kNumMaxInstance) {
-			Matrix4x4 scaleMatrix = MakeScaleMatrix((*particleIterator).transform.scale);
+			// 炎は燃え尽きるにつれて小さくなる
+			Vector3 shrunkScale = (*particleIterator).transform.scale * (1.0f - 0.7f * t);
+			Matrix4x4 scaleMatrix = MakeScaleMatrix(shrunkScale);
 			Matrix4x4 translateMatrix = MakeTranslateMatrix((*particleIterator).transform.translate);
 			Matrix4x4 worldMatrix = Multiply(Multiply(scaleMatrix, billboardMatrix), translateMatrix);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjection);
 			// 死んだものを詰めて、先頭から numInstance 個を描画できるようにする
 			instancingData_[numInstance].WVP = worldViewProjectionMatrix;
 			instancingData_[numInstance].World = worldMatrix;
-			instancingData_[numInstance].color = (*particleIterator).color;
+			instancingData_[numInstance].color = FireColor(t);
 			instancingData_[numInstance].color.w = alpha;
 			++numInstance;
 		}

@@ -4,8 +4,8 @@
 #include <unordered_map>
 
 #include "AssetFactory.h"
-#include "Model.h"
-#include "ModelData.h"
+#include "../3D/Model.h"
+#include "../3D/ModelData.h"
 
 namespace Engine {
 
