@@ -129,6 +129,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource_;
 	ParticleForGPU* instancingData_ = nullptr;
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};
+	SrvSlot instancingSrvSlot_; // instancing用SRVスロットの所有権（破棄時にヒープへ返却される）
 	uint32_t numInstance = 0;
 	bool useBillboard_ = true;
 	std::list<Particle> particles_;

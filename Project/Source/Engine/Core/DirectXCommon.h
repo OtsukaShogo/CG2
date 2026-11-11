@@ -21,6 +21,8 @@ namespace Engine {
 /// </summary>
 class DirectXCommon {
 public:
+    static constexpr uint32_t kSrvHeapSize = 128; // SRVヒープのディスクリプタ数（0番はImGui用）
+
     DirectXCommon() = default;
     ~DirectXCommon() = default;
 

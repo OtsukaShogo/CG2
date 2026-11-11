@@ -10,6 +10,19 @@ TextureManager* TextureManager::GetInstance() {
     return &instance;
 }
 
+void TextureManager::Initialize(uint32_t heapCapacity) {
+    allocator_.Initialize(heapCapacity, 1); // 0 は ImGui が使うので 1 から
+}
+
+SrvSlot TextureManager::AllocateSrv() {
+    uint32_t* index = new uint32_t(allocator_.Allocate());
+    // 最後の所有者が破棄されたらスロットをアロケータへ返す（アロケータはシングルトンの一部なので破棄時にも有効）
+    return SrvSlot(index, [this](const uint32_t* p) {
+        allocator_.Free(*p);
+        delete p;
+    });
+}
+
 TextureHandle TextureManager::LoadTexture(
     const std::string& filePath,
     ID3D12Device* device,
@@ -40,7 +53,8 @@ TextureHandle TextureManager::LoadTexture(
     handle.intermediate = UploadTextureData(handle.texture.Get(), mipImages, device, commandList);
 
     // 4. SRV の空きスロットを自動割り当て
-    uint32_t index = AllocateSrvIndex();
+    handle.srvSlot = AllocateSrv();
+    uint32_t index = *handle.srvSlot;
 
     handle.cpuHandle = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
     handle.gpuHandle = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);

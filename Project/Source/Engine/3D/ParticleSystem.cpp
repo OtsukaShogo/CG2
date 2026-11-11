@@ -110,7 +110,8 @@ void ParticleSystem::CreateInstancingResource(ID3D12Device* device, ID3D12Descri
 	}
 
 	// SRV の空きスロットを自動割り当て（テクスチャと同じヒープ・同じカウンタを共有する）
-	uint32_t index = TextureManager::GetInstance()->AllocateSrvIndex();
+	instancingSrvSlot_ = TextureManager::GetInstance()->AllocateSrv();
+	uint32_t index = *instancingSrvSlot_;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
 	instancingSrvHandleGPU_ = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);

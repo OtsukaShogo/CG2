@@ -36,6 +36,7 @@ void Framework::Initialize() {
 	dx_ = std::make_unique<DirectXCommon>();
 	dx_->Initialize(winApp_->GetHwnd(), WinApp::kClientWidth, WinApp::kClientHeight);
 
+	TextureManager::GetInstance()->Initialize(DirectXCommon::kSrvHeapSize);
 	assetFactory_.Initialize(dx_.get());
 
 	// === Input ===

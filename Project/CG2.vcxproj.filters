@@ -103,6 +103,9 @@
     <ClCompile Include="Source\Engine\Core\FrameSync.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Graphics\DescriptorAllocator.cpp">
+      <Filter>Source\Engine\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\TextureManager.cpp">
       <Filter>Source\Engine\Graphics</Filter>
     </ClCompile>
@@ -263,6 +266,9 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\DebugUtil.h">
       <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Graphics\DescriptorAllocator.h">
+      <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\TextureManager.h">
       <Filter>Source\Engine\Graphics</Filter>
