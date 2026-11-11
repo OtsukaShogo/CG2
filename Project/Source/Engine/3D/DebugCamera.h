@@ -34,6 +34,12 @@ public:
 	/// <returns>カメラの回転行列</returns>
 	const Matrix4x4& GetRotateMatrix() const { return camera_.GetRotateMatrix(); }
 
+	/// <summary>
+	/// 内部のカメラを取得する
+	/// </summary>
+	/// <returns>デバッグカメラが使っているカメラ</returns>
+	const Camera& GetCamera() const { return camera_; }
+
 private:
 	Camera camera_;
 

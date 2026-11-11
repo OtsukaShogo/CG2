@@ -40,4 +40,6 @@ private:
 
 	int currentBlendMode_ = static_cast<int>(Engine::BlendMode::kAdd); // 炎は加算ブレンド
 	bool isParticleMoving_ = true; // 起動直後から燃やす
+
+	Engine::Vector3 followTarget_ = { 0.0f, 0.0f, 0.0f }; // 追従カメラの確認用ターゲット
 };

@@ -136,6 +136,9 @@
     <ClCompile Include="Source\Application\Scenes\DemoScene.cpp">
       <Filter>Source\Application\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\3D\CameraController.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Scene\SceneManager.cpp">
       <Filter>Source\Engine\Scene</Filter>
     </ClCompile>
@@ -263,6 +266,12 @@
     </ClInclude>
     <ClInclude Include="Source\Application\Scenes\DemoScene.h">
       <Filter>Source\Application\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\CameraController.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Math\Ray.h">
+      <Filter>Source\Engine\Math</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Scene\Scene.h">
       <Filter>Source\Engine\Scene</Filter>

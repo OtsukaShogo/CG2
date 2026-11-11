@@ -219,6 +219,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="Source\Engine\Scene\SceneManager.cpp" />
+    <ClCompile Include="Source\Engine\3D\CameraController.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Material.cpp" />
     <ClCompile Include="Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Mesh.cpp" />
@@ -252,6 +253,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Application\Game.h" />
     <ClInclude Include="Source\Application\Scenes\DemoScene.h" />
     <ClInclude Include="Source\Engine\Scene\Scene.h" />
+    <ClInclude Include="Source\Engine\Math\Ray.h" />
+    <ClInclude Include="Source\Engine\3D\CameraController.h" />
     <ClInclude Include="Source\Engine\Scene\SceneManager.h" />
     <ClInclude Include="Source\Engine\Core\FrameContext.h" />
     <ClInclude Include="Source\Engine\Core\SwapChain.h" />

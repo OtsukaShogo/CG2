@@ -2,6 +2,7 @@
 #include <memory>
 #include "Camera.h"
 #include "DebugCamera.h"
+#include "CameraController.h"
 #include "../Math/Matrix4x4.h"
 
 namespace Engine {
@@ -55,6 +56,20 @@ public:
 	Camera* GetCamera() { return camera_.get(); }
 
 	/// <summary>
+	/// 現在有効なカメラ（通常カメラまたはデバッグカメラ）を取得する。
+	/// 画面に映っている内容と一致させたい座標変換（ScreenToWorldOnPlane等）にはこちらを使う
+	/// </summary>
+	/// <returns>有効なカメラ</returns>
+	[[nodiscard]] const Camera* GetActiveCamera() const;
+
+	/// <summary>
+	/// 通常カメラを追従させるコントローラを取得する。
+	/// 使うときは SetEnabled(true) とし、追従対象の更新後に毎フレーム Update(dt) を呼ぶ
+	/// </summary>
+	/// <returns>カメラコントローラ</returns>
+	CameraController* GetController() { return controller_.get(); }
+
+	/// <summary>
 	/// デバッグカメラが有効かどうかを取得する
 	/// </summary>
 	/// <returns>デバッグカメラが有効な場合はtrue</returns>
@@ -73,6 +88,7 @@ private:
 
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<DebugCamera> debugCamera_;
+	std::unique_ptr<CameraController> controller_;
 	bool isDebugCamera_ = false;
 	Vector3 cameraRotate_ = { 0.0f, 0.0f, 0.0f }; // ImGuiで編集する通常カメラの回転（オイラー角）
 };

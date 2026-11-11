@@ -61,6 +61,20 @@ void DemoScene::Update() {
 		ChangeScene("Demo");
 	}
 
+	// 見下ろし平行投影の追従カメラの動作確認用（Follow Targetを動かすとカメラが追いかける）
+	if (ImGui::Button("Top Down Follow Camera")) {
+		Camera* camera = framework->GetCameraManager()->GetCamera();
+		camera->SetProjectionType(ProjectionType::kOrthographic);
+		camera->GetOrthoHeight() = 10.0f;
+
+		CameraController* controller = framework->GetCameraManager()->GetController();
+		controller->GetPitch() = 1.5707963f; // 真上
+		controller->SetTarget(&followTarget_);
+		controller->SetEnabled(true);
+		controller->Snap();
+	}
+	ImGui::DragFloat3("Follow Target", &followTarget_.x, 0.1f);
+
 	framework->GetCameraManager()->DrawImGui();
 	ImGui::Separator();
 
@@ -94,8 +108,11 @@ void DemoScene::Update() {
 	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite_.translate));
 	sprite_->GetMaterial().GetUVTransform() = uvTransformMatrix;
 
-	// パーティクルのWVP等を計算してResourceに書き込む
+	// 追従カメラの更新（追従対象の更新後、VPを使う処理の前に行う）
 	CameraManager* cameraMgr = framework->GetCameraManager();
+	cameraMgr->GetController()->Update(framework->GetDeltaTime());
+
+	// パーティクルのWVP等を計算してResourceに書き込む
 	particle_->Update(cameraMgr->GetViewProjection(), cameraMgr->GetRotateMatrix(),
 		isParticleMoving_ ? framework->GetDeltaTime() : 0.0f);
 }
@@ -115,6 +132,11 @@ void DemoScene::Draw(ID3D12GraphicsCommandList* commandList) {
 }
 
 void DemoScene::Finalize() {
+	// コントローラがこのシーンのメンバを指したまま残らないようにする
+	CameraController* controller = GetFramework()->GetCameraManager()->GetController();
+	controller->SetTarget(nullptr);
+	controller->SetEnabled(false);
+
 	light_.reset();             // ~Light() で Unmap + Release
 	particle_.reset();          // ID3D12Resource x2 (instancing, material)
 	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
