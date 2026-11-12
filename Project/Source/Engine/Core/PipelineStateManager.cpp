@@ -348,7 +348,7 @@ void PipelineStateManager::CreateObject3DPipeline(ID3D12Device* device, ShaderMa
 
 void PipelineStateManager::CreateSpritePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
 	IDxcBlob* vs = shaderMgr->Compile(L"Resource/Shader/Object3d.VS.hlsl", L"vs_6_0");
-	IDxcBlob* ps = shaderMgr->Compile(L"Resource/Shader/Object3d.PS.hlsl", L"ps_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Resource/Shader/Sprite.PS.hlsl", L"ps_6_0");
 
 	D3D12_INPUT_LAYOUT_DESC inputLayout = MakeStandardInputLayout();
 	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();

@@ -386,6 +386,9 @@
     <FxCompile Include="Resource\Shader\Particle.VS.hlsl">
       <Filter>Resource\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Resource\Shader\Sprite.PS.hlsl">
+      <Filter>Resource\Shaders</Filter>
+    </FxCompile>
     <FxCompile Include="Resource\Shader\Particle.PS.hlsl">
       <Filter>Resource\Shaders</Filter>
     </FxCompile>
