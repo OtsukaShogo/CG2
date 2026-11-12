@@ -127,6 +127,7 @@ void Framework::Update() {
 #endif
 
 	input_->Update();
+	audio_->Update(); // 再生が終わった音声の後始末
 
 	// カメラ更新（F1でデバッグカメラ切り替え）。ゲーム側のOnUpdateより先に行う
 	cameraMgr_->Update();

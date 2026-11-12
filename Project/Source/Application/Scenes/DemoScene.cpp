@@ -24,7 +24,7 @@ void DemoScene::Initialize() {
 	// === 音声 ===
 	AudioManager* audio = framework->GetAudio();
 	soundData1_ = audio->LoadWave("Resource/Alarm01.wav");
-	audio->Play(soundData1_);
+	voice1_ = audio->Play(soundData1_);
 
 	// パーティクルの描画形状（板）を読み込む
 	particleModelData_ = assetFactory->CreateModelData("Resource", "plane.obj");
@@ -173,7 +173,9 @@ void DemoScene::Finalize() {
 	particle_.reset();          // ID3D12Resource x2 (instancing, material)
 	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
 	sprite_.reset();            // ID3D12Resource x3 (vertex, material, wvp)
-	GetFramework()->GetAudio()->Unload(&soundData1_);
+	GetFramework()->GetAudio()->Stop(voice1_);
+	voice1_ = Engine::kInvalidVoiceId;
+	soundData1_.reset();
 	tex_ = {};                  // ID3D12Resource (texture) と SRV スロット
 	particleTex_ = {};
 }

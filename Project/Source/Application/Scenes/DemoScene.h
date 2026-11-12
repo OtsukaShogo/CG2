@@ -24,7 +24,8 @@ public:
 private:
 	Engine::TextureHandle tex_;
 	Engine::TextureHandle particleTex_;
-	Engine::SoundData soundData1_{};
+	Engine::Sound soundData1_;                              // 読み込んだ音声（手放せば自動で解放される）
+	Engine::VoiceId voice1_ = Engine::kInvalidVoiceId;      // 再生中の音声の識別子
 
 	std::shared_ptr<Engine::ModelData> particleModelData_;
 	std::unique_ptr<Engine::Sprite> sprite_;

@@ -1,7 +1,13 @@
 #include "AudioManager.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cstring>
+#include <filesystem>
 #include <fstream>
+
+#include "../Core/ConvertString.h"
+#include "../Core/DebugUtil.h"
 
 #pragma comment(lib,"xaudio2.lib")
 
@@ -13,94 +19,78 @@ namespace {
 	/// wavファイルのチャンクヘッダ（ID・サイズ）
 	/// </summary>
 	struct ChunkHeader {
-		char id[4]; // チャンク毎のID
-		int32_t size;  // チャンクサイズ
+		char id[4];    // チャンク毎のID
+		uint32_t size; // チャンクサイズ
 	};
 
-	/// <summary>
-	/// wavファイルのRIFFヘッダチャンク
-	/// </summary>
-	struct RiffHeader {
-		ChunkHeader chunk;  // "RIFF"
-		char type[4]; // "WAVE"
-	};
-
-	/// <summary>
-	/// wavファイルのフォーマットチャンク（波形フォーマット情報）
-	/// </summary>
-	struct FormatChunk {
-		ChunkHeader chunk; // "fmt "
-		WAVEFORMATEX fmt; // 波形フォーマット
-	};
-
-	// wavファイルの各チャンクを識別するID文字列
-	constexpr char kChunkIdRiff[] = "RIFF";
-	constexpr char kChunkIdWave[] = "WAVE";
-	constexpr char kChunkIdFmt[]  = "fmt ";
-	constexpr char kChunkIdData[] = "data";
-	constexpr char kChunkIdJunk[] = "JUNK";
-
-	/// <summary>
-	/// RIFFヘッダーを読み込み、"RIFF"/"WAVE"であることを確認する
-	/// </summary>
-	RiffHeader ReadRiffHeader(std::ifstream& file) {
-		RiffHeader riff;
-		file.read((char*)&riff, sizeof(riff));
-
-		// ファイルがRIFFかチェック
-		assert(strncmp(riff.chunk.id, kChunkIdRiff, sizeof(kChunkIdRiff) - 1) == 0);
-
-		// タイプがWAVEかチェック
-		assert(strncmp(riff.type, kChunkIdWave, sizeof(kChunkIdWave) - 1) == 0);
-
-		return riff;
+	bool IsChunk(const ChunkHeader& header, const char* id) {
+		return std::memcmp(header.id, id, 4) == 0;
 	}
 
 	/// <summary>
-	/// Formatチャンクを読み込み、"fmt "であることを確認する
+	/// wavファイルを読み込む。RIFF/WAVEを確認し、"fmt "と"data"が見つかるまでチャンクを読み飛ばしながら進める
+	/// （JUNK・LISTなどの余分なチャンクが挟まっていてもよい）。
+	/// 失敗した場合は false を返し、理由を errorMessage に入れる
 	/// </summary>
-	FormatChunk ReadFormatChunk(std::ifstream& file) {
-		FormatChunk format = {};
-
-		// チャンクヘッダーの確認
-		file.read((char*)&format, sizeof(ChunkHeader));
-		assert(strncmp(format.chunk.id, kChunkIdFmt, sizeof(kChunkIdFmt) - 1) == 0);
-
-		// チャンク本体の読み込み
-		assert(format.chunk.size <= sizeof(format.fmt));
-		file.read((char*)&format.fmt, format.chunk.size);
-
-		return format;
-	}
-
-	/// <summary>
-	/// Dataチャンクのヘッダーを読み込む（JUNKチャンクが挟まっている場合は読み飛ばす）
-	/// </summary>
-	ChunkHeader ReadDataChunkHeader(std::ifstream& file) {
-		ChunkHeader data;
-		file.read((char*)&data, sizeof(data));
-
-		// JUNKチャンクを検出した場合
-		if (strncmp(data.id, kChunkIdJunk, sizeof(kChunkIdJunk) - 1) == 0) {
-			// 読み取り位置をJUNKチャンクの終わりまで進める
-			file.seekg(data.size, std::ios_base::cur);
-
-			// 再読み込み
-			file.read((char*)&data, sizeof(data));
+	bool ReadWaveFile(const std::string& filePath, SoundData& out, std::string& errorMessage) {
+		std::ifstream file(std::filesystem::path(ConvertString(filePath)), std::ios_base::binary);
+		if (!file.is_open()) {
+			errorMessage = "ファイルを開けません";
+			return false;
 		}
 
-		assert(strncmp(data.id, kChunkIdData, sizeof(kChunkIdData) - 1) == 0);
+		// RIFFヘッダー（"RIFF" + 全体サイズ + "WAVE"）
+		ChunkHeader riff{};
+		char waveType[4]{};
+		file.read(reinterpret_cast<char*>(&riff), sizeof(riff));
+		file.read(waveType, sizeof(waveType));
+		if (!file || !IsChunk(riff, "RIFF") || std::memcmp(waveType, "WAVE", 4) != 0) {
+			errorMessage = "wavファイルではありません";
+			return false;
+		}
 
-		return data;
-	}
+		bool hasFormat = false;
+		ChunkHeader header{};
+		while (file.read(reinterpret_cast<char*>(&header), sizeof(header))) {
+			if (IsChunk(header, "fmt ")) {
+				if (header.size < 16) {
+					errorMessage = "fmtチャンクが不正です";
+					return false;
+				}
+				// 拡張部分があっても、WAVEFORMATEXに収まる分だけ読んで残りは読み飛ばす
+				uint32_t readSize = (std::min)(header.size, static_cast<uint32_t>(sizeof(WAVEFORMATEX)));
+				out.wfex = {};
+				file.read(reinterpret_cast<char*>(&out.wfex), readSize);
+				file.seekg(static_cast<std::streamoff>(header.size - readSize + (header.size & 1)), std::ios_base::cur);
+				if (!file) {
+					errorMessage = "fmtチャンクを読み込めません";
+					return false;
+				}
+				if (out.wfex.wFormatTag != WAVE_FORMAT_PCM && out.wfex.wFormatTag != WAVE_FORMAT_IEEE_FLOAT) {
+					errorMessage = "非対応のwav形式です（PCM/Floatのみ対応）";
+					return false;
+				}
+				hasFormat = true;
+			} else if (IsChunk(header, "data")) {
+				if (!hasFormat) {
+					errorMessage = "fmtチャンクがdataより前にありません";
+					return false;
+				}
+				out.buffer.resize(header.size);
+				file.read(reinterpret_cast<char*>(out.buffer.data()), header.size);
+				if (!file) {
+					errorMessage = "波形データを読み込めません";
+					return false;
+				}
+				return true;
+			} else {
+				// 不要なチャンクは読み飛ばす（チャンクは偶数バイト境界に揃えられる）
+				file.seekg(static_cast<std::streamoff>(header.size + (header.size & 1)), std::ios_base::cur);
+			}
+		}
 
-	/// <summary>
-	/// Dataチャンクのデータ部（波形データ本体）を読み込む
-	/// </summary>
-	std::vector<BYTE> ReadWaveBuffer(std::ifstream& file, int32_t size) {
-		std::vector<BYTE> buffer(size);
-		file.read(reinterpret_cast<char*>(buffer.data()), size);
-		return buffer;
+		errorMessage = "dataチャンクが見つかりません";
+		return false;
 	}
 
 } // namespace
@@ -121,57 +111,50 @@ void AudioManager::Initialize() {
 	// マスターボイスを生成
 	result = xAudio2_->CreateMasteringVoice(&masterVoice_);
 	assert(SUCCEEDED(result));
+
+	nextVoiceId_ = 1;
 }
 
 void AudioManager::Finalize() {
 	// 再生中・再生済みのSourceVoiceを全て破棄してからエンジンを解放する
-	for (IXAudio2SourceVoice* voice : activeVoices_) {
-		voice->Stop();
-		voice->DestroyVoice();
-	}
-	activeVoices_.clear();
+	StopAll();
 
 	xAudio2_.Reset();
 	masterVoice_ = nullptr;
 }
 
-SoundData AudioManager::LoadWave(const std::string& filePath) {
+void AudioManager::Update() {
+	ReapFinishedVoices();
+}
 
-	// .wavファイルをバイナリモードで開く
-	std::ifstream file(filePath, std::ios_base::binary);
-	assert(file.is_open());
+Sound AudioManager::LoadWave(const std::string& filePath) {
+	auto soundData = std::make_shared<SoundData>();
 
-	// RIFF → Format → Data の順にチャンクを読み進める
-	ReadRiffHeader(file);
-	FormatChunk format = ReadFormatChunk(file);
-	ChunkHeader data = ReadDataChunkHeader(file);
-	std::vector<BYTE> buffer = ReadWaveBuffer(file, data.size);
-
-	file.close();
-
-	// returnする為の音声データ
-	SoundData soundData = {};
-	soundData.wfex = format.fmt;
-	soundData.buffer = std::move(buffer);
+	std::string errorMessage;
+	if (!ReadWaveFile(filePath, *soundData, errorMessage)) {
+		DebugUtil::Log("[AudioManager] 音声の読み込みに失敗しました (" + errorMessage + "): " + filePath + "\n");
+		return nullptr;
+	}
 
 	return soundData;
 }
 
-void AudioManager::Unload(SoundData* soundData) {
-	// バッファのメモリを解放
-	soundData->buffer.clear();
-	soundData->buffer.shrink_to_fit();
-	soundData->wfex = {};
+void AudioManager::DestroyVoice(ActiveVoice& active) {
+	// DestroyVoice はXAudio2の処理スレッドがボイスを使い終えるまで待つので、その後であればバッファを手放してよい
+	active.voice->Stop();
+	active.voice->DestroyVoice();
+	active.voice = nullptr;
+	active.sound.reset();
 }
 
 void AudioManager::ReapFinishedVoices() {
 	for (auto it = activeVoices_.begin(); it != activeVoices_.end();) {
 		XAUDIO2_VOICE_STATE state{};
-		(*it)->GetState(&state);
+		it->voice->GetState(&state);
 
-		// 再生キューが空になっていれば再生完了とみなして破棄する
+		// 再生キューが空になっていれば再生完了とみなして破棄する（ループ再生中は空にならない）
 		if (state.BuffersQueued == 0) {
-			(*it)->DestroyVoice();
+			DestroyVoice(*it);
 			it = activeVoices_.erase(it);
 		} else {
 			++it;
@@ -179,30 +162,94 @@ void AudioManager::ReapFinishedVoices() {
 	}
 }
 
-void AudioManager::Play(const SoundData& soundData) {
+const AudioManager::ActiveVoice* AudioManager::Find(VoiceId id) const {
+	if (id == kInvalidVoiceId) {
+		return nullptr;
+	}
+	auto it = std::find_if(activeVoices_.begin(), activeVoices_.end(),
+		[id](const ActiveVoice& v) { return v.id == id; });
+	return it == activeVoices_.end() ? nullptr : &*it;
+}
 
-	HRESULT result;
+VoiceId AudioManager::Play(const Sound& sound, const PlayParams& params) {
+	if (!sound || sound->buffer.empty() || !xAudio2_) {
+		return kInvalidVoiceId;
+	}
 
 	// 再生が終わった過去のSourceVoiceを破棄してからリソースを積み増す
 	ReapFinishedVoices();
 
 	// 波形フォーマットを元にSourceVoiceの生成
-	IXAudio2SourceVoice* pSourceVoice = nullptr;
-	result = xAudio2_->CreateSourceVoice(&pSourceVoice, &soundData.wfex);
-	assert(SUCCEEDED(result));
+	IXAudio2SourceVoice* sourceVoice = nullptr;
+	HRESULT result = xAudio2_->CreateSourceVoice(&sourceVoice, &sound->wfex);
+	if (FAILED(result)) {
+		DebugUtil::Log("[AudioManager] SourceVoiceの生成に失敗しました\n");
+		return kInvalidVoiceId;
+	}
 
 	// 再生する波形データの設定
 	XAUDIO2_BUFFER buf{};
-	buf.pAudioData = soundData.buffer.data();
-	buf.AudioBytes = static_cast<UINT32>(soundData.buffer.size());
+	buf.pAudioData = sound->buffer.data();
+	buf.AudioBytes = static_cast<UINT32>(sound->buffer.size());
 	buf.Flags = XAUDIO2_END_OF_STREAM;
+	buf.LoopCount = params.loop ? XAUDIO2_LOOP_INFINITE : 0;
 
-	// 波形データの再生
-	result = pSourceVoice->SubmitSourceBuffer(&buf);
-	result = pSourceVoice->Start();
+	result = sourceVoice->SubmitSourceBuffer(&buf);
+	if (FAILED(result)) {
+		sourceVoice->DestroyVoice();
+		DebugUtil::Log("[AudioManager] 音声バッファの登録に失敗しました\n");
+		return kInvalidVoiceId;
+	}
 
-	// 再生完了後に破棄できるよう保持しておく
-	activeVoices_.push_back(pSourceVoice);
+	sourceVoice->SetVolume(params.volume);
+	sourceVoice->Start();
+
+	// 再生完了後に破棄できるよう保持しておく。音声データもここで共有して、再生中は解放されないようにする
+	ActiveVoice active;
+	active.id = nextVoiceId_++;
+	active.voice = sourceVoice;
+	active.sound = sound;
+	activeVoices_.push_back(std::move(active));
+	return activeVoices_.back().id;
+}
+
+void AudioManager::Stop(VoiceId id) {
+	auto it = std::find_if(activeVoices_.begin(), activeVoices_.end(),
+		[id](const ActiveVoice& v) { return v.id == id; });
+	if (id == kInvalidVoiceId || it == activeVoices_.end()) {
+		return;
+	}
+	DestroyVoice(*it);
+	activeVoices_.erase(it);
+}
+
+void AudioManager::StopAll() {
+	for (ActiveVoice& active : activeVoices_) {
+		DestroyVoice(active);
+	}
+	activeVoices_.clear();
+}
+
+void AudioManager::SetVolume(VoiceId id, float volume) {
+	if (const ActiveVoice* active = Find(id)) {
+		active->voice->SetVolume(volume);
+	}
+}
+
+bool AudioManager::IsPlaying(VoiceId id) const {
+	const ActiveVoice* active = Find(id);
+	if (!active) {
+		return false;
+	}
+	XAUDIO2_VOICE_STATE state{};
+	active->voice->GetState(&state);
+	return state.BuffersQueued > 0;
+}
+
+void AudioManager::SetMasterVolume(float volume) {
+	if (masterVoice_) {
+		masterVoice_->SetVolume(volume);
+	}
 }
 
 } // namespace Engine
