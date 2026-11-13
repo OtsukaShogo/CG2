@@ -12,4 +12,5 @@
     <File Path=".editorconfig" />
   </Folder>
   <Project Path="CG2.vcxproj" Id="135e1fe7-b1c6-43a6-bd91-c0cb711370f4" />
+  <Project Path="Tests/CG2.Tests.vcxproj" Id="6f3c2d1a-8b47-4e9d-a5c0-2d7e91b4f368" />
 </Solution>

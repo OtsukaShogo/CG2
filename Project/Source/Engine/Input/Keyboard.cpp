@@ -30,18 +30,22 @@ void Keyboard::Finalize() {
 }
 
 bool Keyboard::PushKey(BYTE keyCode) const {
+	if (blocked_) return false;
 	return key_[keyCode] != 0;
 }
 
 bool Keyboard::UpKey(BYTE keyCode) const {
+	if (blocked_) return true; // 押されていない扱い
 	return key_[keyCode] == 0;
 }
 
 bool Keyboard::TriggerKey(BYTE keyCode) const {
+	if (blocked_) return false;
 	return key_[keyCode] != 0 && keyPrev_[keyCode] == 0;
 }
 
 bool Keyboard::ReleaseKey(BYTE keyCode) const {
+	if (blocked_) return false;
 	return key_[keyCode] == 0 && keyPrev_[keyCode] != 0;
 }
 

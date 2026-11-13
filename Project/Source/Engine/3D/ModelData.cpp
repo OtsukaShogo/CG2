@@ -34,9 +34,13 @@ std::shared_ptr<ModelData> ModelData::CreateFromObj(
 }
 
 std::shared_ptr<ModelData> ModelData::CreateSphere(ID3D12Device* device) {
+    return CreatePrimitive(PrimitiveType::kSphere, device);
+}
+
+std::shared_ptr<ModelData> ModelData::CreatePrimitive(PrimitiveType type, ID3D12Device* device) {
     auto modelData = std::make_shared<ModelData>();
 
-    modelData->mesh_.CreateSphere();
+    modelData->mesh_.SetMeshData(MakePrimitiveMeshData(type));
     modelData->mesh_.Upload(device);
     modelData->texture_ = TextureManager::GetInstance()->GetWhiteTexture(); // 色だけで描画できるように白を使う
 

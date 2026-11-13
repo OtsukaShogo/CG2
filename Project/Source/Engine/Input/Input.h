@@ -80,6 +80,16 @@ public:
 	/// </summary>
 	[[nodiscard]] bool IsWindowActive() const { return windowActive_; }
 
+	/// <summary>
+	/// キーボード入力をブロックする（ImGuiの入力欄にフォーカスがあるときなど、ゲームに入力を渡したくない場合）
+	/// </summary>
+	void SetKeyboardBlocked(bool blocked) { keyboard_.SetBlocked(blocked); }
+
+	/// <summary>
+	/// マウス入力をブロックする（ImGuiのウィンドウ上にカーソルがあるときなど）
+	/// </summary>
+	void SetMouseBlocked(bool blocked) { mouse_.SetBlocked(blocked); }
+
 private:
 	Input() = default;
 	~Input() = default;

@@ -40,6 +40,12 @@ public:
 	void Finalize();
 
 	/// <summary>
+	/// ブロック状態を設定する。trueの間は、ボタンは押されていない・移動量とホイールは0として扱う（ImGuiが入力を使っているときなど）。
+	/// カーソル位置は変わらず取得できる
+	/// </summary>
+	void SetBlocked(bool blocked) { blocked_ = blocked; }
+
+	/// <summary>
 	/// 指定のボタンが押されているかを取得する
 	/// </summary>
 	[[nodiscard]] bool PushButton(MouseButton button) const;
@@ -57,17 +63,17 @@ public:
 	/// <summary>
 	/// 今フレームのX軸相対移動量を取得する
 	/// </summary>
-	[[nodiscard]] long GetDeltaX() const { return state_.lX; }
+	[[nodiscard]] long GetDeltaX() const { return blocked_ ? 0 : state_.lX; }
 
 	/// <summary>
 	/// 今フレームのY軸相対移動量を取得する
 	/// </summary>
-	[[nodiscard]] long GetDeltaY() const { return state_.lY; }
+	[[nodiscard]] long GetDeltaY() const { return blocked_ ? 0 : state_.lY; }
 
 	/// <summary>
 	/// 今フレームのホイール移動量を取得する
 	/// </summary>
-	[[nodiscard]] long GetDeltaWheel() const { return state_.lZ; }
+	[[nodiscard]] long GetDeltaWheel() const { return blocked_ ? 0 : state_.lZ; }
 
 	/// <summary>
 	/// カーソルの位置をスクリーン座標（クライアント領域の左上原点、描画解像度基準のピクセル）で取得する。
@@ -94,6 +100,7 @@ private:
 	HWND hwnd_ = nullptr;
 	Vector2 position_ = {};
 	bool inside_ = false;
+	bool blocked_ = false;
 };
 
 } // namespace Engine

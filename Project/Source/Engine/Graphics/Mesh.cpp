@@ -11,6 +11,7 @@
 #include "../Core/DebugUtil.h"
 #include "../Core/D3D12Util.h"
 #include"Material.h"
+#include "PrimitiveMesh.h"
 
 namespace Engine {
 
@@ -24,96 +25,33 @@ const std::string& Mesh::GetTextureFilePath() const {
 	return material_ ? material_->GetTextureFilePath() : kEmpty;
 }
 
+void Mesh::SetMeshData(MeshData&& data) {
+	vertices_ = std::move(data.vertices);
+	indices_ = std::move(data.indices);
+}
+
 void Mesh::CreateSphere(uint32_t subdivision) {
-	// 緯度・経度1区画（クアッド）あたりの頂点数・インデックス数（三角形2枚分）
-	constexpr uint32_t kVerticesPerQuad = 4;
-	constexpr uint32_t kIndicesPerQuad  = 6;
-
-	const float kLonEvery = std::numbers::pi_v<float> * 2.0f / float(subdivision);
-	const float kLatEvery = std::numbers::pi_v<float> / float(subdivision);
-
-	vertices_.clear();
-	indices_.clear();
-	vertices_.reserve(subdivision * subdivision * kVerticesPerQuad);
-	indices_.reserve(subdivision * subdivision * kIndicesPerQuad);
-
-	// 緯度・経度をsubdivision分割し、各区画（クアッド）ごとに4頂点・2三角形を生成してUV球を作る
-	for (uint32_t latIndex = 0; latIndex < subdivision; ++latIndex) {
-		float lat = -std::numbers::pi_v<float> / 2.0f + kLatEvery * latIndex;
-		for (uint32_t lonIndex = 0; lonIndex < subdivision; ++lonIndex) {
-			float lon = lonIndex * kLonEvery;
-
-			float startU = float(lonIndex) / float(subdivision);
-			float startV = 1.0f - float(latIndex) / float(subdivision);
-			float nextU = float(lonIndex + 1) / float(subdivision);
-			float nextV = 1.0f - float(latIndex + 1) / float(subdivision);
-
-			uint32_t vStart = static_cast<uint32_t>(vertices_.size());
-
-			// a
-			VertexData a{};
-			a.position = { std::cos(lat) * std::cos(lon), std::sin(lat), std::cos(lat) * std::sin(lon), 1.0f };
-			a.texcoord = { startU, startV };
-			a.normal = { a.position.x, a.position.y, a.position.z };
-
-			// b
-			VertexData b{};
-			b.position = { std::cos(lat + kLatEvery) * std::cos(lon), std::sin(lat + kLatEvery), std::cos(lat + kLatEvery) * std::sin(lon), 1.0f };
-			b.texcoord = { startU, nextV };
-			b.normal = { b.position.x, b.position.y, b.position.z };
-
-			// c
-			VertexData c{};
-			c.position = { std::cos(lat) * std::cos(lon + kLonEvery), std::sin(lat), std::cos(lat) * std::sin(lon + kLonEvery), 1.0f };
-			c.texcoord = { nextU, startV };
-			c.normal = { c.position.x, c.position.y, c.position.z };
-
-			// d
-			VertexData d{};
-			d.position = { std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery), std::sin(lat + kLatEvery), std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery), 1.0f };
-			d.texcoord = { nextU, nextV };
-			d.normal = { d.position.x, d.position.y, d.position.z };
-
-			vertices_.push_back(a);
-			vertices_.push_back(b);
-			vertices_.push_back(c);
-			vertices_.push_back(d);
-
-			// T1: a, b, c
-			indices_.push_back(vStart + 0);
-			indices_.push_back(vStart + 1);
-			indices_.push_back(vStart + 2);
-
-			// T2: d, c, b
-			indices_.push_back(vStart + 3);
-			indices_.push_back(vStart + 2);
-			indices_.push_back(vStart + 1);
-		}
-	}
+	SetMeshData(MakeSphereMeshData(subdivision));
 }
 
 void Mesh::CreateRect(float width, float height) {
-	// 矩形の頂点数（左下・左上・右上・右下の4点）
-	constexpr size_t kRectVertexCount = 4;
-	vertices_.resize(kRectVertexCount);
+	SetMeshData(MakeRectMeshData(width, height));
+}
 
-	vertices_[0].position = { 0.0f,  height, 0.0f, 1.0f }; // 左下
-	vertices_[0].texcoord = { 0.0f, 1.0f };
-	vertices_[0].normal   = { 0.0f, 0.0f, -1.0f };
+void Mesh::CreateBox(const Vector3& size) {
+	SetMeshData(MakeBoxMeshData(size));
+}
 
-	vertices_[1].position = { 0.0f,  0.0f,  0.0f, 1.0f }; // 左上
-	vertices_[1].texcoord = { 0.0f, 0.0f };
-	vertices_[1].normal   = { 0.0f, 0.0f, -1.0f };
+void Mesh::CreatePlane(float width, float depth) {
+	SetMeshData(MakePlaneMeshData(width, depth));
+}
 
-	vertices_[2].position = { width, 0.0f,  0.0f, 1.0f }; // 右上
-	vertices_[2].texcoord = { 1.0f, 0.0f };
-	vertices_[2].normal   = { 0.0f, 0.0f, -1.0f };
+void Mesh::CreateCylinder(float radius, float height, uint32_t segments) {
+	SetMeshData(MakeCylinderMeshData(radius, height, segments));
+}
 
-	vertices_[3].position = { width, height, 0.0f, 1.0f }; // 右下
-	vertices_[3].texcoord = { 1.0f, 1.0f };
-	vertices_[3].normal   = { 0.0f, 0.0f, -1.0f };
-
-	indices_ = { 0, 1, 3, 1, 2, 3 };
+void Mesh::CreateCone(float radius, float height, uint32_t segments) {
+	SetMeshData(MakeConeMeshData(radius, height, segments));
 }
 
 void Mesh::ParseVertexLine(std::istringstream& s, std::vector<Vector4>& positions) {

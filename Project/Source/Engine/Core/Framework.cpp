@@ -129,6 +129,9 @@ void Framework::Update() {
 
 #ifdef USE_IMGUI
 	imgui_->BeginFrame();
+	// ImGuiが入力を使っている間（入力欄への文字入力・ウィンドウ操作など）は、ゲームへ入力を渡さない
+	input_->SetKeyboardBlocked(imgui_->WantCaptureKeyboard());
+	input_->SetMouseBlocked(imgui_->WantCaptureMouse());
 #endif
 
 	input_->Update();

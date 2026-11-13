@@ -48,6 +48,14 @@ public:
     [[nodiscard]] static std::shared_ptr<ModelData> CreateSphere(ID3D12Device* device);
 
     /// <summary>
+    /// 基本図形（立方体・板・円柱など）のモデルデータを生成する（基準サイズ。白テクスチャ）。
+    /// 大きさはModelのスケールで変える
+    /// </summary>
+    /// <param name="type">図形の種類</param>
+    /// <param name="device">D3D12デバイス</param>
+    [[nodiscard]] static std::shared_ptr<ModelData> CreatePrimitive(PrimitiveType type, ID3D12Device* device);
+
+    /// <summary>
     /// メッシュを取得する
     /// </summary>
     /// <returns>メッシュ</returns>

@@ -44,6 +44,12 @@ public:
     [[nodiscard]] std::shared_ptr<ModelData> CreateSphereModelData();
 
     /// <summary>
+    /// 基本図形のモデルデータを生成する（PrimitiveTypeごとの基準サイズ。白テクスチャ）
+    /// </summary>
+    /// <param name="type">図形の種類</param>
+    [[nodiscard]] std::shared_ptr<ModelData> CreatePrimitiveModelData(PrimitiveType type);
+
+    /// <summary>
     /// モデルデータを参照するモデルインスタンスを生成する
     /// </summary>
     /// <param name="modelData">参照する共有モデルデータ</param>

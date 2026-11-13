@@ -154,6 +154,9 @@
     <ClCompile Include="Source\Engine\Graphics\ConstantBufferAllocator.cpp">
       <Filter>Source\Engine\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Graphics\PrimitiveMesh.cpp">
+      <Filter>Source\Engine\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Core\D3DResourceLeakChecker.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
@@ -340,6 +343,9 @@
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\ConstantBufferAllocator.h">
+      <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Graphics\PrimitiveMesh.h">
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Math\Matrix3x3.h">

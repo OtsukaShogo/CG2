@@ -29,6 +29,12 @@ public:
 	void Finalize();
 
 	/// <summary>
+	/// ブロック状態を設定する。trueの間は、すべてのキーが押されていないものとして扱う（ImGuiが入力を使っているときなど）。
+	/// 内部の状態更新は続くので、解除した時に誤ったトリガーは発生しない
+	/// </summary>
+	void SetBlocked(bool blocked) { blocked_ = blocked; }
+
+	/// <summary>
 	/// 指定キーが押されているかを取得する
 	/// </summary>
 	/// <param name="keyCode">判定するキーコード（DIK_～）</param>
@@ -56,6 +62,7 @@ private:
 	Microsoft::WRL::ComPtr<IDirectInputDevice8> device_;
 	BYTE key_[256] = {};
 	BYTE keyPrev_[256] = {};
+	bool blocked_ = false;
 };
 
 } // namespace Engine

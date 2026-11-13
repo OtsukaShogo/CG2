@@ -62,15 +62,18 @@ void Mouse::Finalize() {
 }
 
 bool Mouse::PushButton(MouseButton button) const {
+	if (blocked_) return false;
 	return (state_.rgbButtons[static_cast<int>(button)] & 0x80) != 0;
 }
 
 bool Mouse::TriggerButton(MouseButton button) const {
+	if (blocked_) return false;
 	int i = static_cast<int>(button);
 	return (state_.rgbButtons[i] & 0x80) != 0 && (statePrev_.rgbButtons[i] & 0x80) == 0;
 }
 
 bool Mouse::ReleaseButton(MouseButton button) const {
+	if (blocked_) return false;
 	int i = static_cast<int>(button);
 	return (state_.rgbButtons[i] & 0x80) == 0 && (statePrev_.rgbButtons[i] & 0x80) != 0;
 }

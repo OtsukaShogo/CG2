@@ -14,6 +14,10 @@ std::shared_ptr<ModelData> AssetFactory::CreateModelData(const std::string& dire
     return ModelData::CreateFromObj(directoryPath, filename, device_, frameContext_->commandList, srvHeap_, descriptorSizeSRV_);
 }
 
+std::shared_ptr<ModelData> AssetFactory::CreatePrimitiveModelData(PrimitiveType type) {
+    return ModelData::CreatePrimitive(type, device_);
+}
+
 std::shared_ptr<ModelData> AssetFactory::CreateSphereModelData() {
     return ModelData::CreateSphere(device_);
 }

@@ -45,6 +45,14 @@ void ImGuiManager::EndFrame(ID3D12GraphicsCommandList* commandList) {
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 }
 
+bool ImGuiManager::WantCaptureKeyboard() const {
+	return initialized_ && ImGui::GetIO().WantCaptureKeyboard;
+}
+
+bool ImGuiManager::WantCaptureMouse() const {
+	return initialized_ && ImGui::GetIO().WantCaptureMouse;
+}
+
 void ImGuiManager::Finalize() {
 	if (!initialized_) return;
 

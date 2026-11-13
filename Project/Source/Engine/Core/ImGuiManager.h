@@ -43,6 +43,16 @@ public:
     /// </summary>
     void Finalize();
 
+    /// <summary>
+    /// ImGuiがキーボード入力（テキスト入力欄など）を使いたがっているかを返す
+    /// </summary>
+    [[nodiscard]] bool WantCaptureKeyboard() const;
+
+    /// <summary>
+    /// ImGuiがマウス入力（ウィンドウ上のカーソルやドラッグ）を使いたがっているかを返す
+    /// </summary>
+    [[nodiscard]] bool WantCaptureMouse() const;
+
 private:
     ImGuiManager() = default;
     ~ImGuiManager() = default;

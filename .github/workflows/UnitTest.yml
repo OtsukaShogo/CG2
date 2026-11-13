@@ -1,0 +1,35 @@
+name: UnitTest
+
+# master への push と、プルリクエストで、単体テストをビルドして実行する。
+# テストが1つでも失敗すると、実行ファイルが0以外の終了コードを返し、このジョブが失敗になる。
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  # リポジトリのルートディレクトリを基点としたテストプロジェクトのパス
+  TEST_PROJECT_PATH: Project/Tests/CG2.Tests.vcxproj
+  CONFIGURATION: Debug
+
+jobs:
+  test:
+    runs-on: windows-2025-vs2026
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
+
+      - name: Build tests
+        run: |
+          msbuild ${{ env.TEST_PROJECT_PATH }} /p:Platform=x64 /p:Configuration=${{ env.CONFIGURATION }}
+
+      - name: Run tests
+        run: |
+          Generated/Output/${{ env.CONFIGURATION }}/CG2.Tests.exe

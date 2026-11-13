@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include "VertexData.h"
+#include "PrimitiveMesh.h"
 
 namespace Engine {
 
@@ -27,17 +28,43 @@ public:
 	~Mesh();
 
 	/// <summary>
-	/// 球メッシュを生成する
+	/// 球メッシュを生成する（半径1）
 	/// </summary>
 	/// <param name="subdivision">球の分割数</param>
 	void CreateSphere(uint32_t subdivision = 16);
 
 	/// <summary>
-	/// 矩形メッシュを生成する
+	/// 矩形メッシュを生成する（左上が原点、+Yが下。Sprite用）
 	/// </summary>
 	/// <param name="width">矩形の幅</param>
 	/// <param name="height">矩形の高さ</param>
 	void CreateRect(float width, float height);
+
+	/// <summary>
+	/// 直方体メッシュを生成する（原点中心）
+	/// </summary>
+	/// <param name="size">X・Y・Zそれぞれの長さ</param>
+	void CreateBox(const Vector3& size = { 1.0f, 1.0f, 1.0f });
+
+	/// <summary>
+	/// 水平な板メッシュ（XZ平面、法線は+Y）を生成する
+	/// </summary>
+	void CreatePlane(float width = 1.0f, float depth = 1.0f);
+
+	/// <summary>
+	/// 円柱メッシュ（Y軸方向）を生成する
+	/// </summary>
+	void CreateCylinder(float radius = 0.5f, float height = 1.0f, uint32_t segments = 24);
+
+	/// <summary>
+	/// 円錐メッシュ（頂点が+Y側）を生成する
+	/// </summary>
+	void CreateCone(float radius = 0.5f, float height = 1.0f, uint32_t segments = 24);
+
+	/// <summary>
+	/// CPU側の頂点・インデックスデータをそのままメッシュにする（Upload()でGPUへ転送する）
+	/// </summary>
+	void SetMeshData(MeshData&& data);
 
 	/// <summary>
 	/// objファイルを読み込み、頂点・マテリアルデータを生成する。
