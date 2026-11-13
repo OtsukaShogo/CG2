@@ -80,7 +80,7 @@ std::list<Particle> Emit(const Emitter& emitter, std::mt19937& randomEngine) {
 } // namespace
 
 ParticleSystem::ParticleSystem() {
-	// 一度に3個発生させるエミッタ
+	// 毎フレーム（1/60秒ごと）に4個ずつ発生させるエミッタ
 	emitter_.transform.scale = { 1.0f, 1.0f, 1.0f };
 	emitter_.transform.rotate = { 0.0f, 0.0f, 0.0f };
 	emitter_.transform.translate = { 0.0f, 0.0f, 0.0f };
@@ -185,12 +185,9 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 			instancingData_[numInstance].color.w = alpha;
 			++numInstance;
 		}
+		// インスタンシング用バッファの容量を超える分は描画しないが、
+		// 更新（移動・寿命の消費）は続ける。ここで打ち切ると、超過分が凍結して消えなくなる
 		++particleIterator;
-
-		// インスタンシング用バッファの容量を超える分は描画しない
-		if (numInstance >= kNumMaxInstance) {
-			break;
-		}
 	}
 }
 

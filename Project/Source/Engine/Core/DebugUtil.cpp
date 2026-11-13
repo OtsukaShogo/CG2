@@ -88,6 +88,11 @@ LONG WINAPI DebugUtil::ExportDump(EXCEPTION_POINTERS* exception) {
 
 	minidumpInformation.ClientPointers = TRUE;
 
+	// ファイルを作れなかった場合（Dumpsフォルダがない等）は、ダンプの出力を諦める
+	if (dumpFileHandle == INVALID_HANDLE_VALUE) {
+		return EXCEPTION_EXECUTE_HANDLER;
+	}
+
 	// Dumpを出力。MiniDumpNormalは最も限の情報を出力するフラグ
 	MiniDumpWriteDump(
 		GetCurrentProcess(),
@@ -98,6 +103,9 @@ LONG WINAPI DebugUtil::ExportDump(EXCEPTION_POINTERS* exception) {
 		nullptr,
 		nullptr
 	);
+
+	// 書き込みを確定させてファイルを閉じる
+	CloseHandle(dumpFileHandle);
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }

@@ -81,17 +81,20 @@ void WinApp::Initialize() {
 	// ウィンドウクラスを登録する
 	RegisterClass(&wc);
 
+	// 描画解像度（スワップチェーン）は固定なので、ウィンドウのサイズ変更・最大化は許可しない
+	constexpr DWORD kWindowStyle = WS_OVERLAPPEDWINDOW & ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+
 	// ウィンドウサイズを表す構造体にクライアント領域を入れる
 	RECT wrc = { 0, 0, kClientWidth, kClientHeight };
 
 	// クライアント領域を元に実際のサイズにwrcを変更してもらう
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
+	AdjustWindowRect(&wrc, kWindowStyle, false);
 
 	// ウィンドウの生成
 	hwnd_ = CreateWindow(
 		wc.lpszClassName,          // 利用するクラス名
 		L"LE2B_02_オオツカ_ショウゴ", // タイトルバーの文字 (何でも良い)
-		WS_OVERLAPPEDWINDOW,       // よく見るウィンドウスタイル
+		kWindowStyle,              // ウィンドウスタイル（サイズ変更・最大化は不可）
 		CW_USEDEFAULT,             // 表示X座標 (WindowsOSに任せる)
 		CW_USEDEFAULT,             // 表示Y座標 (WindowsOSに任せる)
 		wrc.right - wrc.left,      // ウィンドウ横幅
@@ -112,8 +115,9 @@ void WinApp::Initialize() {
 }
 
 bool WinApp::ProcessMessage() {
+	// 溜まっているメッセージを全て処理する（1フレームに1件ずつだと、入力が多いときに処理が遅れる）
 	MSG msg{};
-	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 		if (msg.message == WM_QUIT) {
 			return true;
 		}

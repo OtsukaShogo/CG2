@@ -19,10 +19,18 @@ public:
     ~AssetManager() = default;
 
     /// <summary>
-    /// 登録済みモデルを全てAssetFactoryで読み込む
+    /// AssetFactoryを受け取って保持する（モデルの登録は、ゲーム側が RegisterModel で行う）
     /// </summary>
     /// <param name="factory">モデル生成に使うAssetFactory</param>
     void Initialize(AssetFactory* factory);
+
+    /// <summary>
+    /// モデルを読み込んで、パスで取り出せるように登録する（登録済みのパスは読み込み直さない）。
+    /// 登録したモデルは CreateModel で払い出せる。読み込みに失敗した場合は球で代用される
+    /// </summary>
+    /// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
+    /// <param name="filename">読み込むobjファイル名</param>
+    void RegisterModel(const std::string& directoryPath, const std::string& filename);
 
     /// <summary>
     /// 指定パスのモデルデータを参照する新しいモデルインスタンスを生成する
@@ -36,14 +44,6 @@ public:
     /// shared_ptrで共有しているため、Model側がまだ参照していれば実際の解放はそちらが破棄されるまで遅延される。
     /// </summary>
     void Clear();
-
-private:
-    /// <summary>
-    /// 読み込むモデルのパスを登録し、AssetFactoryで読み込む
-    /// </summary>
-    /// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
-    /// <param name="filename">読み込むobjファイル名</param>
-    void RegisterModel(const std::string& directoryPath, const std::string& filename);
 
 private:
     AssetFactory* factory_ = nullptr;

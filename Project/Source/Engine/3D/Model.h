@@ -40,11 +40,6 @@ public:
 		std::shared_ptr<const FrameContext> frameContext);
 
 	/// <summary>
-	/// ワールド行列・WVP行列を更新する
-	/// </summary>
-	void Update();
-
-	/// <summary>
 	/// モデルを描画する
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>

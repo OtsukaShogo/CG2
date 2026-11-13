@@ -7,13 +7,13 @@ namespace Engine {
 
 void AssetManager::Initialize(AssetFactory* factory) {
     factory_ = factory;
-
-    // === 読み込むモデルをここに登録する ===
-    RegisterModel("Resource", "fence.obj");
 }
 
 void AssetManager::RegisterModel(const std::string& directoryPath, const std::string& filename) {
     std::string path = directoryPath + "/" + filename;
+    if (modelData_.contains(path)) {
+        return; // 登録済み
+    }
     modelData_[path] = factory_->CreateModelData(directoryPath, filename);
 }
 

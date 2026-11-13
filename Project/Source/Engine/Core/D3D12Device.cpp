@@ -21,7 +21,12 @@ void D3D12Device::Initialize() {
         Microsoft::WRL::ComPtr<ID3D12Debug1> debugController;
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
             debugController->EnableDebugLayer();
-            debugController->SetEnableGPUBasedValidation(TRUE);
+            // GPUベースの検証は非常に重いので、環境変数 CG2_GPU_VALIDATION=1 を設定したときだけ有効にする
+            char value[8] = {};
+            size_t length = 0;
+            if (getenv_s(&length, value, sizeof(value), "CG2_GPU_VALIDATION") == 0 && value[0] == '1') {
+                debugController->SetEnableGPUBasedValidation(TRUE);
+            }
         }
     }
 #endif

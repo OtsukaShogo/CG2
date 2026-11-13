@@ -41,10 +41,6 @@ void Model::CreateWvpBuffer(ID3D12Device* device) {
     wvpData_->World = MakeIdentity4x4();
 }
 
-void Model::Update() {
-    worldTransform_.rotate.y += 0.01f;
-}
-
 void Model::Draw(const Matrix4x4& viewProjection) {
     ID3D12GraphicsCommandList* commandList = frameContext_->commandList;
 
