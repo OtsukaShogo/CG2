@@ -7,6 +7,7 @@
 #include "../Math/TransformMatrix.h"
 #include "../Math/WorldTransform.h"
 #include "../Graphics/Material.h"
+#include "../Core/FrameContext.h"
 #include "Wind.h"
 
 namespace Engine {
@@ -67,7 +68,7 @@ public:
 	/// インスタンシング用SRVのGPUディスクリプタハンドルを取得する
 	/// </summary>
 	/// <returns>GPUディスクリプタハンドル</returns>
-	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetInstancingSrvHandleGPU() const { return instancingSrvHandleGPU_; }
+	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetInstancingSrvHandleGPU(uint32_t frameIndex) const { return instancingSrvHandleGPU_[frameIndex]; }
 
 	/// <summary>
 	/// 各インスタンスのワールド行列・WVP行列を計算し、インスタンシング用リソースへ書き込む
@@ -75,7 +76,8 @@ public:
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>
 	/// <param name="cameraRotate">カメラのワールド回転行列（ビルボード用）</param>
 	/// <param name="deltaTime">経過時間（秒）。0を渡すと寿命が進まない</param>
-	void Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime);
+	/// <param name="frameIndex">今のフレームスロット（FrameContext::frameIndex）。GPUが読んでいる別フレームの範囲を上書きしないために使う</param>
+	void Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime, uint32_t frameIndex);
 
 	/// <summary>
 	/// 描画に使うメッシュデータ（共有描画データ）を設定する
@@ -128,8 +130,9 @@ private:
 	const Wind* wind_ = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource_;
 	ParticleForGPU* instancingData_ = nullptr;
-	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_{};
-	SrvSlot instancingSrvSlot_; // instancing用SRVスロットの所有権（破棄時にヒープへ返却される）
+	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU_[kFrameCount] = {}; // フレームスロットごとのSRV（同じリソースの別の範囲を指す）
+	SrvSlot instancingSrvSlot_[kFrameCount]; // instancing用SRVスロットの所有権（破棄時にヒープへ返却される）
+	uint32_t currentFrame_ = 0; // Update()で書き込んだフレームスロット。Draw()で同じ範囲を読む
 	uint32_t numInstance = 0;
 	bool useBillboard_ = true;
 	std::list<Particle> particles_;

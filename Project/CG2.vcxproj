@@ -205,7 +205,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Engine\Input\Gamepad.cpp" />
     <ClCompile Include="Source\Engine\Input\Keyboard.cpp" />
     <ClCompile Include="Source\Engine\Input\Mouse.cpp" />
-    <ClCompile Include="Source\Engine\Graphics\Light.cpp" />
     <ClCompile Include="Source\Engine\Graphics\ConstantBufferAllocator.cpp" />
     <ClCompile Include="Source\Application\main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>

@@ -6,6 +6,7 @@
 #include "../Input/Input.h"
 #include "../Audio/AudioManager.h"
 #include "../3D/CameraManager.h"
+#include "../2D/Sprite.h"
 
 namespace Engine {
 
@@ -110,9 +111,13 @@ void Framework::Update() {
 
 	UpdateDeltaTime();
 
+	// 今フレームが使うスロットのGPU処理（2フレーム前）が終わるまで待つ。以降、CPUが書くリソースを安全に更新できる
+	dx_->WaitForFrameSlot();
+
 	// シーン切り替え要求があれば、描画開始前に行う
-	// （前フレームのGPU完了後なので、旧シーンのリソースを安全に解放でき、新シーンの読み込みもここでGPUへ反映する）
+	// （GPUの完了を待ってから旧シーンのリソースを解放し、新シーンの読み込みもここでGPUへ反映する）
 	if (sceneMgr_.HasPendingChange()) {
+		dx_->WaitIdle(); // 旧シーンのリソースをGPUが使用中でないことを保証する
 		dx_->BeginUpload();
 		sceneMgr_.ApplyPendingChange();
 		dx_->FlushCommands();
@@ -159,6 +164,9 @@ void Framework::Finalize() {
 		return;
 	}
 
+	// 以降で解放するリソースを、GPUが使用中でないようにする（描画を2フレーム先行させているため）
+	dx_->WaitIdle();
+
 #ifdef USE_IMGUI
 	imgui_->Finalize();
 #endif
@@ -168,6 +176,7 @@ void Framework::Finalize() {
 	sceneMgr_.Finalize();
 	OnFinalize();
 
+	Sprite::ReleaseSharedResources(); // スプライト共有の四角形メッシュ
 	assetManager_.Clear(); // ModelData（メッシュ・テクスチャ）を解放
 	TextureManager::GetInstance()->Finalize(); // デフォルトテクスチャ・キャッシュを解放
 	audio_->Finalize();

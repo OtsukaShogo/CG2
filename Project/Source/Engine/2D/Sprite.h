@@ -41,6 +41,11 @@ public:
 		std::shared_ptr<const FrameContext> frameContext);
 
 	/// <summary>
+	/// 全スプライトで共有しているリソース（四角形メッシュ）を解放する。GPUの処理が完了した後（終了時）に呼ぶ
+	/// </summary>
+	static void ReleaseSharedResources();
+
+	/// <summary>
 	/// スプライトを描画する
 	/// </summary>
 	/// <param name="viewProjection">適用するビュープロジェクション行列</param>

@@ -46,7 +46,6 @@ void DemoScene::Initialize() {
 
 	// === ライト ===
 	light_ = std::make_unique<Light>();
-	light_->Initialize(device);
 }
 
 void DemoScene::Update() {
@@ -97,7 +96,7 @@ void DemoScene::Update() {
 
 	// パーティクルのWVP等を計算してResourceに書き込む
 	particle_->Update(cameraMgr->GetViewProjection(), cameraMgr->GetRotateMatrix(),
-		isParticleMoving_ ? framework->GetDeltaTime() : 0.0f);
+		isParticleMoving_ ? framework->GetDeltaTime() : 0.0f, framework->GetDirectX()->GetFrameContext()->frameIndex);
 }
 
 void DemoScene::Draw(ID3D12GraphicsCommandList* commandList) {
@@ -106,7 +105,7 @@ void DemoScene::Draw(ID3D12GraphicsCommandList* commandList) {
 
 	// 3D描画（パーティクル）
 	psoMgr->SetPipeline(commandList, PipelineStateManager::kParticle, blendMode);
-	commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_->GetDirectionalLightAddress());
+	commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_->GetDirectionalLightAddress(*GetFramework()->GetDirectX()->GetFrameContext()->constantBuffers));
 	particle_->Draw(commandList, *GetFramework()->GetDirectX()->GetFrameContext()->constantBuffers);
 
 	// 2D描画
@@ -120,7 +119,7 @@ void DemoScene::Finalize() {
 	controller->SetTarget(nullptr);
 	controller->SetEnabled(false);
 
-	light_.reset();             // ~Light() で Unmap + Release
+	light_.reset();
 	particle_.reset();          // ID3D12Resource x1 (instancing)
 	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
 	sprite_.reset();            // 四角形メッシュは共有、定数バッファはアロケータなので専用のGPUリソースなし

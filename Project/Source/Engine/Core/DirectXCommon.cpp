@@ -24,7 +24,7 @@ namespace Engine {
 
 		// 描画ごとの定数バッファ（WVP・マテリアル）を切り出すアロケータ
 		constantBufferAllocator_ = std::make_unique<ConstantBufferAllocator>();
-		constantBufferAllocator_->Initialize(device_->Get());
+		constantBufferAllocator_->Initialize(device_->Get(), kFrameCount);
 		frameContext_->constantBuffers = constantBufferAllocator_.get();
 
 		swapChain_ = std::make_unique<SwapChain>();
@@ -75,45 +75,58 @@ namespace Engine {
 	void DirectXCommon::InitializeFixFPS()
 	{
 		reference_ = std::chrono::steady_clock::now();
+		// 高精度タイマー（1ms未満の精度で待てる）。使えない環境では nullptr のまま、スピンのみで待つ
+		limiterTimer_ = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
 	}
 
 	void DirectXCommon::UpdateFixFPS()
 	{
-		//1/60秒ぴったりの時間
-		const std::chrono::microseconds kMinTime(uint64_t(1000000.0f / 60.0f));
-		//1/60秒よりわずかに短い時間
-		const std::chrono::microseconds kMinCheckTime(uint64_t(1000000.0f / 65.0f));
+		using Clock = std::chrono::steady_clock;
+		constexpr std::chrono::microseconds kFrameTime(1000000 / 60);   // 1フレームの目標時間
+		constexpr std::chrono::microseconds kSpinMargin(1500);          // 目標の直前はタイマーの誤差を避けるためスピンで待つ
 
-		//現在時間を取得する
-		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+		// 次フレームの目標時刻（前回の目標から積み上げるので、待機の誤差が累積しない）
+		Clock::time_point target = reference_ + kFrameTime;
 
-		//前回記録からの経過時間を取得する
-		std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - reference_);
-
-		//1/60秒(よりわずかに短い時間)経ってない場合
-		if (elapsed < kMinCheckTime) {
-			//1/60秒経過するまで微小なスリープを繰り返す
-			while (std::chrono::steady_clock::now() - reference_ < kMinTime) {
-				//1マイクロ秒スリープ
-				std::this_thread::sleep_for(std::chrono::microseconds(1));
-			}
+		Clock::time_point now = Clock::now();
+		if (limiterTimer_ && target - now > kSpinMargin) {
+			// 目標の少し手前までは、CPUを使わずにタイマーで寝る
+			LARGE_INTEGER dueTime;
+			dueTime.QuadPart = -std::chrono::duration_cast<std::chrono::nanoseconds>(target - kSpinMargin - now).count() / 100; // 100ns単位・負の値=相対時間
+			SetWaitableTimer(limiterTimer_, &dueTime, 0, nullptr, nullptr, FALSE);
+			WaitForSingleObject(limiterTimer_, INFINITE);
+		}
+		// 残りの短い時間だけスピンで待つ
+		while (Clock::now() < target) {
+			YieldProcessor();
 		}
 
-		//現在の時間を記録する
-		reference_ = std::chrono::steady_clock::now();
+		// 処理落ちして大きく遅れている場合は、遅れを取り戻そうとせず現在時刻から数え直す
+		now = Clock::now();
+		reference_ = (now - target > kFrameTime) ? now : target;
+	}
+
+	// 今フレームが使うスロットのGPU処理が終わるまで待ち、そのスロット用のリソースへ切り替える
+	void DirectXCommon::WaitForFrameSlot() {
+		frameSync_->WaitFor(frameFenceValues_[frameIndex_]);
+		frameContext_->frameIndex = frameIndex_;
+		constantBufferAllocator_->BeginFrame(frameIndex_);
+	}
+
+	// GPUの処理がすべて完了するまで待つ
+	void DirectXCommon::WaitIdle() {
+		frameSync_->SignalAndWait(commandContext_->GetCommandQueue());
 	}
 
 	void DirectXCommon::BeginFrame() {
 		swapChain_->UpdateBackBufferIndex();
 
-		commandContext_->Reset();
+		commandContext_->Reset(frameIndex_); // このスロットのGPU処理はWaitForFrameSlot()で完了済み
 
 		ID3D12GraphicsCommandList* commandList = commandContext_->GetCommandList();
 
 		// 今フレームで使うコマンドリストをFrameContextへ反映する
-		// （将来コマンドリストをフレームごとに切り替える設計になっても、ここの更新だけで済む）
 		frameContext_->commandList = commandList;
-		constantBufferAllocator_->BeginFrame(0); // 前フレームのGPU処理は完了済み（EndFrameで待機）なので先頭から使い回せる
 
 		// バリア: Present → RenderTarget
 		swapChain_->TransitionToRenderTarget(commandList);
@@ -145,12 +158,14 @@ namespace Engine {
 		// コマンドリストを閉じて実行
 		commandContext_->CloseAndExecute();
 
-		// フェンスシグナル & 待機
-		// 次フレームでコマンドアロケータ・リストを安全にリセットできるようにする
-		frameSync_->SignalAndWait(commandContext_->GetCommandQueue());
+		// フェンスをシグナルして、このスロットのGPU完了を示す値を記録する（待つのは、次にこのスロットを使う時）
+		frameFenceValues_[frameIndex_] = frameSync_->Signal(commandContext_->GetCommandQueue());
 
 		// Present
 		swapChain_->Present();
+
+		// 次のフレームのスロットへ進む
+		frameIndex_ = (frameIndex_ + 1) % kFrameCount;
 
 		//FPS固定
 		UpdateFixFPS();
@@ -165,7 +180,7 @@ namespace Engine {
 
 	// フレーム外でコマンドを記録できるよう、Close済みのコマンドリストをリセットして開く
 	void DirectXCommon::BeginUpload() {
-		commandContext_->Reset();
+		commandContext_->Reset(frameIndex_); // このスロットのGPU処理はWaitForFrameSlot()で完了済み
 		frameContext_->commandList = commandContext_->GetCommandList();
 	}
 
@@ -173,6 +188,10 @@ namespace Engine {
 		// Present後にDXGIが投入したGPU作業（バックバッファのcomposite等）も含めて完了を待つ
 		frameSync_->SignalAndWait(commandContext_->GetCommandQueue());
 		frameSync_->Finalize();
+		if (limiterTimer_) {
+			CloseHandle(limiterTimer_);
+			limiterTimer_ = nullptr;
+		}
 
 		// コマンドリスト解放後にダングリングポインタが残らないようにする
 		frameContext_->commandList = nullptr;

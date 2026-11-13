@@ -7,20 +7,25 @@ namespace Engine {
 
 namespace {
 
-// 全スプライトで共有する1x1の四角形メッシュ。使っているスプライトがなくなれば解放される
+// 全スプライトで共有する1x1の四角形メッシュ。
+// GPUが使用中のまま解放しないよう、最後のスプライトが消えても保持し、ReleaseSharedResources()でまとめて解放する
+std::shared_ptr<const Mesh> g_sharedQuad;
+
 std::shared_ptr<const Mesh> GetSharedQuad(ID3D12Device* device) {
-    static std::weak_ptr<const Mesh> cache;
-    if (std::shared_ptr<const Mesh> mesh = cache.lock()) {
-        return mesh;
+    if (!g_sharedQuad) {
+        auto mesh = std::make_shared<Mesh>();
+        mesh->CreateRect(1.0f, 1.0f);
+        mesh->Upload(device);
+        g_sharedQuad = mesh;
     }
-    auto mesh = std::make_shared<Mesh>();
-    mesh->CreateRect(1.0f, 1.0f);
-    mesh->Upload(device);
-    cache = mesh;
-    return mesh;
+    return g_sharedQuad;
 }
 
 } // namespace
+
+void Sprite::ReleaseSharedResources() {
+    g_sharedQuad.reset();
+}
 
 Sprite::Sprite(){}
 

@@ -1,13 +1,14 @@
 #pragma once
 #include <d3d12.h>
-#include <wrl/client.h>
 #include "../Math/Vector4.h"
 #include "../Math/Vector3.h"
+#include "ConstantBufferAllocator.h"
 
 namespace Engine {
 
 /// <summary>
-/// 平行光源の定数バッファを管理するクラス
+/// 平行光源のデータを管理するクラス。
+/// データはCPU側に持ち、描画時にアロケータへコピーして渡す（GPUが前のフレームを読んでいても書き換えられる）
 /// </summary>
 class Light {
 public:
@@ -21,36 +22,22 @@ public:
     };
 
     /// <summary>
-    /// コンストラクタ
-    /// </summary>
-    Light();
-
-    /// <summary>
-    /// デストラクタ
-    /// </summary>
-    ~Light();
-
-    /// <summary>
-    /// 平行光源用の定数バッファリソースを生成し初期化する
-    /// </summary>
-    /// <param name="device">D3D12デバイス</param>
-    void Initialize(ID3D12Device* device);
-
-    /// <summary>
     /// 平行光源データへのポインタを取得する（変更可能）
     /// </summary>
     /// <returns>平行光源データへのポインタ</returns>
-    DirectionalLight* GetDirectionalLight() const { return directionalLightData_; }
+    DirectionalLight* GetDirectionalLight() { return &directionalLight_; }
 
     /// <summary>
-    /// 平行光源定数バッファのGPU仮想アドレスを取得する
+    /// 現在の平行光源データを、今フレームの定数バッファへ書き込み、そのGPU仮想アドレスを返す
     /// </summary>
+    /// <param name="constantBuffers">定数バッファの切り出し元</param>
     /// <returns>平行光源定数バッファのGPU仮想アドレス</returns>
-    D3D12_GPU_VIRTUAL_ADDRESS GetDirectionalLightAddress() const { return directionalLightResource_->GetGPUVirtualAddress(); }
+    [[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS GetDirectionalLightAddress(ConstantBufferAllocator& constantBuffers) const {
+        return constantBuffers.Upload(directionalLight_);
+    }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource_;
-    DirectionalLight* directionalLightData_ = nullptr;
+    DirectionalLight directionalLight_;
 };
 
 } // namespace Engine

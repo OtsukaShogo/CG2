@@ -11,15 +11,22 @@ void FrameSync::Initialize(ID3D12Device* device) {
     assert(fenceEvent_ != nullptr);
 }
 
-void FrameSync::SignalAndWait(ID3D12CommandQueue* commandQueue) {
-    // GPUがこのフレームのコマンドを実行し終えるまでCPU側をブロックし、
-    // コマンドアロケータ・リストや解放待ちのリソースを安全に扱えるようにする
+uint64_t FrameSync::Signal(ID3D12CommandQueue* commandQueue) {
     fenceValue_++;
     commandQueue->Signal(fence_.Get(), fenceValue_);
-    if (fence_->GetCompletedValue() < fenceValue_) {
-        fence_->SetEventOnCompletion(fenceValue_, fenceEvent_);
+    return fenceValue_;
+}
+
+void FrameSync::WaitFor(uint64_t fenceValue) {
+    if (fence_->GetCompletedValue() < fenceValue) {
+        fence_->SetEventOnCompletion(fenceValue, fenceEvent_);
         WaitForSingleObject(fenceEvent_, INFINITE);
     }
+}
+
+void FrameSync::SignalAndWait(ID3D12CommandQueue* commandQueue) {
+    // 単調増加のフェンスなので、最新の値を待てば、それ以前の処理もすべて完了している
+    WaitFor(Signal(commandQueue));
 }
 
 void FrameSync::Finalize() {

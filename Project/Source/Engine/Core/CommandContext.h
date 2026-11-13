@@ -1,6 +1,8 @@
 #pragma once
 #include <d3d12.h>
 #include <wrl/client.h>
+#include <cstdint>
+#include "FrameContext.h"
 
 namespace Engine {
 
@@ -23,9 +25,9 @@ public:
     void Initialize(ID3D12Device* device);
 
     /// <summary>
-    /// コマンドアロケータ・コマンドリストを次フレーム用にリセットする
+    /// 指定フレーム用のコマンドアロケータでコマンドリストをリセットする。そのフレームのGPU処理が完了していること
     /// </summary>
-    void Reset();
+    void Reset(uint32_t frameIndex);
 
     /// <summary>
     /// コマンドリストを閉じてコマンドキューへ実行を投入する
@@ -51,7 +53,7 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue_;
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator_;
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocators_[kFrameCount]; // フレームごとに持つ（GPUが使用中のものをリセットしないため）
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
 };
 

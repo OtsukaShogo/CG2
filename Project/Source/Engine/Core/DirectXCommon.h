@@ -40,12 +40,23 @@ public:
     void Initialize(HWND hwnd, uint32_t width, uint32_t height);
 
     /// <summary>
+    /// 今フレームが使うスロットのGPU処理（kFrameCount個前のフレーム）が終わるまで待ち、CPUが書くリソースを触れる状態にする。
+    /// 1フレームの最初（Update前）に1度呼ぶ。frameIndexとConstantBufferAllocatorもここで切り替わる
+    /// </summary>
+    void WaitForFrameSlot();
+
+    /// <summary>
+    /// GPUの処理がすべて完了するまで待つ。GPUが使用中の可能性があるリソースを解放する前（シーン切り替え・終了時）に呼ぶ
+    /// </summary>
+    void WaitIdle();
+
+    /// <summary>
     /// 1フレームの描画開始処理（バリア設定・レンダーターゲットのクリアなど）を行う
     /// </summary>
     void BeginFrame();
 
     /// <summary>
-    /// 1フレームの描画終了処理（コマンド実行・画面表示・フェンス待機）を行う
+    /// 1フレームの描画終了処理（コマンド実行・画面表示・FPS調整）を行う。GPUの完了は待たない（次にそのスロットを使う時に待つ）
     /// </summary>
     void EndFrame();
 
@@ -61,7 +72,7 @@ public:
 
     /// <summary>
     /// フレーム外（描画開始前）でアップロード等のコマンドを記録するため、コマンドリストを開く。
-    /// 前フレームのGPU完了後（EndFrame後）に呼び、記録後は FlushCommands() で投入して完了を待つ
+    /// WaitIdle() の後に呼び、記録後は FlushCommands() で投入して完了を待つ
     /// </summary>
     void BeginUpload();
 
@@ -124,6 +135,13 @@ private:
 
     //記録時間(FPS固定用)
     std::chrono::steady_clock::time_point reference_;
+
+    //待機用の高精度タイマー（FPS固定用）
+    HANDLE limiterTimer_ = nullptr;
+
+    //フレームスロットごとの、GPU完了を示すフェンス値
+    uint64_t frameFenceValues_[kFrameCount] = {};
+    uint32_t frameIndex_ = 0;
 
 private:
     std::unique_ptr<D3D12Device> device_;

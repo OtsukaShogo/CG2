@@ -97,43 +97,49 @@ ParticleSystem::~ParticleSystem() {
 
 // Instancing用のParticleForGPUリソースを作り、単位行列を書き込んだ上でSRVを作成する
 void ParticleSystem::CreateInstancingResource(ID3D12Device* device, ID3D12DescriptorHeap* srvHeap, uint32_t descriptorSizeSRV) {
-	instancingResource_ = CreateBufferResource(device, sizeof(ParticleForGPU) * kNumMaxInstance);
+	// GPUが前のフレームの範囲を読んでいる間もCPUが書き込めるよう、フレームスロット分の範囲を1つのバッファに確保する
+	constexpr uint32_t kTotalInstance = kNumMaxInstance * kFrameCount;
+	instancingResource_ = CreateBufferResource(device, sizeof(ParticleForGPU) * kTotalInstance);
 
 	// 書き込むためのアドレスを取得
 	instancingResource_->Map(0, nullptr, reinterpret_cast<void**>(&instancingData_));
 
 	// 単位行列を書き込んでおく
-	for (uint32_t index = 0; index < kNumMaxInstance; ++index) {
+	for (uint32_t index = 0; index < kTotalInstance; ++index) {
 		instancingData_[index].WVP = MakeIdentity4x4();
 		instancingData_[index].World = MakeIdentity4x4();
 		instancingData_[index].color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	}
 
-	// SRV の空きスロットを自動割り当て（テクスチャと同じヒープ・同じカウンタを共有する）
-	instancingSrvSlot_ = TextureManager::GetInstance()->AllocateSrv();
-	uint32_t index = *instancingSrvSlot_;
+	for (uint32_t frame = 0; frame < kFrameCount; ++frame) {
+		// SRV の空きスロットを自動割り当て（テクスチャと同じヒープ・同じカウンタを共有する）
+		instancingSrvSlot_[frame] = TextureManager::GetInstance()->AllocateSrv();
+		uint32_t index = *instancingSrvSlot_[frame];
 
-	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
-	instancingSrvHandleGPU_ = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
+		D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
+		instancingSrvHandleGPU_[frame] = GetGPUDescriptorHandle(srvHeap, descriptorSizeSRV, index);
 
-	// StructuredBuffer として参照するためのSRVを作成する
-	D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
-	instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;                        // 構造体のレイアウトは自由なので不明
-	instancingSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;          // TextureではなくBufferとして利用する
-	instancingSrvDesc.Buffer.FirstElement = 0;                            // 当面0
-	instancingSrvDesc.Buffer.NumElements = kNumMaxInstance;                  // 10個すべてにアクセスする
-	instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU); // Alignmentルールはsizeofのままで良い
-	instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+		// StructuredBuffer として参照するためのSRVを作成する（このフレームスロットの範囲だけを指す）
+		D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
+		instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;                        // 構造体のレイアウトは自由なので不明
+		instancingSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;          // TextureではなくBufferとして利用する
+		instancingSrvDesc.Buffer.FirstElement = static_cast<UINT64>(frame) * kNumMaxInstance;
+		instancingSrvDesc.Buffer.NumElements = kNumMaxInstance;
+		instancingSrvDesc.Buffer.StructureByteStride = sizeof(ParticleForGPU); // Alignmentルールはsizeofのままで良い
+		instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-	device->CreateShaderResourceView(instancingResource_.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
+		device->CreateShaderResourceView(instancingResource_.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
+	}
 
 	// パーティクルはライティングしない
 	material_.SetEnableLighting(false);
 }
 
 // 各インスタンスのワールド行列・WVP行列を計算し、インスタンシング用リソースへ書き込む
-void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime) {
+void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& cameraRotate, float deltaTime, uint32_t frameIndex) {
+	currentFrame_ = frameIndex;
+	ParticleForGPU* instancingData = instancingData_ + static_cast<size_t>(frameIndex) * kNumMaxInstance; // このフレームスロットの範囲
 	// 板ポリの裏表を反転させた上でカメラの回転に追従させる（ビルボード）
 	Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
 	// ビルボード無効時はカメラ回転を掛けず、板ポリを元の向き（-Z側から見て表）のままにする
@@ -178,10 +184,10 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 			Matrix4x4 worldMatrix = Multiply(Multiply(scaleMatrix, billboardMatrix), translateMatrix);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjection);
 			// 死んだものを詰めて、先頭から numInstance 個を描画できるようにする
-			instancingData_[numInstance].WVP = worldViewProjectionMatrix;
-			instancingData_[numInstance].World = worldMatrix;
-			instancingData_[numInstance].color = FireColor(t);
-			instancingData_[numInstance].color.w = alpha;
+			instancingData[numInstance].WVP = worldViewProjectionMatrix;
+			instancingData[numInstance].World = worldMatrix;
+			instancingData[numInstance].color = FireColor(t);
+			instancingData[numInstance].color.w = alpha;
 			++numInstance;
 		}
 		// インスタンシング用バッファの容量を超える分は描画しないが、
@@ -196,7 +202,7 @@ void ParticleSystem::Draw(ID3D12GraphicsCommandList* commandList, ConstantBuffer
 	if (numInstance == 0) {
 		return;
 	}
-	commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kInstancing), instancingSrvHandleGPU_);
+	commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kInstancing), instancingSrvHandleGPU_[currentFrame_]);
 	material_.Bind(commandList, constantBuffers);
 	modelData_->GetMesh().Draw(commandList, numInstance);
 }
