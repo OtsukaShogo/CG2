@@ -89,17 +89,17 @@ void WinApp::Initialize() {
 
 	// ウィンドウの生成
 	hwnd_ = CreateWindow(
-		wc.lpszClassName,        // 利用するクラス名
-		L"CG2",                  // タイトルバーの文字 (何でも良い)
-		WS_OVERLAPPEDWINDOW,     // よく見るウィンドウスタイル
-		CW_USEDEFAULT,           // 表示X座標 (WindowsOSに任せる)
-		CW_USEDEFAULT,           // 表示Y座標 (WindowsOSに任せる)
-		wrc.right - wrc.left,    // ウィンドウ横幅
-		wrc.bottom - wrc.top,    // ウィンドウ縦幅
-		nullptr,                 // 親ウィンドウハンドル
-		nullptr,                 // メニューハンドル
-		wc.hInstance,            // インスタンスハンドル
-		nullptr                  // オプション
+		wc.lpszClassName,          // 利用するクラス名
+		L"LE2B_02_オオツカ_ショウゴ", // タイトルバーの文字 (何でも良い)
+		WS_OVERLAPPEDWINDOW,       // よく見るウィンドウスタイル
+		CW_USEDEFAULT,             // 表示X座標 (WindowsOSに任せる)
+		CW_USEDEFAULT,             // 表示Y座標 (WindowsOSに任せる)
+		wrc.right - wrc.left,      // ウィンドウ横幅
+		wrc.bottom - wrc.top,      // ウィンドウ縦幅
+		nullptr,                   // 親ウィンドウハンドル
+		nullptr,                   // メニューハンドル
+		wc.hInstance,              // インスタンスハンドル
+		nullptr                    // オプション
 	);
 
 	// ウィンドウを表示する
