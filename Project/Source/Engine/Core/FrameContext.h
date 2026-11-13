@@ -1,6 +1,8 @@
 #pragma once
 #include <d3d12.h>
 
+namespace Engine { class ConstantBufferAllocator; }
+
 namespace Engine {
 
 /// <summary>
@@ -11,6 +13,7 @@ namespace Engine {
 /// DirectXCommon側の更新だけで済み、参照側の変更は不要になる。
 /// </summary>
 struct FrameContext {
+    ConstantBufferAllocator* constantBuffers = nullptr; // 描画ごとの定数バッファの切り出し元
     ID3D12GraphicsCommandList* commandList = nullptr;
 };
 

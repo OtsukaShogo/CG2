@@ -12,6 +12,7 @@
 #include "SwapChain.h"
 #include "FrameSync.h"
 #include "FrameContext.h"
+#include "../Graphics/ConstantBufferAllocator.h"
 
 namespace Engine {
 
@@ -130,6 +131,7 @@ private:
     std::unique_ptr<SwapChain> swapChain_;
     std::unique_ptr<FrameSync> frameSync_;
     std::shared_ptr<FrameContext> frameContext_;
+    std::unique_ptr<ConstantBufferAllocator> constantBufferAllocator_;
 
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap_;
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap_;

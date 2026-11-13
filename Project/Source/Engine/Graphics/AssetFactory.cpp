@@ -19,7 +19,7 @@ std::shared_ptr<ModelData> AssetFactory::CreateSphereModelData() {
 }
 
 std::unique_ptr<Model> AssetFactory::CreateModelInstance(std::shared_ptr<const ModelData> modelData) {
-    return Model::CreateInstance(std::move(modelData), device_, frameContext_);
+    return Model::CreateInstance(std::move(modelData), frameContext_);
 }
 
 std::unique_ptr<Sprite> AssetFactory::CreateSprite(float width, float height) {

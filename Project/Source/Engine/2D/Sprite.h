@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 #include <memory>
+#include "../Math/Vector2.h"
 #include "../Math/Vector4.h"
 #include "../Math/TransformMatrix.h"
 #include "../Math/WorldTransform.h"
@@ -77,23 +78,23 @@ public:
 	/// <param name="handle">設定するGPUディスクリプタハンドル</param>
 	void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { material_.SetTextureHandle(handle); }
 
-private:
+	/// <summary>
+	/// スプライトの大きさ（ピクセル）を取得する
+	/// </summary>
+	[[nodiscard]] Vector2 GetSize() const { return size_; }
 
 	/// <summary>
-	/// WVP行列用の定数バッファリソースを生成する
+	/// スプライトの大きさ（ピクセル）を設定する。四角形のメッシュは共有なので、描画時に拡大して反映される
 	/// </summary>
-	/// <param name="device">D3D12デバイス</param>
-	void CreateWvpBuffer(ID3D12Device* device);
+	void SetSize(const Vector2& size) { size_ = size; }
 
 private:
 
-	Mesh     mesh_;
+	std::shared_ptr<const Mesh> mesh_; // 1x1の四角形。全スプライトで共有する
 	Material material_;
+	Vector2  size_ = { 1.0f, 1.0f };
 	std::shared_ptr<const FrameContext> frameContext_; // Draw()時に「今フレームのcommandList」を都度参照するための共有オブジェクト
 	WorldTransform worldTransform_ = { { 1.0f, 1.0f, 1.0f } ,{ 0.0f, 0.0f, 0.0f } ,{ 0.0f, 0.0f, 0.0f } };
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource_;
-	TransformationMatrix* wvpData_ = nullptr;
 };
 
 } // namespace Engine

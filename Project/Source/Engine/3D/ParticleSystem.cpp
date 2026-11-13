@@ -128,8 +128,7 @@ void ParticleSystem::CreateInstancingResource(ID3D12Device* device, ID3D12Descri
 
 	device->CreateShaderResourceView(instancingResource_.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
 
-	// マテリアル（色・テクスチャ）用の定数バッファを生成する。パーティクルはライティングしない
-	material_.Create(device);
+	// パーティクルはライティングしない
 	material_.SetEnableLighting(false);
 }
 
@@ -192,13 +191,13 @@ void ParticleSystem::Update(const Matrix4x4& viewProjection, const Matrix4x4& ca
 }
 
 // インスタンシング用SRV・マテリアルをバインドし、インスタンス数分まとめて描画する
-void ParticleSystem::Draw(ID3D12GraphicsCommandList* commandList) {
+void ParticleSystem::Draw(ID3D12GraphicsCommandList* commandList, ConstantBufferAllocator& constantBuffers) {
 	// 全パーティクルが寿命を迎えた場合、InstanceCount=0 のDrawはデバッグレイヤーでブレークするため描画しない
 	if (numInstance == 0) {
 		return;
 	}
 	commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kInstancing), instancingSrvHandleGPU_);
-	material_.Bind(commandList);
+	material_.Bind(commandList, constantBuffers);
 	modelData_->GetMesh().Draw(commandList, numInstance);
 }
 

@@ -206,6 +206,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Engine\Input\Keyboard.cpp" />
     <ClCompile Include="Source\Engine\Input\Mouse.cpp" />
     <ClCompile Include="Source\Engine\Graphics\Light.cpp" />
+    <ClCompile Include="Source\Engine\Graphics\ConstantBufferAllocator.cpp" />
     <ClCompile Include="Source\Application\main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -277,6 +278,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Input\Keyboard.h" />
     <ClInclude Include="Source\Engine\Input\Mouse.h" />
     <ClInclude Include="Source\Engine\Graphics\Light.h" />
+    <ClInclude Include="Source\Engine\Graphics\ConstantBufferAllocator.h" />
     <ClInclude Include="Source\Engine\Graphics\Material.h" />
     <ClInclude Include="Source\Engine\Math\Matrix3x3.h" />
     <ClInclude Include="Source\Engine\Math\Matrix4x4.h" />

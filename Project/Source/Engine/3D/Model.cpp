@@ -1,61 +1,47 @@
 #include "Model.h"
 #include "ModelData.h"
-#include "../Core/D3D12Util.h"
 #include "../Math/TransformMatrix.h"
 #include "../Core/PipelineStateManager.h"
+#include "../Graphics/ConstantBufferAllocator.h"
 
 namespace Engine {
 
 Model::Model() {}
 
-Model::~Model() {
-    if (wvpResource_) {
-        wvpResource_->Unmap(0, nullptr);
-    }
-}
+Model::~Model() {}
 
 std::unique_ptr<Model> Model::CreateInstance(
     std::shared_ptr<const ModelData> modelData,
-    ID3D12Device* device,
     std::shared_ptr<const FrameContext> frameContext) {
     auto model = std::make_unique<Model>();
 
-    // Material生成（インスタンス固有。色やUV変換を個別に持たせるため、モデルごとに作成する）
-    model->material_.Create(device);
+    // マテリアル（インスタンス固有。色やUV変換を個別に持たせる。GPUリソースは持たないので生成コストは小さい）
     model->material_.SetTexture(modelData->GetTexture());
 
     model->modelData_ = std::move(modelData);
     model->frameContext_ = std::move(frameContext);
 
-    // WVP生成
-    model->CreateWvpBuffer(device);
-
     return model;
-}
-
-// WVP行列用の定数バッファを作成してCPUから書き込める状態にし、単位行列で初期化しておく
-void Model::CreateWvpBuffer(ID3D12Device* device) {
-    wvpResource_ = CreateBufferResource(device, sizeof(TransformationMatrix));
-    wvpResource_->Map(0, nullptr, reinterpret_cast<void**>(&wvpData_));
-    wvpData_->WVP = MakeIdentity4x4();
-    wvpData_->World = MakeIdentity4x4();
 }
 
 void Model::Draw(const Matrix4x4& viewProjection) {
     ID3D12GraphicsCommandList* commandList = frameContext_->commandList;
+    ConstantBufferAllocator& constantBuffers = *frameContext_->constantBuffers;
 
     // ワールド行列を作り直し、ビュープロジェクションと合成してWVP定数バッファへ書き込む
+    // （定数バッファは描画ごとにアロケータから切り出すので、同じフレーム内で何度描いても上書きされない）
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform_.scale,
         worldTransform_.rotate,
         worldTransform_.translate
     );
-    wvpData_->WVP = Multiply(worldMatrix, viewProjection);
-    wvpData_->World = worldMatrix;
+    TransformationMatrix wvp;
+    wvp.WVP = Multiply(worldMatrix, viewProjection);
+    wvp.World = worldMatrix;
 
-    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kWVP), wvpResource_->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kWVP), constantBuffers.Upload(wvp));
 
-    material_.Bind(commandList);
+    material_.Bind(commandList, constantBuffers);
     modelData_->GetMesh().Draw(commandList);
 }
 

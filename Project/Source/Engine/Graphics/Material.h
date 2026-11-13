@@ -6,6 +6,7 @@
 #include "../Math/Vector4.h"
 #include "../Math/Matrix4x4.h"
 #include "TextureManager.h"
+#include "ConstantBufferAllocator.h"
 
 namespace Engine {
 
@@ -36,16 +37,12 @@ public:
     ~Material();
 
     /// <summary>
-    /// マテリアル用の定数バッファリソースを生成する
-    /// </summary>
-    /// <param name="device">D3D12デバイス</param>
-    void Create(ID3D12Device* device);
-
-    /// <summary>
-    /// マテリアルの定数バッファとテクスチャをコマンドリストにバインドする
+    /// マテリアルの定数バッファとテクスチャをコマンドリストにバインドする。
+    /// 定数バッファはGPUリソースを持たず、描画のたびにアロケータから切り出して書き込む
     /// </summary>
     /// <param name="commandList">バインド先のコマンドリスト</param>
-    void Bind(ID3D12GraphicsCommandList* commandList);
+    /// <param name="constantBuffers">定数バッファの切り出し元</param>
+    void Bind(ID3D12GraphicsCommandList* commandList, ConstantBufferAllocator& constantBuffers);
 
     /// <summary>
     /// マテリアルテンプレートファイル(.mtl)を読み込み、テクスチャパスを取得する
@@ -71,19 +68,19 @@ public:
     /// マテリアルの色を取得する（変更可能）
     /// </summary>
     /// <returns>マテリアルの色</returns>
-    Vector4&   GetColor()       { return materialData_->color; }
+    Vector4&   GetColor()       { return materialData_.color; }
 
     /// <summary>
     /// UV変換行列を取得する（変更可能）
     /// </summary>
     /// <returns>UV変換行列</returns>
-    Matrix4x4& GetUVTransform() { return materialData_->uvTransform; }
+    Matrix4x4& GetUVTransform() { return materialData_.uvTransform; }
 
     /// <summary>
     /// ライティングの有効・無効を設定する
     /// </summary>
     /// <param name="enable">ライティングを有効にする場合はtrue</param>
-    void SetEnableLighting(bool enable) { materialData_->enableLighting = enable ? 1 : 0; }
+    void SetEnableLighting(bool enable) { materialData_.enableLighting = enable ? 1 : 0; }
 
     /// <summary>
     /// テクスチャのGPUディスクリプタハンドルを設定する
@@ -101,8 +98,7 @@ public:
     }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
-    ConstantData* materialData_ = nullptr;
+    ConstantData materialData_; // CPU側に持ち、描画時にアロケータへコピーする
 
     D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU_{};
 

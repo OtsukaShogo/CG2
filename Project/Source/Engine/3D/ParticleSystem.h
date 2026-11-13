@@ -99,7 +99,7 @@ public:
 	/// パーティクルをインスタンシング描画する
 	/// </summary>
 	/// <param name="commandList">描画コマンドを積むコマンドリスト</param>
-	void Draw(ID3D12GraphicsCommandList* commandList);
+	void Draw(ID3D12GraphicsCommandList* commandList, ConstantBufferAllocator& constantBuffers);
 
 	/// <summary>
 	/// エミッタの設定（発生数など）に従ってパーティクルを生成し、リストの末尾へ追加する

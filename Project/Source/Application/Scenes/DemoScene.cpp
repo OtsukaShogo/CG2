@@ -107,7 +107,7 @@ void DemoScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	// 3D描画（パーティクル）
 	psoMgr->SetPipeline(commandList, PipelineStateManager::kParticle, blendMode);
 	commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_->GetDirectionalLightAddress());
-	particle_->Draw(commandList);
+	particle_->Draw(commandList, *GetFramework()->GetDirectX()->GetFrameContext()->constantBuffers);
 
 	// 2D描画
 	psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
@@ -121,9 +121,9 @@ void DemoScene::Finalize() {
 	controller->SetEnabled(false);
 
 	light_.reset();             // ~Light() で Unmap + Release
-	particle_.reset();          // ID3D12Resource x2 (instancing, material)
+	particle_.reset();          // ID3D12Resource x1 (instancing)
 	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
-	sprite_.reset();            // ID3D12Resource x3 (vertex, material, wvp)
+	sprite_.reset();            // 四角形メッシュは共有、定数バッファはアロケータなので専用のGPUリソースなし
 	GetFramework()->GetAudio()->Stop(voice1_);
 	voice1_ = Engine::kInvalidVoiceId;
 	soundData1_.reset();

@@ -13,29 +13,19 @@
 
 namespace Engine {
 
-Material::Material(){}
-
-Material::~Material() {
-    if (materialResource_) {
-        materialResource_->Unmap(0, nullptr);
-    }
+Material::Material() {
+    materialData_.uvTransform = MakeIdentity4x4();
 }
 
-// 定数バッファを作成してCPUから書き込める状態にし、デフォルト値を書き込んでおく
-void Material::Create(ID3D12Device* device) {
-    materialResource_ = CreateBufferResource(device, sizeof(ConstantData));
-    materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
-    *materialData_ = ConstantData{};
-    materialData_->uvTransform = MakeIdentity4x4();
-}
+Material::~Material() = default;
 
 void Material::SetColor(const Vector4& color) {
-    if (materialData_) materialData_->color = color;
+    materialData_.color = color;
 }
 
-// マテリアルの定数バッファとテクスチャを、それぞれ対応するルートパラメータにセットする
-void Material::Bind(ID3D12GraphicsCommandList* commandList) {
-    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kMaterial), materialResource_->GetGPUVirtualAddress());
+// マテリアルの定数バッファ（描画ごとに切り出して書き込む）とテクスチャを、それぞれ対応するルートパラメータにセットする
+void Material::Bind(ID3D12GraphicsCommandList* commandList, ConstantBufferAllocator& constantBuffers) {
+    commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kMaterial), constantBuffers.Upload(materialData_));
     commandList->SetGraphicsRootDescriptorTable(static_cast<UINT>(PipelineStateManager::RootParameter::kTexture), textureSrvHandleGPU_);
 }
 

@@ -22,6 +22,11 @@ namespace Engine {
 		frameContext_ = std::make_shared<FrameContext>();
 		frameContext_->commandList = commandContext_->GetCommandList();
 
+		// 描画ごとの定数バッファ（WVP・マテリアル）を切り出すアロケータ
+		constantBufferAllocator_ = std::make_unique<ConstantBufferAllocator>();
+		constantBufferAllocator_->Initialize(device_->Get());
+		frameContext_->constantBuffers = constantBufferAllocator_.get();
+
 		swapChain_ = std::make_unique<SwapChain>();
 		swapChain_->Initialize(device_->GetFactory(), device_->Get(), commandContext_->GetCommandQueue(), hwnd, width, height);
 
@@ -108,6 +113,7 @@ namespace Engine {
 		// 今フレームで使うコマンドリストをFrameContextへ反映する
 		// （将来コマンドリストをフレームごとに切り替える設計になっても、ここの更新だけで済む）
 		frameContext_->commandList = commandList;
+		constantBufferAllocator_->BeginFrame(0); // 前フレームのGPU処理は完了済み（EndFrameで待機）なので先頭から使い回せる
 
 		// バリア: Present → RenderTarget
 		swapChain_->TransitionToRenderTarget(commandList);
@@ -170,6 +176,8 @@ namespace Engine {
 
 		// コマンドリスト解放後にダングリングポインタが残らないようにする
 		frameContext_->commandList = nullptr;
+		frameContext_->constantBuffers = nullptr;
+		constantBufferAllocator_.reset();
 
 		// シングルトンの ComPtr は main() 返却後まで破棄されないため、明示的に解放してからリークチェックを行う
 		depthStencilResource_.Reset();

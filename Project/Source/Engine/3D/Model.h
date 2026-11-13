@@ -31,12 +31,10 @@ public:
 	/// ModelDataを参照するモデルインスタンスを生成する
 	/// </summary>
 	/// <param name="modelData">参照する共有描画データ（shared_ptrで保持するため、AssetManagerより先に破棄されても問題ない）</param>
-	/// <param name="device">D3D12デバイス</param>
 	/// <param name="frameContext">「今フレームで使うべきコマンドリスト」を保持する共有オブジェクト</param>
 	/// <returns>生成したモデル</returns>
 	[[nodiscard]] static std::unique_ptr<Model> CreateInstance(
 		std::shared_ptr<const ModelData> modelData,
-		ID3D12Device* device,
 		std::shared_ptr<const FrameContext> frameContext);
 
 	/// <summary>
@@ -84,21 +82,10 @@ public:
 	void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { material_.SetTextureHandle(handle); }
 
 private:
-
-	/// <summary>
-	/// WVP行列用の定数バッファリソースを生成する
-	/// </summary>
-	/// <param name="device">D3D12デバイス</param>
-	void CreateWvpBuffer(ID3D12Device* device);
-
-private:
 	std::shared_ptr<const ModelData> modelData_; // 参照カウント方式。AssetManagerが破棄されてもModelが生きている限りデータは解放されない
 	std::shared_ptr<const FrameContext> frameContext_; // Draw()時に「今フレームのcommandList」を都度参照するための共有オブジェクト
 	Material material_;
 	WorldTransform worldTransform_ = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource_;
-	TransformationMatrix* wvpData_ = nullptr;
 };
 
 } // namespace Engine
