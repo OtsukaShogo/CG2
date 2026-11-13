@@ -52,7 +52,8 @@ public:
     /// </summary>
     /// <param name="directoryPath">ファイルが存在するディレクトリパス</param>
     /// <param name="filename">読み込むファイル名</param>
-    void LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename);
+    /// <returns>ファイルを開けた場合は true（開けない場合はログを出し、テクスチャパスは空のまま）</returns>
+    bool LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename);
 
     /// <summary>
     /// 読み込んだテクスチャファイルパスを取得する

@@ -21,7 +21,9 @@ public:
     ModelData& operator=(const ModelData&) = delete;
 
     /// <summary>
-    /// objファイルを読み込んでモデルデータを生成する
+    /// objファイルを読み込んでモデルデータを生成する。
+    /// 読み込めなかった場合はログを出し、球のモデルで代用する（nullptrは返さない）。
+    /// mtllib やテクスチャの指定がないobjは、白テクスチャで描画する
     /// </summary>
     /// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
     /// <param name="filename">読み込むobjファイル名</param>
@@ -39,7 +41,7 @@ public:
         uint32_t descriptorSizeSRV);
 
     /// <summary>
-    /// 球メッシュのモデルデータを生成する（テクスチャなし）
+    /// 球メッシュのモデルデータを生成する（白テクスチャ）
     /// </summary>
     /// <param name="device">D3D12デバイス</param>
     /// <returns>生成したモデルデータ</returns>

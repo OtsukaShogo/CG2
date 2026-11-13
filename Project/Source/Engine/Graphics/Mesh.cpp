@@ -4,6 +4,11 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <filesystem>
+#include "../Core/ConvertString.h"
+#include "../Core/DebugUtil.h"
 #include "../Core/D3D12Util.h"
 #include"Material.h"
 
@@ -14,7 +19,9 @@ Mesh::Mesh() {}
 Mesh::~Mesh() {}
 
 const std::string& Mesh::GetTextureFilePath() const {
-	return material_->GetTextureFilePath();
+	// mtllib が無いobjではマテリアルが存在しない。その場合はテクスチャなし（空文字）として扱う
+	static const std::string kEmpty;
+	return material_ ? material_->GetTextureFilePath() : kEmpty;
 }
 
 void Mesh::CreateSphere(uint32_t subdivision) {
@@ -131,58 +138,151 @@ void Mesh::ParseNormalLine(std::istringstream& s, std::vector<Vector3>& normals)
 	normals.push_back(normal);
 }
 
-void Mesh::ParseFaceLine(
+namespace {
+
+	// OBJのインデックス（1始まり。負の値は末尾からの相対位置）を、0始まりの配列インデックスへ変換する。範囲外なら false
+	bool ResolveObjIndex(long raw, size_t count, size_t& out) {
+		long index = raw > 0 ? raw - 1 : static_cast<long>(count) + raw;
+		if (raw == 0 || index < 0 || static_cast<size_t>(index) >= count) {
+			return false;
+		}
+		out = static_cast<size_t>(index);
+		return true;
+	}
+
+	// 文字列を整数として解釈する。数字以外が含まれていたら false
+	bool ParseObjInteger(const std::string& text, long& out) {
+		if (text.empty()) {
+			return false;
+		}
+		char* end = nullptr;
+		out = std::strtol(text.c_str(), &end, 10);
+		return end != nullptr && *end == '\0';
+	}
+
+} // namespace
+
+bool Mesh::ParseFaceLine(
 	std::istringstream& s,
 	const std::vector<Vector4>& positions,
 	const std::vector<Vector2>& texcoords,
 	const std::vector<Vector3>& normals) {
-	// 面は三角形限定。面を構成する頂点を逆順に登録することで、回り順を反転させる
-	VertexData triangle[3];
-	for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-		std::string vertexDefinition;
-		s >> vertexDefinition;
+	// 面の頂点を、まず全部読み込む（"v", "v/vt", "v//vn", "v/vt/vn" のどれにも対応する）
+	struct FaceVertex {
+		VertexData data;
+		bool hasNormal;
+	};
+	std::vector<FaceVertex> face;
 
+	std::string vertexDefinition;
+	while (s >> vertexDefinition) {
 		// 頂点の要素へのインデックスは「位置/UV/法線」の形式で書かれているので分解する
 		std::istringstream v(vertexDefinition);
-		uint32_t elementIndices[3];
+		std::string parts[3];
 		for (int32_t element = 0; element < 3; ++element) {
-			std::string index;
-			std::getline(v, index, '/');
-			elementIndices[element] = static_cast<uint32_t>(std::stoi(index));
+			if (!std::getline(v, parts[element], '/')) {
+				break;
+			}
 		}
 
-		// 要素のインデックスから、実際の要素の値を取得して頂点を構築する
-		Vector4 position = positions[elementIndices[0] - 1];
-		Vector2 texcoord = texcoords[elementIndices[1] - 1];
-		Vector3 normal   = normals[elementIndices[2] - 1];
-		triangle[faceVertex] = VertexData{ position, texcoord, normal };
+		long raw = 0;
+		size_t index = 0;
+
+		// 位置は必須
+		if (!ParseObjInteger(parts[0], raw) || !ResolveObjIndex(raw, positions.size(), index)) {
+			return false;
+		}
+		FaceVertex fv{};
+		fv.data.position = positions[index];
+
+		// UVは省略可能（省略時は(0,0)）。書かれていて範囲外のものは不正な面として扱う
+		fv.data.texcoord = { 0.0f, 0.0f };
+		if (!parts[1].empty()) {
+			if (!ParseObjInteger(parts[1], raw) || !ResolveObjIndex(raw, texcoords.size(), index)) {
+				return false;
+			}
+			fv.data.texcoord = texcoords[index];
+		}
+
+		// 法線も省略可能（省略時は、あとで面から計算する）
+		fv.hasNormal = false;
+		if (!parts[2].empty()) {
+			if (!ParseObjInteger(parts[2], raw) || !ResolveObjIndex(raw, normals.size(), index)) {
+				return false;
+			}
+			fv.data.normal = normals[index];
+			fv.hasNormal = true;
+		}
+
+		face.push_back(fv);
 	}
 
-	// 頂点を逆順で登録する
-	vertices_.push_back(triangle[2]);
-	vertices_.push_back(triangle[1]);
-	vertices_.push_back(triangle[0]);
+	if (face.size() < 3) {
+		return false;
+	}
+
+	// 多角形は先頭の頂点を共有する三角形ファン (0, i, i+1) に分割する。
+	// 各三角形は頂点を逆順に登録することで、回り順を反転させる
+	for (size_t i = 1; i + 1 < face.size(); ++i) {
+		FaceVertex triangle[3] = { face[0], face[i], face[i + 1] };
+
+		// 法線が書かれていない頂点には、登録順（逆順）での三角形から求めた面法線を使う
+		const Vector4& a = triangle[2].data.position;
+		const Vector4& b = triangle[1].data.position;
+		const Vector4& c = triangle[0].data.position;
+		Vector3 e1 = { b.x - a.x, b.y - a.y, b.z - a.z };
+		Vector3 e2 = { c.x - a.x, c.y - a.y, c.z - a.z };
+		Vector3 faceNormal = {
+			e1.y * e2.z - e1.z * e2.y,
+			e1.z * e2.x - e1.x * e2.z,
+			e1.x * e2.y - e1.y * e2.x,
+		};
+		float length = std::sqrt(faceNormal.x * faceNormal.x + faceNormal.y * faceNormal.y + faceNormal.z * faceNormal.z);
+		if (length > 0.0f) {
+			faceNormal = { faceNormal.x / length, faceNormal.y / length, faceNormal.z / length };
+		} else {
+			faceNormal = { 0.0f, 0.0f, -1.0f };
+		}
+
+		for (int32_t k = 2; k >= 0; --k) {
+			if (!triangle[k].hasNormal) {
+				triangle[k].data.normal = faceNormal;
+			}
+			vertices_.push_back(triangle[k].data);
+		}
+	}
+	return true;
 }
 
 void Mesh::ParseMtllibLine(std::istringstream& s, const std::string& directoryPath) {
 	// materialTemplateLibraryファイルの名前を取得する
 	std::string materialFilename;
 	s >> materialFilename;
-	// Materialを生成し、mtlファイルを読み込ませる（基本的にobjファイルと同一階層にmtlは存在する）
+	// Materialを生成し、mtlファイルを読み込ませる（基本的にobjファイルと同一階層にmtlは存在する）。
+	// 読めなくてもマテリアルは残り、テクスチャパスが空のまま（=テクスチャなし）になる
 	material_ = std::make_unique<Material>();
-	material_->LoadMaterialTemplateFile(directoryPath, materialFilename);
+	(void)material_->LoadMaterialTemplateFile(directoryPath, materialFilename);
 }
 
-void Mesh::LoadObjFile(const std::string& directoryPath, const std::string& filename) {
+bool Mesh::LoadObjFile(const std::string& directoryPath, const std::string& filename) {
 	std::vector<Vector4> positions; // 位置
 	std::vector<Vector3> normals;   // 法線
 	std::vector<Vector2> texcoords; // テクスチャ座標
 	std::string line;               // ファイルから読んだ1行を格納する
 
-	std::ifstream file(directoryPath + "/" + filename);
-	assert(file.is_open());
+	vertices_.clear();
+	indices_.clear();
+	material_.reset();
+
+	const std::string path = directoryPath + "/" + filename;
+	std::ifstream file(std::filesystem::path(ConvertString(path)));
+	if (!file.is_open()) {
+		DebugUtil::Log("[Mesh] objファイルを開けません: " + path + "\n");
+		return false;
+	}
 
 	// 1行ずつ読み、先頭の識別子に応じて対応するパーサーへ振り分ける
+	uint32_t skippedFaces = 0;
 	while (std::getline(file, line)) {
 		std::string identifier;
 		std::istringstream s(line);
@@ -195,11 +295,23 @@ void Mesh::LoadObjFile(const std::string& directoryPath, const std::string& file
 		} else if (identifier == "vn") {
 			ParseNormalLine(s, normals);
 		} else if (identifier == "f") {
-			ParseFaceLine(s, positions, texcoords, normals);
+			if (!ParseFaceLine(s, positions, texcoords, normals)) {
+				++skippedFaces; // 不正な面は飛ばして読み込みを続ける
+			}
 		} else if (identifier == "mtllib") {
 			ParseMtllibLine(s, directoryPath);
 		}
 	}
+
+	if (skippedFaces > 0) {
+		DebugUtil::Log("[Mesh] 不正な面を " + std::to_string(skippedFaces) + " 個スキップしました: " + path + "\n");
+	}
+
+	if (vertices_.empty()) {
+		DebugUtil::Log("[Mesh] objに有効な面がありません: " + path + "\n");
+		return false;
+	}
+	return true;
 }
 
 // CPU上に構築した頂点・インデックスデータをGPUバッファへコピーし、各種ビューを作成する

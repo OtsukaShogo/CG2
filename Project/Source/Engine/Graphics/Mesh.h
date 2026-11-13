@@ -40,11 +40,14 @@ public:
 	void CreateRect(float width, float height);
 
 	/// <summary>
-	/// objファイルを読み込み、頂点・マテリアルデータを生成する
+	/// objファイルを読み込み、頂点・マテリアルデータを生成する。
+	/// 多角形の面は三角形に分割し、UV・法線が無い頂点は既定値（法線は面から計算）で補う。
+	/// 読み込めなかった場合はログを出して false を返し、メッシュは空になる
 	/// </summary>
 	/// <param name="directoryPath">objファイルが存在するディレクトリパス</param>
 	/// <param name="filename">読み込むobjファイル名</param>
-	void LoadObjFile(const std::string& directoryPath, const std::string& filename);
+	/// <returns>頂点を1つ以上読み込めた場合は true</returns>
+	[[nodiscard]] bool LoadObjFile(const std::string& directoryPath, const std::string& filename);
 
 	/// <summary>
 	/// 頂点・インデックスデータをGPUへ転送する
@@ -66,7 +69,7 @@ public:
 	uint32_t GetVertexCount() const { return static_cast<uint32_t>(vertices_.size()); }
 
 	/// <summary>
-	/// マテリアルが参照するテクスチャファイルパスを取得する
+	/// マテリアルが参照するテクスチャファイルパスを取得する（マテリアル・テクスチャ指定がない場合は空文字）
 	/// </summary>
 	/// <returns>テクスチャファイルパス</returns>
 	const std::string& GetTextureFilePath() const;
@@ -88,9 +91,9 @@ private:
 	static void ParseNormalLine(std::istringstream& s, std::vector<Vector3>& normals);
 
 	/// <summary>
-	/// "f"行（面）を解析し、対応する頂点をvertices_へ追加する
+	/// "f"行（面）を解析し、対応する頂点をvertices_へ追加する（失敗した面は追加せず false を返す）
 	/// </summary>
-	void ParseFaceLine(
+	bool ParseFaceLine(
 		std::istringstream& s,
 		const std::vector<Vector4>& positions,
 		const std::vector<Vector2>& texcoords,
