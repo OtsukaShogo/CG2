@@ -56,6 +56,15 @@ struct TransformationMatrix {
 [[nodiscard]] Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix);
 
 /// <summary>
+/// 方向ベクトル（法線・速度など）を行列で変換する。平行移動は適用されない。
+/// 拡大縮小を含む行列で法線を変換する場合は、逆行列の転置行列を渡すこと
+/// </summary>
+/// <param name="vector">変換する方向ベクトル</param>
+/// <param name="matrix">適用する行列</param>
+/// <returns>変換後のベクトル</returns>
+[[nodiscard]] Vector3 TransformNormal(const Vector3& vector, const Matrix4x4& matrix);
+
+/// <summary>
 /// 拡大縮小・回転・平行移動をまとめた3次元アフィン変換行列を作成する
 /// </summary>
 /// <param name="scale">拡大縮小率</param>

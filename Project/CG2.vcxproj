@@ -230,6 +230,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Source\Engine\3D\ModelData.cpp" />
     <ClCompile Include="Source\Engine\3D\ParticleSystem.cpp" />
     <ClCompile Include="Source\Engine\Core\PipelineStateManager.cpp" />
+    <ClCompile Include="Source\Engine\Math\Quaternion.cpp" />
     <ClCompile Include="Source\Engine\Math\Random.cpp" />
     <ClCompile Include="Source\Engine\Core\ShaderManager.cpp" />
     <ClCompile Include="Source\Engine\2D\Sprite.cpp" />
@@ -289,6 +290,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\2D\Sprite.h" />
     <ClInclude Include="Source\Engine\Graphics\DescriptorAllocator.h" />
     <ClInclude Include="Source\Engine\Graphics\TextureManager.h" />
+    <ClInclude Include="Source\Engine\Math\MathUtil.h" />
+    <ClInclude Include="Source\Engine\Math\Quaternion.h" />
     <ClInclude Include="Source\Engine\Math\Vector2.h" />
     <ClInclude Include="Source\Engine\Graphics\VertexData.h" />
     <ClInclude Include="Source\Engine\Core\WinApp.h" />

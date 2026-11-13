@@ -55,4 +55,18 @@ struct Matrix4x4 {
 /// <returns>単位行列</returns>
 [[nodiscard]] Matrix4x4 MakeIdentity4x4();
 
+//=== 行列の演算子 ===================================
+
+[[nodiscard]] inline Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return Add(m1, m2); }
+[[nodiscard]] inline Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return Subtract(m1, m2); }
+
+/// <summary>
+/// 行列の積（行ベクトル規約なので、m1 * m2 は「m1の変換のあとに m2の変換」を意味する）
+/// </summary>
+[[nodiscard]] inline Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return Multiply(m1, m2); }
+
+inline Matrix4x4& operator+=(Matrix4x4& m1, const Matrix4x4& m2) { m1 = Add(m1, m2); return m1; }
+inline Matrix4x4& operator-=(Matrix4x4& m1, const Matrix4x4& m2) { m1 = Subtract(m1, m2); return m1; }
+inline Matrix4x4& operator*=(Matrix4x4& m1, const Matrix4x4& m2) { m1 = Multiply(m1, m2); return m1; }
+
 } // namespace Engine

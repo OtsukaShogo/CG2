@@ -172,6 +172,9 @@
     <ClCompile Include="Source\Engine\Input\Input.cpp">
       <Filter>Source\Engine\Input</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Math\Quaternion.cpp">
+      <Filter>Source\Engine\Math</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Math\Random.cpp">
       <Filter>Source\Engine\Math</Filter>
     </ClCompile>
@@ -198,6 +201,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Engine\Math\MathUtil.h">
+      <Filter>Source\Engine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Math\Quaternion.h">
+      <Filter>Source\Engine\Math</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Math\Vector4.h">
       <Filter>Source\Engine\Math</Filter>
     </ClInclude>
