@@ -67,30 +67,6 @@ const Matrix4x4& CameraManager::GetSpriteViewProjection() const {
 #ifdef USE_IMGUI
 void CameraManager::DrawImGui() {
 	ImGui::Checkbox("Debug Camera (F1)", &isDebugCamera_);
-	if (!isDebugCamera_) {
-		controller_->DrawImGui();
-
-		if (controller_->IsEnabled()) {
-			// 位置・回転はコントローラが毎フレーム決めるので手動編集は出さない（無効に戻したとき表示がずれないよう値だけ同期）
-			cameraRotate_ = { controller_->GetPitch(), controller_->GetYaw(), 0.0f };
-		} else {
-			ImGui::DragFloat3("Camera Translate", &camera_->GetTranslate().x, 0.1f);
-			if (ImGui::DragFloat3("Camera Rotate", &cameraRotate_.x, 0.01f)) {
-				camera_->SetRotation(cameraRotate_);
-			}
-		}
-		int projection = static_cast<int>(camera_->GetProjectionType());
-		if (ImGui::Combo("Camera Projection", &projection, "Perspective\0Orthographic\0")) {
-			camera_->SetProjectionType(static_cast<ProjectionType>(projection));
-		}
-		if (camera_->GetProjectionType() == ProjectionType::kOrthographic) {
-			ImGui::DragFloat("Camera Ortho Height", &camera_->GetOrthoHeight(), 0.1f, 0.1f, 200.0f);
-		} else {
-			ImGui::SliderFloat("Camera FovY", &camera_->GetFovY(), 0.1f, 3.0f);
-		}
-		ImGui::DragFloat("Camera NearZ", &camera_->GetNearZ(), 0.01f, 0.01f, camera_->GetFarZ() - 0.01f);
-		ImGui::DragFloat("Camera FarZ", &camera_->GetFarZ(), 0.1f, camera_->GetNearZ() + 0.01f, 1000.0f);
-	}
 }
 #endif
 

@@ -57,54 +57,9 @@ void DemoScene::Update() {
 
 	ImGui::Text("%f", ImGui::GetIO().Framerate);
 
-	// シーンの作り直し（切り替え処理の動作確認用）
+	// シーンの作り直し
 	if (ImGui::Button("Reload Scene")) {
 		ChangeScene("Demo");
-	}
-
-	// 見下ろし平行投影の追従カメラの動作確認用（Follow Targetを動かすとカメラが追いかける）
-	if (ImGui::Button("Top Down Follow Camera")) {
-		Camera* camera = framework->GetCameraManager()->GetCamera();
-		camera->SetProjectionType(ProjectionType::kOrthographic);
-		camera->GetOrthoHeight() = 10.0f;
-
-		CameraController* controller = framework->GetCameraManager()->GetController();
-		controller->GetPitch() = 1.5707963f; // 真上
-		controller->SetTarget(&followTarget_);
-		controller->SetEnabled(true);
-		controller->Snap();
-	}
-	ImGui::DragFloat3("Follow Target", &followTarget_.x, 0.1f);
-
-	// 入力の動作確認用（マウス座標・地面上の位置・ゲームパッド）
-	if (ImGui::TreeNode("Input")) {
-		Input* input = framework->GetInput();
-
-		const Mouse& mouseDevice = input->GetMouse();
-		Vector2 mouse = mouseDevice.GetPosition();
-		ImGui::Text("Mouse: (%.1f, %.1f) inside=%d", mouse.x, mouse.y, mouseDevice.IsInsideWindow());
-		Vector3 ground{};
-		if (framework->GetCameraManager()->GetActiveCamera()->ScreenToWorldOnPlane(mouse, 0.0f, &ground)) {
-			ImGui::Text("Mouse on ground(y=0): (%.2f, %.2f, %.2f)", ground.x, ground.y, ground.z);
-		}
-
-		int padIndex = input->GetFirstConnectedGamepadIndex();
-		if (padIndex < 0) {
-			ImGui::Text("Gamepad: not connected");
-		} else {
-			Gamepad& pad = input->GetGamepad(padIndex);
-			Vector2 ls = pad.GetLeftStick();
-			Vector2 rs = pad.GetRightStick();
-			ImGui::Text("Gamepad %d: connected", padIndex);
-			ImGui::Text("L stick (%.2f, %.2f)  R stick (%.2f, %.2f)", ls.x, ls.y, rs.x, rs.y);
-			ImGui::Text("LT %.2f  RT %.2f", pad.GetLeftTrigger(), pad.GetRightTrigger());
-			ImGui::Text("A:%d B:%d X:%d Y:%d LB:%d RB:%d", pad.PushButton(GamepadButton::kA), pad.PushButton(GamepadButton::kB),
-				pad.PushButton(GamepadButton::kX), pad.PushButton(GamepadButton::kY),
-				pad.PushButton(GamepadButton::kLeftShoulder), pad.PushButton(GamepadButton::kRightShoulder));
-			// Aボタンを押している間だけ振動させる
-			pad.SetVibration(pad.PushButton(GamepadButton::kA) ? 0.5f : 0.0f, pad.PushButton(GamepadButton::kA) ? 0.5f : 0.0f);
-		}
-		ImGui::TreePop();
 	}
 
 	framework->GetCameraManager()->DrawImGui();
@@ -113,12 +68,8 @@ void DemoScene::Update() {
 	ImGui::Combo("Blend Mode", &currentBlendMode_, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
 	//パーティクル
-	if (ImGui::Button("Particle Start")) {
-		particle_->EmitParticles(); // エミッタ（count=3）に従ってパーティクルを追加する
-		isParticleMoving_ = true;
-	}
 	ImGui::Checkbox("Billboard", &particle_->GetUseBillboard());
-	ImGui::DragFloat3("Emitter X", &particle_->GetEmitter().transform.translate.x, 0.1f);
+	ImGui::DragFloat3("Emitter Translate", &particle_->GetEmitter().transform.translate.x, 0.1f);
 
 	//風
 	ImGui::Checkbox("Wind Enabled", &wind_.GetEnabled());
