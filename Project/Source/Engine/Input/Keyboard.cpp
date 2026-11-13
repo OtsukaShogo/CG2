@@ -19,7 +19,10 @@ void Keyboard::Initialize(IDirectInput8* directInput, HWND hwnd) {
 void Keyboard::Update() {
 	std::memcpy(keyPrev_, key_, sizeof(key_));
 	device_->Acquire();
-	device_->GetDeviceState(sizeof(key_), key_);
+	// 取得に失敗した（ウィンドウが非アクティブ等でデバイスを失った）場合は、押されたままにならないよう全キーを離した状態にする
+	if (FAILED(device_->GetDeviceState(sizeof(key_), key_))) {
+		std::memset(key_, 0, sizeof(key_));
+	}
 }
 
 void Keyboard::Finalize() {

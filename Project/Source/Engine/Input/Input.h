@@ -75,6 +75,11 @@ public:
 	/// <returns>パッド番号または-1</returns>
 	[[nodiscard]] int GetFirstConnectedGamepadIndex() const;
 
+	/// <summary>
+	/// ウィンドウがアクティブ（フォーカスがある）かを取得する。非アクティブの間、キーボード・マウス・ゲームパッドの入力は無効になる
+	/// </summary>
+	[[nodiscard]] bool IsWindowActive() const { return windowActive_; }
+
 private:
 	Input() = default;
 	~Input() = default;
@@ -83,6 +88,8 @@ private:
 	Microsoft::WRL::ComPtr<IDirectInput8> directInput_;
 	Keyboard keyboard_;
 	Mouse mouse_;
+	HWND hwnd_ = nullptr;
+	bool windowActive_ = true;
 	Gamepad gamepads_[kMaxGamepads];
 };
 

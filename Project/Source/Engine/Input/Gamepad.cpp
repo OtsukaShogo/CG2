@@ -24,8 +24,34 @@ Vector2 Gamepad::ApplyStickDeadZone(SHORT x, SHORT y, SHORT deadZone) {
 	return { fx / magnitude * normalized, fy / magnitude * normalized };
 }
 
-void Gamepad::Update(DWORD index) {
+void Gamepad::Update(DWORD index, bool enabled) {
 	index_ = index;
+
+	// ウィンドウが非アクティブの間は入力を無効にする（XInputはバックグラウンドでも値を返すため）
+	if (!enabled) {
+		if (enabled_) {
+			// 非アクティブになった瞬間：押していたボタンの「離した」を1回だけ通知してから、すべてクリアする
+			enabled_ = false;
+			buttonsPrev_ = buttons_;
+			leftTriggerPrev_ = leftTrigger_;
+			rightTriggerPrev_ = rightTrigger_;
+			buttons_ = 0;
+			leftStick_ = rightStick_ = { 0.0f, 0.0f };
+			leftTrigger_ = rightTrigger_ = 0.0f;
+
+			// 振動したままにならないようにする
+			if (connected_) {
+				XINPUT_VIBRATION stop{};
+				XInputSetState(index_, &stop);
+			}
+		} else {
+			buttonsPrev_ = buttons_;
+			leftTriggerPrev_ = leftTrigger_;
+			rightTriggerPrev_ = rightTrigger_;
+		}
+		return;
+	}
+	enabled_ = true;
 
 	// 未接続のパッドは一定間隔でしか確認しない
 	if (!connected_ && reconnectCounter_ > 0) {
@@ -75,12 +101,21 @@ bool Gamepad::ReleaseButton(GamepadButton button) const {
 }
 
 void Gamepad::SetVibration(float low, float high) {
-	if (!connected_) {
+	// 非アクティブの間は振動させない（フォーカスが戻るまで無視する）
+	if (!connected_ || !enabled_) {
 		return;
 	}
 	XINPUT_VIBRATION vibration{};
 	vibration.wLeftMotorSpeed = static_cast<WORD>(std::clamp(low, 0.0f, 1.0f) * 65535.0f);
 	vibration.wRightMotorSpeed = static_cast<WORD>(std::clamp(high, 0.0f, 1.0f) * 65535.0f);
+	XInputSetState(index_, &vibration);
+}
+
+void Gamepad::StopVibration() {
+	if (!connected_) {
+		return;
+	}
+	XINPUT_VIBRATION vibration{};
 	XInputSetState(index_, &vibration);
 }
 

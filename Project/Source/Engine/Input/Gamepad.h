@@ -35,9 +35,11 @@ class Gamepad {
 public:
 	/// <summary>
 	/// 状態を最新のものに更新する（Inputが毎フレーム呼ぶ）。接続されていない場合は一定間隔でのみ接続を確認する
+	/// ウィンドウが非アクティブ（enabled=false）の間は入力を取得せず、すべて無入力として扱う（押しっぱなしにならない）
 	/// </summary>
 	/// <param name="index">パッド番号（0〜3）</param>
-	void Update(DWORD index);
+	/// <param name="enabled">入力を受け付けるか（ウィンドウがアクティブか）</param>
+	void Update(DWORD index, bool enabled = true);
 
 	/// <summary>
 	/// 接続されているかを取得する
@@ -99,6 +101,11 @@ public:
 	/// <param name="high">高周波モーター（右・細かい振動）の強さ 0〜1</param>
 	void SetVibration(float low, float high);
 
+	/// <summary>
+	/// 振動を止める（ウィンドウの状態に関係なく必ず止める。終了処理用）
+	/// </summary>
+	void StopVibration();
+
 private:
 	// トリガーをボタン扱いする閾値
 	static constexpr float kTriggerThreshold = 0.12f;
@@ -113,6 +120,7 @@ private:
 	bool connected_ = false;
 	DWORD index_ = 0;
 	int reconnectCounter_ = 0;
+	bool enabled_ = true; // false の間（ウィンドウ非アクティブ時）は入力を受け付けない
 
 	WORD buttons_ = 0;
 	WORD buttonsPrev_ = 0;

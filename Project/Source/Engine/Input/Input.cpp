@@ -20,14 +20,18 @@ void Input::Initialize(WinApp* winApp) {
 
 	keyboard_.Initialize(directInput_.Get(), winApp->GetHwnd());
 	mouse_.Initialize(directInput_.Get(), winApp->GetHwnd());
+	hwnd_ = winApp->GetHwnd();
 }
 
 void Input::Update() {
+	// ウィンドウがアクティブか（XInputはバックグラウンドでも入力を返すため、パッド側で無効化に使う）
+	windowActive_ = GetForegroundWindow() == hwnd_;
+
 	keyboard_.Update();
 	mouse_.Update();
 
 	for (int i = 0; i < kMaxGamepads; ++i) {
-		gamepads_[i].Update(static_cast<DWORD>(i));
+		gamepads_[i].Update(static_cast<DWORD>(i), windowActive_);
 	}
 }
 
@@ -53,7 +57,7 @@ int Input::GetFirstConnectedGamepadIndex() const {
 void Input::Finalize() {
 	// 振動したまま終了しないようにする
 	for (int i = 0; i < kMaxGamepads; ++i) {
-		gamepads_[i].SetVibration(0.0f, 0.0f);
+		gamepads_[i].StopVibration();
 	}
 
 	mouse_.Finalize();

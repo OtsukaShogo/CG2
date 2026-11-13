@@ -1,5 +1,6 @@
 #include "Mouse.h"
 #include <cassert>
+#include <cstring>
 
 #include "../Core/WinApp.h"
 
@@ -21,7 +22,10 @@ void Mouse::Initialize(IDirectInput8* directInput, HWND hwnd) {
 void Mouse::Update() {
 	statePrev_ = state_;
 	device_->Acquire();
-	device_->GetDeviceState(sizeof(DIMOUSESTATE), &state_);
+	// 取得に失敗した場合は、ボタンが押されたまま・移動量が残ったままにならないようクリアする
+	if (FAILED(device_->GetDeviceState(sizeof(DIMOUSESTATE), &state_))) {
+		state_ = {};
+	}
 
 	UpdatePosition();
 }
