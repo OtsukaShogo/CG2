@@ -28,7 +28,8 @@ public:
 	/// <param name="deltaTime">経過時間（秒）</param>
 	/// <param name="moveDirection">移動したい向き（ワールドのXZ平面、長さ0〜1。長さが速さの割合になる）</param>
 	/// <param name="arena">壁との押し戻しに使う</param>
-	void Update(float deltaTime, const Engine::Vector3& moveDirection, const Arena& arena);
+	/// <param name="aimDirection">狙っている向き（ワールドのXZ平面、長さ1）。長さが0なら、狙っていないので、進む向きを向く</param>
+	void Update(float deltaTime, const Engine::Vector3& moveDirection, const Engine::Vector3& aimDirection, const Arena& arena);
 
 	/// <summary>
 	/// 描画する

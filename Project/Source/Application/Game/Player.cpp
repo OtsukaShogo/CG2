@@ -27,7 +27,7 @@ void Player::Initialize(AssetFactory* assetFactory, const Vector3& startPosition
 	SyncModels();
 }
 
-void Player::Update(float deltaTime, const Vector3& moveDirection, const Arena& arena) {
+void Player::Update(float deltaTime, const Vector3& moveDirection, const Vector3& aimDirection, const Arena& arena) {
 	// 目標の速度へ、加速（入力をやめたときは、強めに減速）して近づく
 	const Vector3 targetVelocity = moveDirection * Config::kPlayerSpeed;
 	const bool hasInput = Length(moveDirection) > 1e-4f;
@@ -49,8 +49,10 @@ void Player::Update(float deltaTime, const Vector3& moveDirection, const Arena& 
 	}
 	position_.y = 0.0f;
 
-	// 向き: 動いている間は、進む向きへ、滑らかに回る
-	if (hasInput && Length(velocity_) > 0.5f) {
+	// 向き: 狙っている間は、狙う向きへ（移動の向きとは独立）。狙っていなければ、動いている間だけ、進む向きへ。どちらも滑らかに回る
+	if (Length(aimDirection) > 1e-4f) {
+		yaw_ = RotateTowardsAngle(yaw_, YawFromDirection(aimDirection, yaw_), Config::kPlayerTurnSpeed * deltaTime);
+	} else if (hasInput && Length(velocity_) > 0.5f) {
 		const float targetYaw = YawFromDirection(velocity_, yaw_);
 		yaw_ = RotateTowardsAngle(yaw_, targetYaw, Config::kPlayerTurnSpeed * deltaTime);
 	}

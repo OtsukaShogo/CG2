@@ -222,6 +222,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="Source\Application\Game\Arena.cpp" />
+    <ClCompile Include="Source\Application\Game\BulletManager.cpp" />
+    <ClCompile Include="Source\Application\Game\ShootingMath.cpp" />
     <ClCompile Include="Source\Application\Game\Player.cpp" />
     <ClCompile Include="Source\Application\Game\PlayerMath.cpp" />
     <ClCompile Include="Source\Application\Scenes\GameScene.cpp" />
@@ -266,6 +268,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Core\Framework.h" />
     <ClInclude Include="Source\Application\Game\ShooterConfig.h" />
     <ClInclude Include="Source\Application\Game\Arena.h" />
+    <ClInclude Include="Source\Application\Game\BulletManager.h" />
+    <ClInclude Include="Source\Application\Game\ShootingMath.h" />
     <ClInclude Include="Source\Application\Game\Player.h" />
     <ClInclude Include="Source\Application\Game\PlayerMath.h" />
     <ClInclude Include="Source\Application\Scenes\GameScene.h" />

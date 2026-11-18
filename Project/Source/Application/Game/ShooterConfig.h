@@ -24,4 +24,16 @@ inline constexpr float kCameraDistance = 30.0f;    //!< 注視点からの距離
 inline constexpr float kCameraOrthoHeight = 16.0f; //!< 画面の縦に映す範囲（ワールドの長さ）
 inline constexpr float kCameraFollowSpeed = 8.0f;  //!< 追従の速さ
 
+// ---- 射撃 ----
+inline constexpr float kBulletSpeed = 26.0f;        //!< 弾の速さ
+inline constexpr float kBulletLifetime = 1.5f;      //!< 弾が飛び続ける時間（秒）
+inline constexpr float kBulletRadius = 0.15f;       //!< 弾の半径（壁との判定にも使う）
+inline constexpr float kBulletHeight = 1.0f;        //!< 弾を撃つ高さ。マウスの照準も、この高さの水平面で判定する
+inline constexpr float kFireInterval = 0.12f;       //!< 連射の間隔（秒）
+inline constexpr int kBulletPoolCapacity = 256;     //!< 同時に飛べる弾の最大数
+inline constexpr float kMuzzleDistance = kPlayerRadius + 0.3f; //!< 自機の中心から、弾が出る位置までの距離
+inline constexpr float kAimStickThreshold = 0.25f;  //!< 右スティックを、狙う操作とみなす傾き
+inline constexpr float kPadReticleDistance = 6.0f;  //!< ゲームパッドで狙うとき、照準を表示する自機からの距離
+inline constexpr float kReticleRadius = 0.5f;       //!< 照準の表示の大きさ
+
 } // namespace Shooter::Config
