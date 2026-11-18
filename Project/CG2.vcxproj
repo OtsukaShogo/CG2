@@ -221,6 +221,10 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Development|x64'">_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game\Arena.cpp" />
+    <ClCompile Include="Source\Application\Game\Player.cpp" />
+    <ClCompile Include="Source\Application\Game\PlayerMath.cpp" />
+    <ClCompile Include="Source\Application\Scenes\GameScene.cpp" />
     <ClCompile Include="Source\Application\Scenes\DemoScene.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -260,6 +264,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Core\DirectXCommon.h" />
     <ClInclude Include="Source\Engine\Core\FrameSync.h" />
     <ClInclude Include="Source\Engine\Core\Framework.h" />
+    <ClInclude Include="Source\Application\Game\ShooterConfig.h" />
+    <ClInclude Include="Source\Application\Game\Arena.h" />
+    <ClInclude Include="Source\Application\Game\Player.h" />
+    <ClInclude Include="Source\Application\Game\PlayerMath.h" />
+    <ClInclude Include="Source\Application\Scenes\GameScene.h" />
     <ClInclude Include="Source\Application\Game.h" />
     <ClInclude Include="Source\Application\Scenes\DemoScene.h" />
     <ClInclude Include="Source\Engine\Scene\Scene.h" />

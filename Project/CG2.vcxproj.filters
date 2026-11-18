@@ -8,6 +8,9 @@
     <Filter Include="Source\Application">
       <UniqueIdentifier>{8d4c3e5f-6071-4c8d-ae1f-203b4c5d6e7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Application\Game">
+      <UniqueIdentifier>{7d0b3e91-4c52-4a86-b1f3-0e9a6c2d5f18}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Application\Scenes">
       <UniqueIdentifier>{5e1d7a42-93b6-4c0f-8a2e-6b7f1c3d9e04}</UniqueIdentifier>
     </Filter>
@@ -144,6 +147,18 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Core\Framework.cpp">
       <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\Arena.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\Player.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\PlayerMath.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Scenes\GameScene.cpp">
+      <Filter>Source\Application\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Source\Application\Scenes\DemoScene.cpp">
       <Filter>Source\Application\Scenes</Filter>
@@ -311,6 +326,21 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\AssetManager.h">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\ShooterConfig.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\Arena.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\Player.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\PlayerMath.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Scenes\GameScene.h">
+      <Filter>Source\Application\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Scenes\DemoScene.h">
       <Filter>Source\Application\Scenes</Filter>

@@ -57,6 +57,9 @@ void DemoScene::Update() {
 	ImGui::Text("%f", ImGui::GetIO().Framerate);
 
 	// シーンの作り直し
+	if (ImGui::Button("Open Game Scene")) {
+		ChangeScene("Game");
+	}
 	if (ImGui::Button("Reload Scene")) {
 		ChangeScene("Demo");
 	}

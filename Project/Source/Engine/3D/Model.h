@@ -81,6 +81,12 @@ public:
 	/// <param name="handle">設定するGPUディスクリプタハンドル</param>
 	void SetTextureHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { material_.SetTextureHandle(handle); }
 
+	/// <summary>
+	/// マテリアルを取得する（変更可能）。UV変換（テクスチャの繰り返しなど）や、ライティングの有無の設定に使う
+	/// </summary>
+	/// <returns>マテリアル</returns>
+	Material& GetMaterial() { return material_; }
+
 private:
 	std::shared_ptr<const ModelData> modelData_; // 参照カウント方式。AssetManagerが破棄されてもModelが生きている限りデータは解放されない
 	std::shared_ptr<const FrameContext> frameContext_; // Draw()時に「今フレームのcommandList」を都度参照するための共有オブジェクト

@@ -84,6 +84,7 @@
     <ClCompile Include="CollisionTests.cpp" />
     <ClCompile Include="Collision3DTests.cpp" />
     <ClCompile Include="ObjectPoolTests.cpp" />
+    <ClCompile Include="PlayerMathTests.cpp" />
     <!-- テスト対象のソース（D3D12に依存しない、CPUだけで動くもの） -->
     <ClCompile Include="..\Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="..\Source\Engine\Math\Quaternion.cpp" />
@@ -92,6 +93,7 @@
     <ClCompile Include="..\Source\Engine\DebugTools\DebugShapes.cpp" />
     <ClCompile Include="..\Source\Engine\Collision\Collision2D.cpp" />
     <ClCompile Include="..\Source\Engine\Collision\Collision3D.cpp" />
+    <ClCompile Include="..\Source\Application\Game\PlayerMath.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestFramework.h" />
