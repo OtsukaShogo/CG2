@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "Arena.h"
+#include "CombatMath.h"
 #include "PlayerMath.h"
 #include "ShooterConfig.h"
 #include "../../Engine/DebugTools/DebugDraw.h"
@@ -13,6 +14,7 @@ void Player::Initialize(AssetFactory* assetFactory, const Vector3& startPosition
 	position_ = startPosition;
 	velocity_ = Vector3{ 0.0f, 0.0f, 0.0f };
 	yaw_ = 0.0f;
+	health_ = MakeHealth(Config::kPlayerMaxHp);
 
 	// 本体: 判定のカプセルと同じ大きさの円柱
 	body_ = assetFactory->CreateModelInstance(assetFactory->CreatePrimitiveModelData(PrimitiveType::kCylinder));
@@ -27,7 +29,15 @@ void Player::Initialize(AssetFactory* assetFactory, const Vector3& startPosition
 	SyncModels();
 }
 
-void Player::Update(float deltaTime, const Vector3& moveDirection, const Vector3& aimDirection, const Arena& arena) {
+void Player::Update(float deltaTime, const Vector3& requestedMove, const Vector3& requestedAim, const Arena& arena) {
+	UpdateHealth(health_, deltaTime);
+
+	// 倒れている間は、操作を受け付けない（その場で、減速して止まる）
+	const Vector3 zero = { 0.0f, 0.0f, 0.0f };
+	const bool dead = IsDead();
+	const Vector3& moveDirection = dead ? zero : requestedMove;
+	const Vector3& aimDirection = dead ? zero : requestedAim;
+
 	// 目標の速度へ、加速（入力をやめたときは、強めに減速）して近づく
 	const Vector3 targetVelocity = moveDirection * Config::kPlayerSpeed;
 	const bool hasInput = Length(moveDirection) > 1e-4f;
@@ -61,6 +71,8 @@ void Player::Update(float deltaTime, const Vector3& moveDirection, const Vector3
 }
 
 void Player::SyncModels() {
+	// 倒れたら、灰色にする
+	body_->SetColor(IsDead() ? Vector4{ 0.35f, 0.35f, 0.4f, 1.0f } : Vector4{ 0.3f, 0.6f, 1.0f, 1.0f });
 	body_->GetTranslate() = Vector3{ position_.x, position_.y + Config::kPlayerHeight * 0.5f, position_.z };
 
 	const Vector3 forward = Vector3{ std::sin(yaw_), 0.0f, std::cos(yaw_) };
@@ -68,7 +80,15 @@ void Player::SyncModels() {
 	nose_->GetRotate() = Vector3{ 0.0f, yaw_, 0.0f };
 }
 
+bool Player::TakeDamage(int amount) {
+	return Shooter::TakeDamage(health_, amount, Config::kPlayerInvulnerableTime);
+}
+
 void Player::Draw(const Matrix4x4& viewProjection) {
+	// 無敵の間は、点滅して、被弾が分かるようにする
+	if (!IsBlinkVisible(health_.invulnerableTime, Config::kBlinkPeriod)) {
+		return;
+	}
 	body_->Draw(viewProjection);
 	nose_->Draw(viewProjection);
 }

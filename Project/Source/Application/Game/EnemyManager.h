@@ -3,6 +3,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include "CombatMath.h"
 #include "../../Engine/Containers/ObjectPool.h"
 #include "../../Engine/Graphics/AssetFactory.h"
 #include "../../Engine/Math/Matrix4x4.h"
@@ -39,6 +40,26 @@ public:
 	bool SpawnAt(const Engine::Vector3& position);
 
 	/// <summary>
+	/// 弾が1フレームで進んだ道のり（線分）に、最も手前で当たる敵にダメージを与える。体力が尽きた敵は、消える。
+	/// 出現演出の間の敵には、当たらない
+	/// </summary>
+	/// <param name="path">弾の前フレームの位置から、今の位置までの線分</param>
+	/// <param name="outHitPoint">当たった位置（当たった場合のみ書き込まれる。不要なら nullptr）</param>
+	/// <param name="outKilled">倒した場合は true（不要なら nullptr）</param>
+	/// <returns>どれかの敵に当たったか</returns>
+	bool TryHitByBullet(const Engine::Segment3D& path, float bulletRadius, int damage, Engine::Vector3* outHitPoint = nullptr, bool* outKilled = nullptr);
+
+	/// <summary>
+	/// 自機に触れている敵がいるか（出現演出の終わった敵だけが対象）
+	/// </summary>
+	[[nodiscard]] bool IsTouchingPlayer(const Engine::Vector3& playerPosition, float playerRadius) const;
+
+	/// <summary>
+	/// 倒した敵の数（Clear で0に戻る）
+	/// </summary>
+	[[nodiscard]] int GetKillCount() const { return killCount_; }
+
+	/// <summary>
 	/// 敵を描画する
 	/// </summary>
 	void Draw(const Engine::Matrix4x4& viewProjection);
@@ -72,6 +93,8 @@ private:
 		Engine::Vector3 velocity = { 0.0f, 0.0f, 0.0f };
 		float yaw = 0.0f;
 		float age = 0.0f; // 出現してからの時間
+		Health health;
+		float hitFlash = 0.0f; // 弾を受けて、白く光る残り時間
 	};
 
 	/// <summary>
@@ -84,6 +107,7 @@ private:
 	std::vector<Enemy*> scratch_; // 押し合いの計算に使う、出現演出の終わった敵の一覧（毎フレーム使い回す）
 	std::mt19937 random_{ std::random_device{}() };
 	float spawnTimer_ = 0.0f;
+	int killCount_ = 0;
 	bool spawningEnabled_ = true;
 };
 

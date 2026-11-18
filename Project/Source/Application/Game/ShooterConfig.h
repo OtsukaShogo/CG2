@@ -49,4 +49,20 @@ inline constexpr float kEnemySpawnMargin = 1.5f;      //!< 出現位置の、壁
 inline constexpr float kEnemySpawnMinDistance = 14.0f; //!< 出現位置を、自機からこれ以上離す
 inline constexpr float kEnemySpawnInTime = 0.4f;      //!< 出現演出の時間（この間は、動かず、押し合いもしない）
 
+// ---- 戦闘 ----
+inline constexpr int kEnemyHp = 3;                    //!< 敵の体力（弾のダメージ 1 で、3発で倒れる）
+inline constexpr int kBulletDamage = 1;               //!< 弾1発のダメージ
+inline constexpr float kEnemyHitFlashTime = 0.09f;    //!< 敵が弾を受けたとき、白く光る時間（秒）
+inline constexpr int kPlayerMaxHp = 5;                //!< 自機の体力
+inline constexpr int kContactDamage = 1;              //!< 敵に触れたときのダメージ
+inline constexpr float kPlayerInvulnerableTime = 1.0f; //!< 被弾したあとの無敵時間（秒）。触れ続けても、この間隔でしかダメージを受けない
+inline constexpr float kContactMargin = 0.12f;        //!< 接触とみなす距離の余裕（押し合いで、ちょうど接した状態でも、途切れないように）
+inline constexpr float kBlinkPeriod = 0.08f;          //!< 無敵中の点滅の周期（秒）
+
+// ---- HUD（画面の左上に出す、体力のバー。ピクセル単位） ----
+inline constexpr float kHudMargin = 24.0f;
+inline constexpr float kHpBarWidth = 280.0f;
+inline constexpr float kHpBarHeight = 24.0f;
+inline constexpr float kHpBarBorder = 3.0f;
+
 } // namespace Shooter::Config

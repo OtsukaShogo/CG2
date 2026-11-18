@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "CombatMath.h"
 #include "../../Engine/Collision/Collision3D.h"
 #include "../../Engine/Graphics/AssetFactory.h"
 #include "../../Engine/Math/Matrix4x4.h"
@@ -32,7 +33,20 @@ public:
 	void Update(float deltaTime, const Engine::Vector3& moveDirection, const Engine::Vector3& aimDirection, const Arena& arena);
 
 	/// <summary>
-	/// 描画する
+	/// ダメージを受ける。無敵中・すでに倒れている場合は、何もしない。受けたら、一定時間の無敵になる
+	/// </summary>
+	/// <returns>ダメージを受けたら true</returns>
+	bool TakeDamage(int amount);
+
+	/// <summary>
+	/// 体力が尽きているか（倒れている間は、操作を受け付けない）
+	/// </summary>
+	[[nodiscard]] bool IsDead() const { return Shooter::IsDead(health_); }
+
+	[[nodiscard]] const Health& GetHealth() const { return health_; }
+
+	/// <summary>
+	/// 描画する。無敵の間は、点滅する
 	/// </summary>
 	void Draw(const Engine::Matrix4x4& viewProjection);
 
@@ -71,6 +85,8 @@ private:
 
 	std::unique_ptr<Engine::Model> body_;
 	std::unique_ptr<Engine::Model> nose_;
+
+	Health health_;
 };
 
 } // namespace Shooter

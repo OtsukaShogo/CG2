@@ -2,6 +2,7 @@
 #include <memory>
 #include "../../Engine/Scene/Scene.h"
 #include "../../Engine/3D/Camera.h"
+#include "../../Engine/2D/Sprite.h"
 #include "../../Engine/Graphics/Light.h"
 #include "../Game/Arena.h"
 #include "../Game/BulletManager.h"
@@ -46,6 +47,16 @@ private:
 	/// </summary>
 	[[nodiscard]] bool IsFireHeld() const;
 
+	/// <summary>
+	/// 体力のバーの長さ・色を、自機の体力に合わせる
+	/// </summary>
+	void UpdateHud();
+
+	/// <summary>
+	/// 倒れたあとの、やり直しの操作（R キー・ゲームパッドの Start / A）が押されたか
+	/// </summary>
+	[[nodiscard]] bool IsRestartPressed() const;
+
 private:
 	Shooter::Arena arena_;
 	Shooter::Player player_;
@@ -53,6 +64,11 @@ private:
 	Shooter::EnemyManager enemies_;
 	Engine::Light light_;
 	std::unique_ptr<Engine::Model> reticle_; // 照準（地面に出す円盤）
+
+	// HUD（体力のバー）と、倒れたときの画面の色（フォントがなくても、Releaseでも出せるよう、スプライトで作る）
+	std::unique_ptr<Engine::Sprite> hpBack_;
+	std::unique_ptr<Engine::Sprite> hpFill_;
+	std::unique_ptr<Engine::Sprite> deathOverlay_;
 
 	// 照準
 	Shooter::AimSource aimSource_ = Shooter::AimSource::kMouse;

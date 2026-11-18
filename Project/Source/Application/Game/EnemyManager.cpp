@@ -2,8 +2,10 @@
 #include "Arena.h"
 #include "EnemyMath.h"
 #include "PlayerMath.h"
+#include "CombatMath.h"
 #include "ShooterConfig.h"
 #include "../../Engine/DebugTools/DebugDraw.h"
+#include <algorithm>
 #include <cmath>
 
 using namespace Engine;
@@ -41,6 +43,8 @@ bool EnemyManager::SpawnAt(const Vector3& position) {
 	enemy->velocity = Vector3{ 0.0f, 0.0f, 0.0f };
 	enemy->yaw = 0.0f;
 	enemy->age = 0.0f;
+	enemy->health = MakeHealth(Config::kEnemyHp);
+	enemy->hitFlash = 0.0f;
 	SyncModels(*enemy);
 	return true;
 }
@@ -53,6 +57,10 @@ void EnemyManager::SyncModels(Enemy& enemy) {
 	enemy.body->GetScale() = Vector3{ kBodyWidth * scale, height, kBodyWidth * scale };
 	enemy.body->GetTranslate() = Vector3{ enemy.position.x, height * 0.5f, enemy.position.z };
 	enemy.body->GetRotate() = Vector3{ 0.0f, enemy.yaw, 0.0f };
+	// 弾を受けた直後は、白く光る（光を受けない設定にして、確実に白く見えるようにする）
+	const bool flashing = enemy.hitFlash > 0.0f;
+	enemy.body->SetColor(flashing ? Vector4{ 1.0f, 1.0f, 1.0f, 1.0f } : Vector4{ 0.9f, 0.25f, 0.25f, 1.0f });
+	enemy.body->GetMaterial().SetEnableLighting(!flashing);
 
 	const Vector3 forward = Vector3{ std::sin(enemy.yaw), 0.0f, std::cos(enemy.yaw) };
 	enemy.eye->GetScale() = Vector3{ 0.5f * scale, 0.2f * scale, 0.15f * scale };
@@ -76,6 +84,7 @@ void EnemyManager::Update(float deltaTime, const Vector3& playerPosition, float 
 	scratch_.clear();
 	for (Enemy& enemy : *pool_) {
 		enemy.age += deltaTime;
+		enemy.hitFlash = (std::max)(0.0f, enemy.hitFlash - deltaTime);
 		if (enemy.age < Config::kEnemySpawnInTime) {
 			continue;
 		}
@@ -132,7 +141,53 @@ void EnemyManager::DrawDebug(DebugDraw& debugDraw) const {
 	}
 }
 
+bool EnemyManager::TryHitByBullet(const Segment3D& path, float bulletRadius, int damage, Vector3* outHitPoint, bool* outKilled) {
+	// 弾の道のりに、最も手前で当たる敵を探す（出現演出の間は、判定がないので、当たらない）
+	Enemy* nearest = nullptr;
+	float nearestT = 2.0f;
+	for (Enemy& enemy : *pool_) {
+		if (enemy.age < Config::kEnemySpawnInTime) {
+			continue;
+		}
+		float t = 0.0f;
+		if (BulletHitsCapsule(path, bulletRadius, MakeUprightCapsule(enemy.position, Config::kEnemyHeight, Config::kEnemyRadius), &t) && t < nearestT) {
+			nearestT = t;
+			nearest = &enemy;
+		}
+	}
+	if (!nearest) {
+		return false;
+	}
+
+	if (outHitPoint) {
+		*outHitPoint = path.start + (path.end - path.start) * nearestT;
+	}
+	TakeDamage(nearest->health, damage);
+	nearest->hitFlash = Config::kEnemyHitFlashTime;
+
+	const bool killed = IsDead(nearest->health);
+	if (killed) {
+		pool_->Release(nearest); // 走査中ではないので、安全に返却できる
+		++killCount_;
+	}
+	if (outKilled) {
+		*outKilled = killed;
+	}
+	return true;
+}
+
+bool EnemyManager::IsTouchingPlayer(const Vector3& playerPosition, float playerRadius) const {
+	for (const Enemy& enemy : *pool_) {
+		if (enemy.age >= Config::kEnemySpawnInTime &&
+			IsInContact(enemy.position, playerPosition, Config::kEnemyRadius + playerRadius, Config::kContactMargin)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void EnemyManager::Clear() {
+	killCount_ = 0;
 	if (pool_) {
 		pool_->ReleaseAll();
 	}

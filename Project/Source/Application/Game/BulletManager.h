@@ -11,6 +11,8 @@ namespace Engine { class DebugDraw; }
 
 namespace Shooter {
 
+class EnemyManager;
+
 /// <summary>
 /// 自機の弾をまとめて管理する。弾はプールで使い回すので、撃つたびにモデルを作り直さない
 /// </summary>
@@ -29,9 +31,11 @@ public:
 	void Fire(const Engine::Vector3& position, const Engine::Vector3& direction);
 
 	/// <summary>
-	/// すべての弾を進める。壁に当たった弾・寿命の尽きた弾は、プールへ返却する
+	/// すべての弾を進める。敵・壁に当たった弾、寿命の尽きた弾は、プールへ返却する。
+	/// 敵への命中は、前フレームの位置から今の位置までの線分で調べるので、速い弾が、敵をすり抜けない
+	/// （壁に当たった場合は、壁の手前までの線分なので、壁の向こうの敵には当たらない）
 	/// </summary>
-	void Update(float deltaTime, const std::array<Engine::AABB, 4>& walls);
+	void Update(float deltaTime, const std::array<Engine::AABB, 4>& walls, EnemyManager& enemies);
 
 	/// <summary>
 	/// 飛んでいる弾を描画する

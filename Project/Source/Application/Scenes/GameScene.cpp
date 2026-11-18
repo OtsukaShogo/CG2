@@ -32,6 +32,21 @@ void GameScene::Initialize() {
 	reticle_->SetColor(Vector4{ 1.0f, 0.35f, 0.3f, 1.0f });
 	reticle_->GetMaterial().SetEnableLighting(false);
 
+	// HUD: 体力のバー（背景の枠と、中身）と、倒れたときに画面を赤く染める板。すべて、白い1x1のテクスチャに色を掛けて作る
+	const Vector2 barOrigin = { Shooter::Config::kHudMargin, Shooter::Config::kHudMargin };
+	const D3D12_GPU_DESCRIPTOR_HANDLE white = assetFactory->GetWhiteTexture().gpuHandle;
+	hpBack_ = assetFactory->CreateSprite(Shooter::Config::kHpBarWidth, Shooter::Config::kHpBarHeight);
+	hpBack_->SetTextureHandle(white);
+	hpBack_->SetColor(Vector4{ 0.0f, 0.0f, 0.0f, 0.6f });
+	hpBack_->GetTranslate() = Vector3{ barOrigin.x, barOrigin.y, 0.0f };
+	hpFill_ = assetFactory->CreateSprite(Shooter::Config::kHpBarWidth - Shooter::Config::kHpBarBorder * 2.0f, Shooter::Config::kHpBarHeight - Shooter::Config::kHpBarBorder * 2.0f);
+	hpFill_->SetTextureHandle(white);
+	hpFill_->GetTranslate() = Vector3{ barOrigin.x + Shooter::Config::kHpBarBorder, barOrigin.y + Shooter::Config::kHpBarBorder, 0.0f };
+	deathOverlay_ = assetFactory->CreateSprite(static_cast<float>(WinApp::kClientWidth), static_cast<float>(WinApp::kClientHeight));
+	deathOverlay_->SetTextureHandle(white);
+	deathOverlay_->SetColor(Vector4{ 0.7f, 0.05f, 0.05f, 0.35f });
+	UpdateHud();
+
 	// 斜めから見るので、光は、手前上から奥へ向かう向きにして、箱の側面にも陰影が出るようにする
 	light_.GetDirectionalLight()->direction = Normalize(Vector3{ -0.4f, -1.0f, 0.6f });
 
@@ -132,6 +147,25 @@ void GameScene::UpdateAim(const Vector2& screenRight, const Vector2& screenUp) {
 	}
 }
 
+bool GameScene::IsRestartPressed() const {
+	Input* input = GetFramework()->GetInput();
+	bool pressed = input->GetKeyboard().TriggerKey(DIK_R);
+	const int padIndex = input->GetFirstConnectedGamepadIndex();
+	if (padIndex >= 0) {
+		const Gamepad& pad = input->GetGamepad(padIndex);
+		pressed = pressed || pad.TriggerButton(GamepadButton::kStart) || pad.TriggerButton(GamepadButton::kA);
+	}
+	return pressed;
+}
+
+void GameScene::UpdateHud() {
+	const float ratio = Shooter::HealthRatio(player_.GetHealth());
+	const float fullWidth = Shooter::Config::kHpBarWidth - Shooter::Config::kHpBarBorder * 2.0f;
+	hpFill_->SetSize(Vector2{ fullWidth * ratio, Shooter::Config::kHpBarHeight - Shooter::Config::kHpBarBorder * 2.0f });
+	// 体力が減るほど、緑から赤へ
+	hpFill_->SetColor(Vector4{ 1.0f - ratio * 0.7f, 0.3f + ratio * 0.6f, 0.25f, 1.0f });
+}
+
 bool GameScene::IsFireHeld() const {
 	Input* input = GetFramework()->GetInput();
 	bool held = input->GetMouse().PushButton(MouseButton::kLeft);
@@ -156,6 +190,10 @@ void GameScene::Update() {
 	ImGui::Text("Move: WASD / Arrow keys / Left stick");
 	ImGui::Text("Aim: Mouse / Right stick   Fire: Left click / RT / RB (stick only aims)");
 	ImGui::Text("Aim source: %s   Bullets: %d", aimSource_ == Shooter::AimSource::kMouse ? "Mouse" : "Gamepad", static_cast<int>(bullets_.GetActiveCount()));
+	ImGui::Text("HP: %d / %d   Kills: %d", player_.GetHealth().hp, player_.GetHealth().maxHp, enemies_.GetKillCount());
+	if (player_.IsDead()) {
+		ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "DEAD - press R / Start / A to restart");
+	}
 	ImGui::Text("Enemies: %d", static_cast<int>(enemies_.GetActiveCount()));
 	bool spawning = enemies_.IsSpawningEnabled();
 	if (ImGui::Checkbox("Spawn Enemies", &spawning)) {
@@ -181,7 +219,9 @@ void GameScene::Update() {
 	UpdateAim(screenRight, screenUp);
 	player_.Update(deltaTime, ReadMoveDirection(screenRight, screenUp), aiming_ ? aimDirection_ : Vector3{ 0.0f, 0.0f, 0.0f }, arena_);
 
-	const int shots = Shooter::ConsumeShots(fireCooldown_, deltaTime, IsFireHeld(), Shooter::Config::kFireInterval);
+	// 倒れている間は、撃てない
+	const bool canFire = !player_.IsDead();
+	const int shots = Shooter::ConsumeShots(fireCooldown_, deltaTime, canFire && IsFireHeld(), Shooter::Config::kFireInterval);
 	if (shots > 0) {
 		// 撃つ向き: 狙っていればその向き。ゲームパッドで右スティックを離していれば、自機が向いている向き
 		const Vector3 fireDirection = aiming_ ? aimDirection_ : Vector3{ std::sin(player_.GetYaw()), 0.0f, std::cos(player_.GetYaw()) };
@@ -191,8 +231,18 @@ void GameScene::Update() {
 			bullets_.Fire(muzzle, fireDirection);
 		}
 	}
-	bullets_.Update(deltaTime, arena_.GetWalls());
+	// 戦闘: 敵が動いてから、弾の命中を調べる（最新の敵の位置に対して）。そのあと、敵が自機に触れていたらダメージ
 	enemies_.Update(deltaTime, player_.GetPosition(), Shooter::Config::kPlayerRadius, arena_);
+	bullets_.Update(deltaTime, arena_.GetWalls(), enemies_);
+	if (!player_.IsDead() && enemies_.IsTouchingPlayer(player_.GetPosition(), Shooter::Config::kPlayerRadius)) {
+		player_.TakeDamage(Shooter::Config::kContactDamage); // 無敵中は、何も起きない
+	}
+
+	// 倒れたら、やり直しの操作を待つ
+	if (player_.IsDead() && IsRestartPressed()) {
+		ChangeScene("Game");
+	}
+	UpdateHud();
 
 	// 照準の円盤の位置
 	reticle_->GetTranslate() = Vector3{ aimPoint_.x, 0.03f, aimPoint_.z };
@@ -231,6 +281,15 @@ void GameScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	player_.Draw(viewProjection);
 	bullets_.Draw(viewProjection);
 	enemies_.Draw(viewProjection);
+
+	// HUD: 半透明に重ねるので、通常のブレンドで描く
+	framework->GetPipelineStateManager()->SetPipeline(commandList, PipelineStateManager::kSprite, BlendMode::kNormal);
+	const Matrix4x4& spriteViewProjection = framework->GetCameraManager()->GetSpriteViewProjection();
+	if (player_.IsDead()) {
+		deathOverlay_->Draw(spriteViewProjection);
+	}
+	hpBack_->Draw(spriteViewProjection);
+	hpFill_->Draw(spriteViewProjection);
 }
 
 void GameScene::Finalize() {
