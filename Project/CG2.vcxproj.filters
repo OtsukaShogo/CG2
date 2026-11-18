@@ -166,6 +166,9 @@
     <ClCompile Include="Source\Engine\Collision\Collision2D.cpp">
       <Filter>Source\Engine\Collision</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Collision\Collision3D.cpp">
+      <Filter>Source\Engine\Collision</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\DebugTools\DebugDraw.cpp">
       <Filter>Source\Engine\DebugTools</Filter>
     </ClCompile>
@@ -364,6 +367,9 @@
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Collision\Collision2D.h">
+      <Filter>Source\Engine\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Collision\Collision3D.h">
       <Filter>Source\Engine\Collision</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\DebugTools\DebugDraw.h">

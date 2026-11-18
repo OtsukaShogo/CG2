@@ -111,6 +111,15 @@ public:
 	void Box(const Matrix4x4& world, const Vector4& color = DebugColor::kWhite);
 
 	/// <summary>
+	/// 当たり判定の形を、そのまま追加する（Sphere・AABB・OBB・Capsule・Segment3D・Plane は、同じ名前の Draw で呼べる）
+	/// </summary>
+	void Draw(const Engine::Sphere& sphere, const Vector4& color = DebugColor::kWhite, uint32_t segments = kDefaultSegments);
+	void Draw(const AABB& aabb, const Vector4& color = DebugColor::kWhite);
+	void Draw(const OBB& obb, const Vector4& color = DebugColor::kWhite);
+	void Draw(const Capsule& capsule, const Vector4& color = DebugColor::kWhite, uint32_t segments = kDefaultSegments);
+	void Draw(const Segment3D& segment, const Vector4& color = DebugColor::kWhite);
+
+	/// <summary>
 	/// 水平な長方形（XZ平面。見下ろし型の矩形の当たり判定）を追加する
 	/// </summary>
 	/// <param name="halfSize">X方向・Z方向の半分の長さ</param>

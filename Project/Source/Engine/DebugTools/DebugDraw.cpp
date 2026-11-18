@@ -101,6 +101,32 @@ void DebugDraw::RectXZ(const Vector3& center, const Vector2& halfSize, const Vec
 	Commit(scratch_, color);
 }
 
+void DebugDraw::Draw(const Engine::Sphere& sphere, const Vector4& color, uint32_t segments) {
+	Sphere(sphere.center, sphere.radius, color, segments);
+}
+
+void DebugDraw::Draw(const AABB& aabb, const Vector4& color) {
+	Box(aabb.min, aabb.max, color);
+}
+
+void DebugDraw::Draw(const OBB& obb, const Vector4& color) {
+	if (!kEnabled) return;
+	scratch_.clear();
+	DebugShapes::AppendOBB(scratch_, obb);
+	Commit(scratch_, color);
+}
+
+void DebugDraw::Draw(const Capsule& capsule, const Vector4& color, uint32_t segments) {
+	if (!kEnabled) return;
+	scratch_.clear();
+	DebugShapes::AppendCapsule(scratch_, capsule.segment, capsule.radius, segments);
+	Commit(scratch_, color);
+}
+
+void DebugDraw::Draw(const Segment3D& segment, const Vector4& color) {
+	Line(segment.start, segment.end, color);
+}
+
 void DebugDraw::DrawCircle2D(const Circle2D& circle, float y, const Vector4& color, uint32_t segments) {
 	CircleXZ(FromXZ(circle.center, y), circle.radius, color, segments);
 }

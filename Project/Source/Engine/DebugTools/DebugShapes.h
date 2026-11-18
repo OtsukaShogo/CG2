@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include "../Collision/Collision3D.h"
 #include "../Math/Matrix4x4.h"
 #include "../Math/Vector2.h"
 #include "../Math/Vector3.h"
@@ -52,6 +53,17 @@ void AppendBox(DebugLineList& out, const Vector3& min, const Vector3& max);
 /// 回転した箱（OBB）は、MakeAffineMatrix でスケール・回転・移動を指定して渡す
 /// </summary>
 void AppendBox(DebugLineList& out, const Matrix4x4& world);
+
+/// <summary>
+/// OBB（回転した箱）の12本の辺
+/// </summary>
+void AppendOBB(DebugLineList& out, const OBB& obb);
+
+/// <summary>
+/// カプセル（両端の半球と、側面の輪郭）。軸の長さが0なら球になる
+/// </summary>
+/// <param name="segments">円周の分割数（半球の弧は、その半分）</param>
+void AppendCapsule(DebugLineList& out, const Segment3D& segment, float radius, uint32_t segments);
 
 /// <summary>
 /// 水平な長方形（XZ平面）の4本の辺

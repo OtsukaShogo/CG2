@@ -199,3 +199,75 @@ TEST_CASE(DebugShapes_Arrow) {
 	}
 	CHECK(clamped);
 }
+
+TEST_CASE(DebugShapes_Obb) {
+	OBB obb = MakeOBB(V3(1, 2, 3), V3(1, 2, 3), V3(0.3f, 1.1f, -0.7f)); // 回転した箱
+	DebugLineList lines;
+	AppendOBB(lines, obb);
+	CHECK(lines.size() == 12);
+	// 辺の長さは、4本ずつ 2・4・6（回転しても変わらない）
+	int x = 0, y = 0, z = 0;
+	for (const DebugLine& line : lines) {
+		float length = LineLength(line);
+		x += NearlyEqual(length, 2.0f, 1e-4f) ? 1 : 0;
+		y += NearlyEqual(length, 4.0f, 1e-4f) ? 1 : 0;
+		z += NearlyEqual(length, 6.0f, 1e-4f) ? 1 : 0;
+	}
+	CHECK(x == 4);
+	CHECK(y == 4);
+	CHECK(z == 4);
+	// すべての端点は、箱の表面（角）にある
+	bool onCorners = true;
+	for (const DebugLine& line : lines) {
+		for (Vector3 p : { line.start, line.end }) {
+			Vector3 closest = ClosestPoint(p, obb);
+			onCorners = onCorners && NearlyEqual(closest, p, 1e-4f); // 箱の上（内側を含む）
+			// 軸ごとの位置が、すべて端（±半分）にある
+			for (int i = 0; i < 3; ++i) {
+				float half = i == 0 ? obb.halfExtents.x : (i == 1 ? obb.halfExtents.y : obb.halfExtents.z);
+				onCorners = onCorners && NearlyEqual(std::abs(Dot(Vector3{ p - obb.center }, obb.axes[i])), half, 1e-3f);
+			}
+		}
+	}
+	CHECK(onCorners);
+}
+
+TEST_CASE(DebugShapes_Capsule) {
+	Segment3D axis{ V3(1, 0, 2), V3(1, 3, 2) };
+	DebugLineList lines;
+	AppendCapsule(lines, axis, 0.5f, 16);
+	CHECK(!lines.empty());
+	// 輪郭のすべての点は、軸から、ちょうど半径の距離にある（カプセルの表面上）
+	bool onSurface = true;
+	for (const DebugLine& line : lines) {
+		for (Vector3 p : { line.start, line.end }) {
+			onSurface = onSurface && NearlyEqual(Length(Vector3{ p - ClosestPoint(p, axis) }), 0.5f, 1e-4f);
+		}
+	}
+	CHECK(onSurface);
+	// 軸の端（上下）を越えた先まで、輪郭が伸びている（半球がある）
+	float top = -1e9f, bottom = 1e9f;
+	for (const DebugLine& line : lines) {
+		for (Vector3 p : { line.start, line.end }) {
+			top = (std::max)(top, p.y);
+			bottom = (std::min)(bottom, p.y);
+		}
+	}
+	CHECK_NEAR(top, 3.5, 1e-4);
+	CHECK_NEAR(bottom, -0.5, 1e-4);
+
+	// 斜めの軸でも、表面上にある
+	Segment3D diagonal{ V3(-1, 0, 0), V3(2, 2, 1) };
+	DebugLineList slanted;
+	AppendCapsule(slanted, diagonal, 0.7f, 24);
+	bool slantedOk = true;
+	for (const DebugLine& line : slanted) {
+		slantedOk = slantedOk && NearlyEqual(Length(Vector3{ line.start - ClosestPoint(line.start, diagonal) }), 0.7f, 1e-3f);
+	}
+	CHECK(slantedOk);
+
+	// 軸の長さが0なら球（3つの円）
+	DebugLineList sphere;
+	AppendCapsule(sphere, Segment3D{ V3(0, 0, 0), V3(0, 0, 0) }, 1.0f, 12);
+	CHECK(sphere.size() == 36);
+}

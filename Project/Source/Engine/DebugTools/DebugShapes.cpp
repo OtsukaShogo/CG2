@@ -80,6 +80,50 @@ void AppendBox(DebugLineList& out, const Matrix4x4& world) {
 	AppendBoxEdges(out, corners);
 }
 
+void AppendOBB(DebugLineList& out, const OBB& obb) {
+	Vector3 corners[8];
+	GetCorners(obb, corners); // ビット0=軸0・ビット1=軸1・ビット2=軸2（AppendBoxEdgesと同じ並び）
+	AppendBoxEdges(out, corners);
+}
+
+void AppendCapsule(DebugLineList& out, const Segment3D& segment, float radius, uint32_t segments) {
+	segments = (std::max)(segments, 4u);
+	const Vector3 axis = segment.end - segment.start;
+	const float length = Length(axis);
+	if (!(length > 1e-6f)) {
+		AppendSphere(out, segment.start, radius, segments); // 軸の長さが0: 球
+		return;
+	}
+	const Vector3 direction = axis / length;
+	const Vector3 side1 = Normalize(Perpendicular(direction));
+	const Vector3 side2 = Cross(direction, side1);
+
+	// 両端の輪
+	AppendCircle(out, segment.start, side1, side2, radius, segments);
+	AppendCircle(out, segment.end, side1, side2, radius, segments);
+
+	// 側面の輪郭（4本）
+	for (const Vector3& side : { side1, -side1, side2, -side2 }) {
+		out.push_back({ segment.start + side * radius, segment.end + side * radius });
+	}
+
+	// 両端の半球の弧（それぞれ、直交する2つの平面で）
+	const uint32_t arcSegments = (std::max)(segments / 2, 2u);
+	auto appendArc = [&](const Vector3& center, const Vector3& side, const Vector3& outward) {
+		Vector3 previous = center + side * radius;
+		for (uint32_t i = 1; i <= arcSegments; ++i) {
+			const float angle = kPi * static_cast<float>(i) / static_cast<float>(arcSegments);
+			const Vector3 current = center + (side * std::cos(angle) + outward * std::sin(angle)) * radius;
+			out.push_back({ previous, current });
+			previous = current;
+		}
+	};
+	appendArc(segment.end, side1, direction);
+	appendArc(segment.end, side2, direction);
+	appendArc(segment.start, side1, -direction);
+	appendArc(segment.start, side2, -direction);
+}
+
 void AppendRect(DebugLineList& out, const Vector3& center, const Vector2& halfSize) {
 	Vector3 a = { center.x - halfSize.x, center.y, center.z - halfSize.y };
 	Vector3 b = { center.x - halfSize.x, center.y, center.z + halfSize.y };
