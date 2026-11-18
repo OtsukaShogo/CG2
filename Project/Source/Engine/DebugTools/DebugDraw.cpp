@@ -101,6 +101,20 @@ void DebugDraw::RectXZ(const Vector3& center, const Vector2& halfSize, const Vec
 	Commit(scratch_, color);
 }
 
+void DebugDraw::DrawCircle2D(const Circle2D& circle, float y, const Vector4& color, uint32_t segments) {
+	CircleXZ(FromXZ(circle.center, y), circle.radius, color, segments);
+}
+
+void DebugDraw::DrawAABB2D(const AABB2D& aabb, float y, const Vector4& color) {
+	const Vector2 center = (aabb.min + aabb.max) * 0.5f;
+	const Vector2 halfSize = (aabb.max - aabb.min) * 0.5f;
+	RectXZ(FromXZ(center, y), halfSize, color);
+}
+
+void DebugDraw::DrawSegment2D(const Segment2D& segment, float y, const Vector4& color) {
+	Line(FromXZ(segment.start, y), FromXZ(segment.end, y), color);
+}
+
 void DebugDraw::Axis(const Vector3& origin, float length) {
 	if (!kEnabled) return;
 	Line(origin, origin + Vector3{ length, 0.0f, 0.0f }, DebugColor::kRed);

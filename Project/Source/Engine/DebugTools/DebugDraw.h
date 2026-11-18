@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include "DebugShapes.h"
+#include "../Collision/Collision2D.h"
 #include "../Math/Matrix4x4.h"
 #include "../Math/Vector2.h"
 #include "../Math/Vector3.h"
@@ -114,6 +115,21 @@ public:
 	/// </summary>
 	/// <param name="halfSize">X方向・Z方向の半分の長さ</param>
 	void RectXZ(const Vector3& center, const Vector2& halfSize, const Vector4& color = DebugColor::kWhite);
+
+	/// <summary>
+	/// 当たり判定の円（Circle2D）を、高さ y の水平な円として追加する
+	/// </summary>
+	void DrawCircle2D(const Circle2D& circle, float y, const Vector4& color = DebugColor::kWhite, uint32_t segments = kDefaultSegments);
+
+	/// <summary>
+	/// 当たり判定の矩形（AABB2D）を、高さ y の水平な長方形として追加する
+	/// </summary>
+	void DrawAABB2D(const AABB2D& aabb, float y, const Vector4& color = DebugColor::kWhite);
+
+	/// <summary>
+	/// 当たり判定の線分（Segment2D）を、高さ y の水平な線として追加する
+	/// </summary>
+	void DrawSegment2D(const Segment2D& segment, float y, const Vector4& color = DebugColor::kWhite);
 
 	/// <summary>
 	/// 座標軸（X=赤・Y=緑・Z=青）を追加する

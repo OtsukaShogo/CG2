@@ -26,6 +26,9 @@
     <Filter Include="Source\Engine\Math">
       <UniqueIdentifier>{87c7204d-7a8e-40fe-85d6-856434d95c5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Collision">
+      <UniqueIdentifier>{9a2e4c71-5b38-4d06-8f1a-3c7d0e6b2f94}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\DebugTools">
       <UniqueIdentifier>{c5b81f3a-6d27-4e90-a1c4-8f3b7d2e5a60}</UniqueIdentifier>
     </Filter>
@@ -159,6 +162,9 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\PrimitiveMesh.cpp">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Collision\Collision2D.cpp">
+      <Filter>Source\Engine\Collision</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\DebugTools\DebugDraw.cpp">
       <Filter>Source\Engine\DebugTools</Filter>
@@ -356,6 +362,9 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\PrimitiveMesh.h">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Collision\Collision2D.h">
+      <Filter>Source\Engine\Collision</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\DebugTools\DebugDraw.h">
       <Filter>Source\Engine\DebugTools</Filter>
