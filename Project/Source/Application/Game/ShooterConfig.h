@@ -36,4 +36,17 @@ inline constexpr float kAimStickThreshold = 0.25f;  //!< 右スティックを�
 inline constexpr float kPadReticleDistance = 6.0f;  //!< ゲームパッドで狙うとき、照準を表示する自機からの距離
 inline constexpr float kReticleRadius = 0.5f;       //!< 照準の表示の大きさ
 
+// ---- 敵 ----
+inline constexpr float kEnemyRadius = 0.45f;          //!< 敵の体の半径（敵どうし・自機・壁との押し合いに使う）
+inline constexpr float kEnemyHeight = 1.5f;           //!< 敵の体の高さ
+inline constexpr float kEnemySpeed = 3.5f;            //!< 追いかける速さ（自機の最高速度 7 より遅く、逃げられる）
+inline constexpr float kEnemyAcceleration = 25.0f;    //!< 加速（向きを変えるときも、急には曲がらない）
+inline constexpr float kEnemyTurnSpeed = 10.0f;       //!< 向きを変える速さ（ラジアン/秒）
+inline constexpr int kEnemyPoolCapacity = 128;        //!< 同時に存在できる敵の最大数（プールの容量）
+inline constexpr int kEnemyMaxAlive = 40;             //!< 出現で増やす、生きている敵の上限（プールの容量より少なくする）
+inline constexpr float kEnemySpawnInterval = 0.8f;    //!< 出現の間隔（秒）
+inline constexpr float kEnemySpawnMargin = 1.5f;      //!< 出現位置の、壁からの内側への余裕
+inline constexpr float kEnemySpawnMinDistance = 14.0f; //!< 出現位置を、自機からこれ以上離す
+inline constexpr float kEnemySpawnInTime = 0.4f;      //!< 出現演出の時間（この間は、動かず、押し合いもしない）
+
 } // namespace Shooter::Config

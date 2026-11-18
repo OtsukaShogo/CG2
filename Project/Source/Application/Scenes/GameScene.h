@@ -5,6 +5,7 @@
 #include "../../Engine/Graphics/Light.h"
 #include "../Game/Arena.h"
 #include "../Game/BulletManager.h"
+#include "../Game/EnemyManager.h"
 #include "../Game/Player.h"
 #include "../Game/ShootingMath.h"
 
@@ -49,6 +50,7 @@ private:
 	Shooter::Arena arena_;
 	Shooter::Player player_;
 	Shooter::BulletManager bullets_;
+	Shooter::EnemyManager enemies_;
 	Engine::Light light_;
 	std::unique_ptr<Engine::Model> reticle_; // 照準（地面に出す円盤）
 

@@ -223,6 +223,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ClCompile>
     <ClCompile Include="Source\Application\Game\Arena.cpp" />
     <ClCompile Include="Source\Application\Game\BulletManager.cpp" />
+    <ClCompile Include="Source\Application\Game\EnemyManager.cpp" />
+    <ClCompile Include="Source\Application\Game\EnemyMath.cpp" />
     <ClCompile Include="Source\Application\Game\ShootingMath.cpp" />
     <ClCompile Include="Source\Application\Game\Player.cpp" />
     <ClCompile Include="Source\Application\Game\PlayerMath.cpp" />
@@ -269,6 +271,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Application\Game\ShooterConfig.h" />
     <ClInclude Include="Source\Application\Game\Arena.h" />
     <ClInclude Include="Source\Application\Game\BulletManager.h" />
+    <ClInclude Include="Source\Application\Game\EnemyManager.h" />
+    <ClInclude Include="Source\Application\Game\EnemyMath.h" />
     <ClInclude Include="Source\Application\Game\ShootingMath.h" />
     <ClInclude Include="Source\Application\Game\Player.h" />
     <ClInclude Include="Source\Application\Game\PlayerMath.h" />

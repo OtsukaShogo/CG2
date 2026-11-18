@@ -148,6 +148,12 @@
     <ClCompile Include="Source\Engine\Core\Framework.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game\EnemyManager.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\EnemyMath.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Application\Game\BulletManager.cpp">
       <Filter>Source\Application\Game</Filter>
     </ClCompile>
@@ -334,6 +340,12 @@
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Game\ShooterConfig.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\EnemyManager.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\EnemyMath.h">
       <Filter>Source\Application\Game</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Game\BulletManager.h">

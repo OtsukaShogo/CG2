@@ -24,6 +24,7 @@ void GameScene::Initialize() {
 	arena_.Initialize(assetFactory);
 	player_.Initialize(assetFactory, Vector3{ 0.0f, 0.0f, 0.0f });
 	bullets_.Initialize(assetFactory, Shooter::Config::kBulletPoolCapacity);
+	enemies_.Initialize(assetFactory, Shooter::Config::kEnemyPoolCapacity);
 
 	// 照準: 地面に置く、薄い円盤（光を受けず、常に見えるようにする）
 	reticle_ = assetFactory->CreateModelInstance(assetFactory->CreatePrimitiveModelData(PrimitiveType::kCylinder));
@@ -155,6 +156,14 @@ void GameScene::Update() {
 	ImGui::Text("Move: WASD / Arrow keys / Left stick");
 	ImGui::Text("Aim: Mouse / Right stick   Fire: Left click / RT / RB (stick only aims)");
 	ImGui::Text("Aim source: %s   Bullets: %d", aimSource_ == Shooter::AimSource::kMouse ? "Mouse" : "Gamepad", static_cast<int>(bullets_.GetActiveCount()));
+	ImGui::Text("Enemies: %d", static_cast<int>(enemies_.GetActiveCount()));
+	bool spawning = enemies_.IsSpawningEnabled();
+	if (ImGui::Checkbox("Spawn Enemies", &spawning)) {
+		enemies_.SetSpawningEnabled(spawning);
+	}
+	if (ImGui::Button("Clear Enemies")) {
+		enemies_.Clear();
+	}
 	ImGui::Checkbox("Show Colliders", &showColliders_);
 	if (ImGui::Button("Open Demo Scene")) {
 		ChangeScene("Demo");
@@ -183,6 +192,7 @@ void GameScene::Update() {
 		}
 	}
 	bullets_.Update(deltaTime, arena_.GetWalls());
+	enemies_.Update(deltaTime, player_.GetPosition(), Shooter::Config::kPlayerRadius, arena_);
 
 	// 照準の円盤の位置
 	reticle_->GetTranslate() = Vector3{ aimPoint_.x, 0.03f, aimPoint_.z };
@@ -195,6 +205,7 @@ void GameScene::Update() {
 		arena_.DrawDebug(*debugDraw);
 		player_.DrawDebug(*debugDraw);
 		bullets_.DrawDebug(*debugDraw);
+		enemies_.DrawDebug(*debugDraw);
 		if (reticleVisible_) {
 			// 自機から照準までの線（弾が進む向き）
 			const Vector3 from = player_.GetPosition() + Vector3{ 0.0f, Shooter::Config::kBulletHeight, 0.0f };
@@ -219,6 +230,7 @@ void GameScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	}
 	player_.Draw(viewProjection);
 	bullets_.Draw(viewProjection);
+	enemies_.Draw(viewProjection);
 }
 
 void GameScene::Finalize() {
@@ -236,4 +248,5 @@ void GameScene::Finalize() {
 	camera->Update();
 
 	bullets_.Clear();
+	enemies_.Clear();
 }
