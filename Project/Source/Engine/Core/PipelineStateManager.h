@@ -39,6 +39,8 @@ public:
     static constexpr const char* kObject3D = "Object3D";
     static constexpr const char* kSprite   = "Sprite";
     static constexpr const char* kParticle = "Particle";
+    static constexpr const char* kDebugLine = "DebugLine";           // デバッグ線（常に手前）
+    static constexpr const char* kDebugLineDepth = "DebugLineDepth"; // デバッグ線（深度テストあり）
 
     /// <summary>
     /// ブレンドモードに応じたブレンドステート設定を作成する
@@ -82,6 +84,7 @@ public:
     /// <param name="rtvFormat">レンダーターゲットのフォーマット</param>
     /// <param name="dsvFormat">深度ステンシルのフォーマット</param>
     /// <param name="rootSignature">使用するルートシグネチャ（nullptrの場合は共通のルートシグネチャを使う）</param>
+    /// <param name="topologyType">プリミティブの種類（三角形・線など。既定は三角形）</param>
     void CreateGraphicsPipeline(
         const std::string& name,
         ID3D12Device* device,
@@ -93,7 +96,8 @@ public:
         const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
         DXGI_FORMAT rtvFormat,
         DXGI_FORMAT dsvFormat,
-        ID3D12RootSignature* rootSignature = nullptr);
+        ID3D12RootSignature* rootSignature = nullptr,
+        D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 
     /// <summary>
     /// Object3D用のPSOを、全ブレンドモード分作成してキャッシュする
@@ -156,7 +160,19 @@ public:
     /// <param name="blendMode">セットするブレンドモード</param>
     void SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name, BlendMode blendMode);
 
+    /// <summary>
+    /// デバッグ線描画用のPSOとルートシグネチャを作成する（Debug/Developmentのみ。ルートシグネチャも作る）
+    /// </summary>
+    void CreateDebugLinePipeline(ID3D12Device* device, ShaderManager* shaderMgr);
+
+    /// <summary>
+    /// デバッグ線描画用のPSOとルートシグネチャをコマンドリストにセットする
+    /// </summary>
+    /// <param name="depthTest">深度テストをする（モデルの後ろに隠れる）場合はtrue</param>
+    void SetDebugLinePipeline(ID3D12GraphicsCommandList* commandList, bool depthTest);
+
 private:
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> debugLineRootSignature_;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> particleRootSignature_;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelineStates_;

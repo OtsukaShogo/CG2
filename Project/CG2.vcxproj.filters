@@ -26,6 +26,9 @@
     <Filter Include="Source\Engine\Math">
       <UniqueIdentifier>{87c7204d-7a8e-40fe-85d6-856434d95c5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\DebugTools">
+      <UniqueIdentifier>{c5b81f3a-6d27-4e90-a1c4-8f3b7d2e5a60}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Input">
       <UniqueIdentifier>{7c3b2d4e-5f60-4b7c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
@@ -156,6 +159,12 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\PrimitiveMesh.cpp">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\DebugTools\DebugDraw.cpp">
+      <Filter>Source\Engine\DebugTools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\DebugTools\DebugShapes.cpp">
+      <Filter>Source\Engine\DebugTools</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Core\D3DResourceLeakChecker.cpp">
       <Filter>Source\Engine\Core</Filter>
@@ -348,6 +357,12 @@
     <ClInclude Include="Source\Engine\Graphics\PrimitiveMesh.h">
       <Filter>Source\Engine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\DebugTools\DebugDraw.h">
+      <Filter>Source\Engine\DebugTools</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\DebugTools\DebugShapes.h">
+      <Filter>Source\Engine\DebugTools</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Math\Matrix3x3.h">
       <Filter>Source\Engine\Math</Filter>
     </ClInclude>
@@ -402,6 +417,12 @@
       <Filter>Resource\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Resource\Shader\Particle.VS.hlsl">
+      <Filter>Resource\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\DebugLine.VS.hlsl">
+      <Filter>Resource\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\DebugLine.PS.hlsl">
       <Filter>Resource\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Resource\Shader\Sprite.PS.hlsl">

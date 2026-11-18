@@ -58,6 +58,10 @@ void Framework::Initialize() {
 	psoMgr_->CreateObject3DPipeline(device, shaderMgr_.get());
 	psoMgr_->CreateSpritePipeline(device, shaderMgr_.get());
 	psoMgr_->CreateParticlePipeline(device, shaderMgr_.get());
+	if (DebugDraw::kEnabled) {
+		psoMgr_->CreateDebugLinePipeline(device, shaderMgr_.get());
+		debugDraw_.Initialize(psoMgr_.get());
+	}
 
 	// === ImGui ===
 #ifdef USE_IMGUI
@@ -154,6 +158,9 @@ void Framework::Draw() {
 
 	OnDraw(commandList);
 	sceneMgr_.Draw(commandList);
+
+	// シーンの描画後に、デバッグ線をまとめて描く（ImGuiの前）
+	debugDraw_.Render(commandList, *dx_->GetFrameContext()->constantBuffers, cameraMgr_->GetViewProjection());
 
 #ifdef USE_IMGUI
 	imgui_->EndFrame(commandList);

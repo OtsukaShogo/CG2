@@ -80,11 +80,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MathTests.cpp" />
     <ClCompile Include="PrimitiveMeshTests.cpp" />
+    <ClCompile Include="DebugShapesTests.cpp" />
     <!-- テスト対象のソース（D3D12に依存しない、CPUだけで動くもの） -->
     <ClCompile Include="..\Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="..\Source\Engine\Math\Quaternion.cpp" />
     <ClCompile Include="..\Source\Engine\Math\TransformMatrix.cpp" />
     <ClCompile Include="..\Source\Engine\Graphics\PrimitiveMesh.cpp" />
+    <ClCompile Include="..\Source\Engine\DebugTools\DebugShapes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestFramework.h" />

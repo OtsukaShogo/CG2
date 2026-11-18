@@ -9,6 +9,7 @@
 #include "../Graphics/AssetFactory.h"
 #include "../Graphics/AssetManager.h"
 #include "../Scene/SceneManager.h"
+#include "../DebugTools/DebugDraw.h"
 
 namespace Engine {
 
@@ -82,6 +83,11 @@ public:
 	[[nodiscard]] CameraManager* GetCameraManager() const { return cameraMgr_; }
 	[[nodiscard]] SceneManager* GetSceneManager() { return &sceneMgr_; }
 
+	/// <summary>
+	/// デバッグ描画（線・円・箱など）を取得する。Update/Draw中にいつでも呼べ、貯めた線はシーンの描画後に描かれる。Releaseでは何もしない
+	/// </summary>
+	[[nodiscard]] DebugDraw* GetDebugDraw() { return &debugDraw_; }
+
 private:
 	void Initialize();
 	void Update();
@@ -108,6 +114,7 @@ private:
 	std::unique_ptr<DirectXCommon> dx_;
 	std::unique_ptr<ShaderManager> shaderMgr_;
 	std::unique_ptr<PipelineStateManager> psoMgr_;
+	DebugDraw debugDraw_;
 	AssetFactory assetFactory_;
 	AssetManager assetManager_;
 	SceneManager sceneMgr_;

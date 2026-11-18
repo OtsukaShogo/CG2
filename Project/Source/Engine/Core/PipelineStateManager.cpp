@@ -273,7 +273,8 @@ void PipelineStateManager::CreateGraphicsPipeline(
 	const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
 	DXGI_FORMAT rtvFormat,
 	DXGI_FORMAT dsvFormat,
-	ID3D12RootSignature* rootSignature)
+	ID3D12RootSignature* rootSignature,
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType)
 {
 	// 既にあるなら何もしない
 	if (pipelineStates_.contains(name)) {
@@ -300,7 +301,7 @@ void PipelineStateManager::CreateGraphicsPipeline(
 	desc.RTVFormats[0] = rtvFormat;
 	desc.SampleDesc.Count = 1;
 	desc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	desc.PrimitiveTopologyType = topologyType;
 
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
 	HRESULT hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso));
@@ -406,6 +407,75 @@ void PipelineStateManager::CreateParticlePipeline(ID3D12Device* device, ShaderMa
 			particleRootSignature_.Get()
 		);
 	}
+}
+
+void PipelineStateManager::CreateDebugLinePipeline(ID3D12Device* device, ShaderManager* shaderMgr) {
+	// ルートシグネチャ: VertexShader用CBV (b0) 1つだけ（ビュープロジェクション行列）
+	if (!debugLineRootSignature_) {
+		D3D12_ROOT_PARAMETER rootParameter{};
+		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+		rootParameter.Descriptor.ShaderRegister = 0;
+
+		D3D12_ROOT_SIGNATURE_DESC desc{};
+		desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+		desc.pParameters = &rootParameter;
+		desc.NumParameters = 1;
+
+		Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
+		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+		HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+		if (FAILED(hr)) {
+			if (errorBlob) {
+				DebugUtil::Log(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+			}
+			assert(false);
+		}
+		hr = device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&debugLineRootSignature_));
+		assert(SUCCEEDED(hr));
+	}
+
+	IDxcBlob* vs = shaderMgr->Compile(L"Resource/Shader/DebugLine.VS.hlsl", L"vs_6_0");
+	IDxcBlob* ps = shaderMgr->Compile(L"Resource/Shader/DebugLine.PS.hlsl", L"ps_6_0");
+
+	// 頂点: 座標(float3) + 色(RGBA8)
+	static constexpr D3D12_INPUT_ELEMENT_DESC kInputElements[2] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+	D3D12_INPUT_LAYOUT_DESC inputLayout{};
+	inputLayout.pInputElementDescs = kInputElements;
+	inputLayout.NumElements = _countof(kInputElements);
+
+	D3D12_RASTERIZER_DESC rasterDesc = MakeStandardRasterizerDesc();
+	rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
+
+	// 深度テストあり: モデルの後ろに隠れる。深度は書き込まない
+	D3D12_DEPTH_STENCIL_DESC depthTest{};
+	depthTest.DepthEnable = true;
+	depthTest.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	depthTest.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+	// 深度テストなし: 常に手前に描く
+	D3D12_DEPTH_STENCIL_DESC depthNone{};
+	depthNone.DepthEnable = false;
+	depthNone.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+	depthNone.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+
+	// 半透明の色も使えるよう、通常のアルファブレンドで描く
+	const D3D12_BLEND_DESC blendDesc = MakeBlendDesc(BlendMode::kNormal);
+
+	CreateGraphicsPipeline(kDebugLineDepth, device, vs, ps, inputLayout, blendDesc, rasterDesc, depthTest,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D24_UNORM_S8_UINT, debugLineRootSignature_.Get(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+	CreateGraphicsPipeline(kDebugLine, device, vs, ps, inputLayout, blendDesc, rasterDesc, depthNone,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D24_UNORM_S8_UINT, debugLineRootSignature_.Get(), D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE);
+}
+
+void PipelineStateManager::SetDebugLinePipeline(ID3D12GraphicsCommandList* commandList, bool depthTest) {
+	auto* pso = GetPipelineState(depthTest ? kDebugLineDepth : kDebugLine);
+	assert(pso != nullptr);
+	commandList->SetGraphicsRootSignature(debugLineRootSignature_.Get());
+	commandList->SetPipelineState(pso);
 }
 
 void PipelineStateManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& name, BlendMode blendMode) {
