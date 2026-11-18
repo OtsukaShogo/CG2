@@ -287,6 +287,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Engine\Collision\Collision2D.h" />
     <ClInclude Include="Source\Engine\Collision\Collision3D.h" />
     <ClInclude Include="Source\Engine\DebugTools\DebugDraw.h" />
+    <ClInclude Include="Source\Engine\Utility\ObjectPool.h" />
     <ClInclude Include="Source\Engine\DebugTools\DebugShapes.h" />
     <ClInclude Include="Source\Engine\Graphics\Material.h" />
     <ClInclude Include="Source\Engine\Math\Matrix3x3.h" />

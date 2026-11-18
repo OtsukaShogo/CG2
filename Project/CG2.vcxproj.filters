@@ -29,6 +29,9 @@
     <Filter Include="Source\Engine\Collision">
       <UniqueIdentifier>{9a2e4c71-5b38-4d06-8f1a-3c7d0e6b2f94}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Utility">
+      <UniqueIdentifier>{e2f6a9c4-3b71-4d58-9a0e-6c1d8f4b7a23}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\DebugTools">
       <UniqueIdentifier>{c5b81f3a-6d27-4e90-a1c4-8f3b7d2e5a60}</UniqueIdentifier>
     </Filter>
@@ -371,6 +374,9 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Collision\Collision3D.h">
       <Filter>Source\Engine\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Utility\ObjectPool.h">
+      <Filter>Source\Engine\Utility</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\DebugTools\DebugDraw.h">
       <Filter>Source\Engine\DebugTools</Filter>
