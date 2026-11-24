@@ -65,4 +65,11 @@ inline constexpr float kHpBarWidth = 280.0f;
 inline constexpr float kHpBarHeight = 24.0f;
 inline constexpr float kHpBarBorder = 3.0f;
 
+// ---- ゲームの流れ（シーンの遷移） ----
+inline constexpr float kFadeInTime = 0.4f;          //!< シーンの開始時の、明るくなる時間（秒）
+inline constexpr float kFadeOutTime = 0.35f;        //!< シーンを出るときの、暗くなる時間（秒）
+inline constexpr float kSceneInputLockTime = 0.45f; //!< シーンの開始直後に、操作を受け付けない時間（前のシーンのクリックなどが、誤って効かないように）
+inline constexpr float kDeathToResultDelay = 1.6f;  //!< 倒れてから、ゲームオーバー画面へ進むまでの時間（秒）
+inline constexpr float kDeathSkipLockTime = 0.5f;   //!< 倒れた直後に、決定ボタンで先へ進めない時間（連射のクリックで、飛ばしてしまわないように）
+
 } // namespace Shooter::Config

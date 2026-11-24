@@ -223,6 +223,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ClCompile>
     <ClCompile Include="Source\Application\Game\Arena.cpp" />
     <ClCompile Include="Source\Application\Game\BulletManager.cpp" />
+    <ClCompile Include="Source\Application\Game\FadeOverlay.cpp" />
+    <ClCompile Include="Source\Application\Game\GameInput.cpp" />
+    <ClCompile Include="Source\Application\Game\GameSession.cpp" />
+    <ClCompile Include="Source\Application\Game\ScreenFade.cpp" />
+    <ClCompile Include="Source\Application\Scenes\TitleScene.cpp" />
+    <ClCompile Include="Source\Application\Scenes\GameOverScene.cpp" />
     <ClCompile Include="Source\Application\Game\CombatMath.cpp" />
     <ClCompile Include="Source\Application\Game\EnemyManager.cpp" />
     <ClCompile Include="Source\Application\Game\EnemyMath.cpp" />
@@ -272,6 +278,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Source\Application\Game\ShooterConfig.h" />
     <ClInclude Include="Source\Application\Game\Arena.h" />
     <ClInclude Include="Source\Application\Game\BulletManager.h" />
+    <ClInclude Include="Source\Application\Game\FadeOverlay.h" />
+    <ClInclude Include="Source\Application\Game\GameInput.h" />
+    <ClInclude Include="Source\Application\Game\GameSession.h" />
+    <ClInclude Include="Source\Application\Game\ScreenFade.h" />
+    <ClInclude Include="Source\Application\Scenes\TitleScene.h" />
+    <ClInclude Include="Source\Application\Scenes\GameOverScene.h" />
     <ClInclude Include="Source\Application\Game\CombatMath.h" />
     <ClInclude Include="Source\Application\Game\EnemyManager.h" />
     <ClInclude Include="Source\Application\Game\EnemyMath.h" />

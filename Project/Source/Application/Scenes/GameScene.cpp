@@ -8,6 +8,8 @@
 #include "../../Engine/Core/WinApp.h"
 #include "../../Engine/DebugTools/DebugDraw.h"
 #include "../../Engine/Input/Input.h"
+#include "../Game/GameInput.h"
+#include "../Game/GameSession.h"
 #include "../Game/PlayerMath.h"
 #include "../Game/ShooterConfig.h"
 
@@ -51,6 +53,10 @@ void GameScene::Initialize() {
 	light_.GetDirectionalLight()->direction = Normalize(Vector3{ -0.4f, -1.0f, 0.6f });
 
 	SetupCamera();
+
+	// ゲームの流れ: 新しいプレイの開始（直近の結果を消し、ベストは残す）。暗転から明るくしながら始める
+	Shooter::GameSession::Get().BeginPlay();
+	fade_.Initialize(assetFactory);
 }
 
 void GameScene::SetupCamera() {
@@ -147,17 +153,6 @@ void GameScene::UpdateAim(const Vector2& screenRight, const Vector2& screenUp) {
 	}
 }
 
-bool GameScene::IsRestartPressed() const {
-	Input* input = GetFramework()->GetInput();
-	bool pressed = input->GetKeyboard().TriggerKey(DIK_R);
-	const int padIndex = input->GetFirstConnectedGamepadIndex();
-	if (padIndex >= 0) {
-		const Gamepad& pad = input->GetGamepad(padIndex);
-		pressed = pressed || pad.TriggerButton(GamepadButton::kStart) || pad.TriggerButton(GamepadButton::kA);
-	}
-	return pressed;
-}
-
 void GameScene::UpdateHud() {
 	const float ratio = Shooter::HealthRatio(player_.GetHealth());
 	const float fullWidth = Shooter::Config::kHpBarWidth - Shooter::Config::kHpBarBorder * 2.0f;
@@ -190,9 +185,9 @@ void GameScene::Update() {
 	ImGui::Text("Move: WASD / Arrow keys / Left stick");
 	ImGui::Text("Aim: Mouse / Right stick   Fire: Left click / RT / RB (stick only aims)");
 	ImGui::Text("Aim source: %s   Bullets: %d", aimSource_ == Shooter::AimSource::kMouse ? "Mouse" : "Gamepad", static_cast<int>(bullets_.GetActiveCount()));
-	ImGui::Text("HP: %d / %d   Kills: %d", player_.GetHealth().hp, player_.GetHealth().maxHp, enemies_.GetKillCount());
+	ImGui::Text("HP: %d / %d   Kills: %d   Time: %.1f", player_.GetHealth().hp, player_.GetHealth().maxHp, enemies_.GetKillCount(), survivalTime_);
 	if (player_.IsDead()) {
-		ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "DEAD - press R / Start / A to restart");
+		ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "DEAD - going to Game Over (Enter / Click / Start / A to skip)");
 	}
 	ImGui::Text("Enemies: %d", static_cast<int>(enemies_.GetActiveCount()));
 	bool spawning = enemies_.IsSpawningEnabled();
@@ -238,9 +233,24 @@ void GameScene::Update() {
 		player_.TakeDamage(Shooter::Config::kContactDamage); // 無敵中は、何も起きない
 	}
 
-	// 倒れたら、やり直しの操作を待つ
-	if (player_.IsDead() && IsRestartPressed()) {
-		ChangeScene("Game");
+	// ゲームの流れ: 生きている間は、生存時間を進める。倒れたら、少し待って（または決定の操作で）、暗転してゲームオーバーへ
+	if (!player_.IsDead()) {
+		survivalTime_ += deltaTime;
+	} else {
+		deathTimer_ += deltaTime;
+		const bool skip = deathTimer_ > Shooter::Config::kDeathSkipLockTime && Shooter::IsConfirmPressed(framework->GetInput());
+		if (!leaving_ && (deathTimer_ >= Shooter::Config::kDeathToResultDelay || skip)) {
+			leaving_ = true;
+			Shooter::GameResult result;
+			result.kills = enemies_.GetKillCount();
+			result.survivalTime = survivalTime_;
+			Shooter::GameSession::Get().Record(result); // ゲームオーバー画面が読む結果を、ここで確定する
+			fade_.StartFadeOut();
+		}
+	}
+	fade_.Update(deltaTime);
+	if (leaving_ && fade_.IsFadeOutFinished()) {
+		ChangeScene("GameOver");
 	}
 	UpdateHud();
 
@@ -290,6 +300,7 @@ void GameScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	}
 	hpBack_->Draw(spriteViewProjection);
 	hpFill_->Draw(spriteViewProjection);
+	fade_.Draw(spriteViewProjection); // 暗転は、最後に重ねる
 }
 
 void GameScene::Finalize() {

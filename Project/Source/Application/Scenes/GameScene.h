@@ -5,6 +5,7 @@
 #include "../../Engine/2D/Sprite.h"
 #include "../../Engine/Graphics/Light.h"
 #include "../Game/Arena.h"
+#include "../Game/FadeOverlay.h"
 #include "../Game/BulletManager.h"
 #include "../Game/EnemyManager.h"
 #include "../Game/Player.h"
@@ -52,11 +53,6 @@ private:
 	/// </summary>
 	void UpdateHud();
 
-	/// <summary>
-	/// 倒れたあとの、やり直しの操作（R キー・ゲームパッドの Start / A）が押されたか
-	/// </summary>
-	[[nodiscard]] bool IsRestartPressed() const;
-
 private:
 	Shooter::Arena arena_;
 	Shooter::Player player_;
@@ -84,6 +80,12 @@ private:
 	Engine::ProjectionType savedProjection_ = Engine::ProjectionType::kPerspective;
 	float savedOrthoHeight_ = 10.0f;
 	Engine::Vector3 savedTranslate_ = { 0.0f, 0.0f, -10.0f };
+
+	// ゲームの流れ
+	Shooter::FadeOverlay fade_;
+	float survivalTime_ = 0.0f; // 生き延びた時間（倒れるまで進む）
+	float deathTimer_ = 0.0f;   // 倒れてからの時間
+	bool leaving_ = false;      // ゲームオーバーへ進む暗転に入ったか
 
 	bool showColliders_ = true; // 当たり判定のデバッグ表示（Debug/Developmentのみ有効）
 };

@@ -148,6 +148,24 @@
     <ClCompile Include="Source\Engine\Core\Framework.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game\FadeOverlay.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\GameInput.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\GameSession.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\ScreenFade.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Scenes\TitleScene.cpp">
+      <Filter>Source\Application\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Scenes\GameOverScene.cpp">
+      <Filter>Source\Application\Scenes</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Application\Game\CombatMath.cpp">
       <Filter>Source\Application\Game</Filter>
     </ClCompile>
@@ -344,6 +362,24 @@
     </ClInclude>
     <ClInclude Include="Source\Application\Game\ShooterConfig.h">
       <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\FadeOverlay.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\GameInput.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\GameSession.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\ScreenFade.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Scenes\TitleScene.h">
+      <Filter>Source\Application\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Scenes\GameOverScene.h">
+      <Filter>Source\Application\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Game\CombatMath.h">
       <Filter>Source\Application\Game</Filter>
