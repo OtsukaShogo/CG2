@@ -58,6 +58,7 @@ public:
         kInstancing       = 1, // VertexShader用SRVテーブル (t0) ※Particle用ルートシグネチャ
         kTexture          = 2, // SRVテーブル (t0)
         kDirectionalLight = 3, // PixelShader用CBV (b1)
+        kCamera = 4, // PixelShader用CBV (b2)
     };
 
     /// <summary>

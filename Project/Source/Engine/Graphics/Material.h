@@ -23,6 +23,7 @@ public:
         int32_t   enableLighting = 1;
         float     pad[3]         = {};  // float4x4 を 16byte 境界に揃えるためのパディング
         Matrix4x4 uvTransform   = {};
+        float     shininess     = 40.0f; // 光沢度（大きいほどハイライトが小さく鋭くなる）
     };
 
 public:
@@ -81,6 +82,12 @@ public:
     /// </summary>
     /// <param name="enable">ライティングを有効にする場合はtrue</param>
     void SetEnableLighting(bool enable) { materialData_.enableLighting = enable ? 1 : 0; }
+
+    /// <summary>
+    /// 光沢度を取得する（変更可能）。大きいほど鏡面反射のハイライトが小さく鋭くなる
+    /// </summary>
+    /// <returns>光沢度</returns>
+    float& GetShininess() { return materialData_.shininess; }
 
     /// <summary>
     /// テクスチャのGPUディスクリプタハンドルを設定する

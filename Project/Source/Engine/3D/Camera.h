@@ -3,6 +3,7 @@
 #include "../Math/Vector2.h"
 #include "../Math/Ray.h"
 #include "../Math/Matrix4x4.h"
+#include "../Graphics/ConstantBufferAllocator.h"
 
 namespace Engine {
 
@@ -19,6 +20,24 @@ enum class ProjectionType {
 /// </summary>
 class Camera {
 public:
+
+	/// <summary>
+	/// シェーダーに渡すカメラ情報
+	/// </summary>
+	struct CameraForGPU {
+		Vector3 worldPosition;
+	};
+
+	/// <summary>
+	/// カメラ情報を今フレームの定数バッファへ書き込み、そのGPU仮想アドレスを返す
+	/// </summary>
+	/// <param name="constantBuffers"></param>
+	/// <returns></returns>
+	[[nodiscard]] D3D12_GPU_VIRTUAL_ADDRESS GetCameraAddress(ConstantBufferAllocator& constantBuffers) const {
+		CameraForGPU data{ translate_ };
+		return constantBuffers.Upload(data);
+	}
+
 	/// <summary>
 	/// コンストラクタ
 	/// </summary>

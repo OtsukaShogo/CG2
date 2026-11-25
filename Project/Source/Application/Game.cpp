@@ -13,7 +13,7 @@ void Game::OnInitialize() {
 	sceneMgr->Register<TitleScene>("Title");
 	sceneMgr->Register<GameScene>("Game");
 	sceneMgr->Register<GameOverScene>("GameOver");
-	sceneMgr->Register<DemoScene>("Demo"); // エンジンの動作確認用（炎のパーティクル）
+	sceneMgr->Register<DemoScene>("Demo"); // エンジンの動作確認用（球で鏡面反射を確認）
 
 	// 最初のシーン
 	sceneMgr->ChangeScene("Title");

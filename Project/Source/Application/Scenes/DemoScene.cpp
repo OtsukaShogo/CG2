@@ -14,35 +14,25 @@ using namespace Engine;
 void DemoScene::Initialize() {
 	Framework* framework = GetFramework();
 	AssetFactory* assetFactory = framework->GetAssetFactory();
-	DirectXCommon* dx = framework->GetDirectX();
-	ID3D12Device* device = dx->GetDevice();
 
 	// === テクスチャ ===
 	tex_ = assetFactory->LoadTexture("Resource/uvChecker.png");
-	particleTex_ = assetFactory->LoadTexture("Resource/circle.png");
+	sphereTex_ = assetFactory->LoadTexture("Resource/monsterBall.png");
 
 	// === 音声 ===
 	AudioManager* audio = framework->GetAudio();
 	soundData1_ = audio->LoadWave("Resource/Alarm01.wav");
 	voice1_ = audio->Play(soundData1_);
 
-	// パーティクルの描画形状（板）を読み込む
-	particleModelData_ = assetFactory->CreateModelData("Resource", "plane.obj");
-
 	// === スプライト ===
 	sprite_ = assetFactory->CreateSprite(640.0f, 360.0f);
 	sprite_->SetTextureHandle(tex_.gpuHandle);
 
-	// === パーティクル ===
-	particle_ = std::make_unique<ParticleSystem>();
-	particle_->CreateInstancingResource(device, dx->GetSrvDescriptorHeap(), dx->GetDescriptorSizeSRV());
-	particle_->SetModelData(particleModelData_);
-	particle_->SetTextureHandle(particleTex_.gpuHandle); // circleを使う
-
-	// 風（パーティクル以外のゲームオブジェクトからも参照できる）
-	wind_.SetAcceleration({ -6.0f, 5.0f, 0.0f }); // 左上へ流す
-	wind_.SetArea({ { -8.0f, -8.0f, -2.0f }, { 8.0f, 8.0f, 2.0f } });
-	particle_->SetWind(&wind_);
+	// === 球（鏡面反射の確認用） ===
+	sphereModelData_ = assetFactory->CreateSphereModelData();
+	sphere_ = assetFactory->CreateModelInstance(sphereModelData_);
+	sphere_->SetTextureHandle(sphereTex_.gpuHandle);
+	sphere_->GetMaterial().SetEnableLighting(true);
 
 	// === ライト ===
 	light_ = std::make_unique<Light>();
@@ -69,15 +59,12 @@ void DemoScene::Update() {
 
 	ImGui::Combo("Blend Mode", &currentBlendMode_, kBlendModeNames, static_cast<int>(BlendMode::kCountOfBlendMode));
 
-	//パーティクル
-	ImGui::Checkbox("Billboard", &particle_->GetUseBillboard());
-	ImGui::DragFloat3("Emitter Translate", &particle_->GetEmitter().transform.translate.x, 0.1f);
-
-	//風
-	ImGui::Checkbox("Wind Enabled", &wind_.GetEnabled());
-	ImGui::DragFloat3("Wind Acceleration", &wind_.GetField().acceleration.x, 0.1f);
-	ImGui::DragFloat3("Wind Area Min", &wind_.GetField().area.min.x, 0.1f);
-	ImGui::DragFloat3("Wind Area Max", &wind_.GetField().area.max.x, 0.1f);
+	//球
+	ImGui::DragFloat3("Sphere Translate", &sphere_->GetTranslate().x, 0.1f);
+	ImGui::DragFloat3("Sphere Rotate", &sphere_->GetRotate().x, 0.01f);
+	ImGui::DragFloat3("Sphere Scale", &sphere_->GetScale().x, 0.01f);
+	ImGui::ColorEdit4("Sphere Color", &sphere_->GetColor().x);
+	ImGui::DragFloat("Shininess", &sphere_->GetMaterial().GetShininess(), 0.5f, 1.0f, 1000.0f);
 
 	//ライト
 	ImGui::ColorEdit4("Light Color", &light_->GetDirectionalLight()->color.x);
@@ -96,20 +83,22 @@ void DemoScene::Update() {
 	// 追従カメラの更新（追従対象の更新後、VPを使う処理の前に行う）
 	CameraManager* cameraMgr = framework->GetCameraManager();
 	cameraMgr->GetController()->Update(framework->GetDeltaTime());
-
-	// パーティクルのWVP等を計算してResourceに書き込む
-	particle_->Update(cameraMgr->GetViewProjection(), cameraMgr->GetRotateMatrix(),
-		isParticleMoving_ ? framework->GetDeltaTime() : 0.0f, framework->GetDirectX()->GetFrameContext()->frameIndex);
 }
 
 void DemoScene::Draw(ID3D12GraphicsCommandList* commandList) {
-	PipelineStateManager* psoMgr = GetFramework()->GetPipelineStateManager();
+	Framework* framework = GetFramework();
+	PipelineStateManager* psoMgr = framework->GetPipelineStateManager();
+	CameraManager* cameraMgr = framework->GetCameraManager();
+	ConstantBufferAllocator& constantBuffers = *framework->GetDirectX()->GetFrameContext()->constantBuffers;
 	BlendMode blendMode = static_cast<BlendMode>(currentBlendMode_);
 
-	// 3D描画（パーティクル）
-	psoMgr->SetPipeline(commandList, PipelineStateManager::kParticle, blendMode);
-	commandList->SetGraphicsRootConstantBufferView(static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_->GetDirectionalLightAddress(*GetFramework()->GetDirectX()->GetFrameContext()->constantBuffers));
-	particle_->Draw(commandList, *GetFramework()->GetDirectX()->GetFrameContext()->constantBuffers);
+	// 3D描画（球）: ライト(b1)とカメラ(b2)をセットしてから描く
+	psoMgr->SetPipeline(commandList, PipelineStateManager::kObject3D, BlendMode::kNone);
+	commandList->SetGraphicsRootConstantBufferView(
+		static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_->GetDirectionalLightAddress(constantBuffers));
+	commandList->SetGraphicsRootConstantBufferView(
+		static_cast<UINT>(PipelineStateManager::RootParameter::kCamera), cameraMgr->GetActiveCamera()->GetCameraAddress(constantBuffers));
+	sphere_->Draw(cameraMgr->GetViewProjection());
 
 	// 2D描画
 	psoMgr->SetPipeline(commandList, PipelineStateManager::kSprite, blendMode);
@@ -123,12 +112,12 @@ void DemoScene::Finalize() {
 	controller->SetEnabled(false);
 
 	light_.reset();
-	particle_.reset();          // ID3D12Resource x1 (instancing)
-	particleModelData_.reset(); // ID3D12Resource x3 (vertex, index, texture)
+	sphere_.reset();
+	sphereModelData_.reset();   // 球メッシュの頂点・インデックスリソース
 	sprite_.reset();            // 四角形メッシュは共有、定数バッファはアロケータなので専用のGPUリソースなし
 	GetFramework()->GetAudio()->Stop(voice1_);
 	voice1_ = Engine::kInvalidVoiceId;
 	soundData1_.reset();
 	tex_ = {};                  // ID3D12Resource (texture) と SRV スロット
-	particleTex_ = {};
+	sphereTex_ = {};
 }

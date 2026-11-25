@@ -284,6 +284,10 @@ void GameScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	commandList->SetGraphicsRootConstantBufferView(
 		static_cast<UINT>(PipelineStateManager::RootParameter::kDirectionalLight), light_.GetDirectionalLightAddress(constantBuffers));
 
+	commandList->SetGraphicsRootConstantBufferView(
+		static_cast<UINT>(PipelineStateManager::RootParameter::kCamera),
+		framework->GetCameraManager()->GetActiveCamera()->GetCameraAddress(constantBuffers));
+
 	arena_.Draw(viewProjection);
 	if (reticleVisible_) {
 		reticle_->Draw(viewProjection);

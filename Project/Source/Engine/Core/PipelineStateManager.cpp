@@ -111,7 +111,7 @@ void PipelineStateManager::InitializeRootSignature(ID3D12Device* device) {
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	D3D12_ROOT_PARAMETER rootParameters[4] = {};
+	D3D12_ROOT_PARAMETER rootParameters[5] = {};
 	// PixelShader 用 CBV (b0)
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -142,6 +142,10 @@ void PipelineStateManager::InitializeRootSignature(ID3D12Device* device) {
 	descriptionRootSignature.pParameters = rootParameters;
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
 
+	// PixelShader 用 CBV (b2) - Camera
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[4].Descriptor.ShaderRegister = 2;
 	// Sampler
 	D3D12_STATIC_SAMPLER_DESC staticSampler{};
 	staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
