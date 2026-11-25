@@ -7,7 +7,9 @@
 #include "../Game/Arena.h"
 #include "../Game/FadeOverlay.h"
 #include "../Game/BulletManager.h"
+#include "../Game/EffectManager.h"
 #include "../Game/EnemyManager.h"
+#include "../Game/FeedbackEvent.h"
 #include "../Game/Player.h"
 #include "../Game/ShootingMath.h"
 
@@ -58,6 +60,8 @@ private:
 	Shooter::Player player_;
 	Shooter::BulletManager bullets_;
 	Shooter::EnemyManager enemies_;
+	Shooter::EffectManager effects_;
+	Shooter::FeedbackQueue feedback_;
 	Engine::Light light_;
 	std::unique_ptr<Engine::Model> reticle_; // 照準（地面に出す円盤）
 

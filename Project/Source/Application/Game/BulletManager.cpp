@@ -21,7 +21,7 @@ void BulletManager::Initialize(AssetFactory* assetFactory, size_t capacity) {
 	});
 }
 
-void BulletManager::Fire(const Vector3& position, const Vector3& direction) {
+void BulletManager::Fire(const Vector3& position, const Vector3& direction, FeedbackQueue& feedback) {
 	Bullet* bullet = pool_->AcquireOrRecycleOldest();
 	if (!bullet) {
 		return; // 容量0
@@ -30,25 +30,48 @@ void BulletManager::Fire(const Vector3& position, const Vector3& direction) {
 	bullet->state.position = position;
 	bullet->state.velocity = direction * Config::kBulletSpeed;
 	bullet->state.lifeRemaining = Config::kBulletLifetime;
+	bullet->trailTimer = 0.0f;
 	bullet->model->GetTranslate() = position;
+
+	// 銃口の閃光と、発射音
+	feedback.Push(FeedbackType::kBulletFired, position, direction);
 }
 
-void BulletManager::Update(float deltaTime, const std::array<AABB, 4>& walls, EnemyManager& enemies) {
+void BulletManager::Update(float deltaTime, const std::array<AABB, 4>& walls, EnemyManager& enemies, FeedbackQueue& feedback) {
 	// 走査しながら返却してよい
 	for (Bullet& bullet : *pool_) {
 		const Vector3 previous = bullet.state.position;
 		const BulletStepResult result = AdvanceBullet(bullet.state, deltaTime, walls.data(), walls.size(), Config::kBulletRadius);
+		const Vector3 direction = Normalize(bullet.state.velocity);
 
 		// 敵への命中: 前の位置から今の位置（壁に当たった場合は、壁の手前）までの道のりで調べる
 		Vector3 hitPoint;
-		if (enemies.TryHitByBullet(Segment3D{ previous, bullet.state.position }, Config::kBulletRadius, Config::kBulletDamage, &hitPoint)) {
+		Vector3 enemyPosition;
+		bool killed = false;
+		if (enemies.TryHitByBullet(Segment3D{ previous, bullet.state.position }, Config::kBulletRadius, Config::kBulletDamage, &hitPoint, &killed, &enemyPosition)) {
 			bullet.state.position = hitPoint;
 			bullet.model->GetTranslate() = hitPoint;
+			feedback.Push(FeedbackType::kEnemyHit, hitPoint, direction);
+			if (killed) {
+				feedback.Push(FeedbackType::kEnemyKilled, enemyPosition + Vector3{ 0.0f, Config::kEnemyHeight * 0.5f, 0.0f });
+			}
 			pool_->Release(&bullet);
 			continue;
 		}
 
 		bullet.model->GetTranslate() = bullet.state.position;
+
+		if (result.hitWall) {
+			feedback.Push(FeedbackType::kBulletHitWall, result.hitPoint, result.hitNormal);
+		} else if (result.alive) {
+			// 飛んでいる間、一定の間隔で、軌跡を残す
+			bullet.trailTimer += deltaTime;
+			if (bullet.trailTimer >= Config::kBulletTrailInterval) {
+				bullet.trailTimer = 0.0f;
+				feedback.Push(FeedbackType::kBulletTrail, bullet.state.position, direction);
+			}
+		}
+
 		if (!result.alive) {
 			pool_->Release(&bullet);
 		}

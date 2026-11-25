@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include "FeedbackEvent.h"
 #include "ShootingMath.h"
 #include "../../Engine/Containers/ObjectPool.h"
 #include "../../Engine/Graphics/AssetFactory.h"
@@ -28,14 +29,16 @@ public:
 	/// </summary>
 	/// <param name="position">弾が出る位置</param>
 	/// <param name="direction">撃つ向き（長さ1）</param>
-	void Fire(const Engine::Vector3& position, const Engine::Vector3& direction);
+	/// <param name="feedback">演出・効果音のきっかけ（銃口の閃光・発射音）を入れる先</param>
+	void Fire(const Engine::Vector3& position, const Engine::Vector3& direction, FeedbackQueue& feedback);
 
 	/// <summary>
 	/// すべての弾を進める。敵・壁に当たった弾、寿命の尽きた弾は、プールへ返却する。
 	/// 敵への命中は、前フレームの位置から今の位置までの線分で調べるので、速い弾が、敵をすり抜けない
 	/// （壁に当たった場合は、壁の手前までの線分なので、壁の向こうの敵には当たらない）
 	/// </summary>
-	void Update(float deltaTime, const std::array<Engine::AABB, 4>& walls, EnemyManager& enemies);
+	/// 弾の軌跡・壁への着弾・敵への命中・撃破を、feedback に入れる
+	void Update(float deltaTime, const std::array<Engine::AABB, 4>& walls, EnemyManager& enemies, FeedbackQueue& feedback);
 
 	/// <summary>
 	/// 飛んでいる弾を描画する
@@ -61,6 +64,7 @@ private:
 	struct Bullet {
 		std::unique_ptr<Engine::Model> model;
 		BulletState state;
+		float trailTimer = 0.0f; // 軌跡を出してからの時間
 	};
 
 	std::unique_ptr<Engine::ObjectPool<Bullet>> pool_;

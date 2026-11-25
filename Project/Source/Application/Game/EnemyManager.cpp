@@ -141,7 +141,7 @@ void EnemyManager::DrawDebug(DebugDraw& debugDraw) const {
 	}
 }
 
-bool EnemyManager::TryHitByBullet(const Segment3D& path, float bulletRadius, int damage, Vector3* outHitPoint, bool* outKilled) {
+bool EnemyManager::TryHitByBullet(const Segment3D& path, float bulletRadius, int damage, Vector3* outHitPoint, bool* outKilled, Vector3* outEnemyPosition) {
 	// 弾の道のりに、最も手前で当たる敵を探す（出現演出の間は、判定がないので、当たらない）
 	Enemy* nearest = nullptr;
 	float nearestT = 2.0f;
@@ -161,6 +161,9 @@ bool EnemyManager::TryHitByBullet(const Segment3D& path, float bulletRadius, int
 
 	if (outHitPoint) {
 		*outHitPoint = path.start + (path.end - path.start) * nearestT;
+	}
+	if (outEnemyPosition) {
+		*outEnemyPosition = nearest->position;
 	}
 	TakeDamage(nearest->health, damage);
 	nearest->hitFlash = Config::kEnemyHitFlashTime;

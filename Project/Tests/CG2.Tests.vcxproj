@@ -89,6 +89,8 @@
     <ClCompile Include="EnemyMathTests.cpp" />
     <ClCompile Include="CombatMathTests.cpp" />
     <ClCompile Include="GameFlowTests.cpp" />
+    <ClCompile Include="ParticleEffectMathTests.cpp" />
+    <ClCompile Include="FeedbackTests.cpp" />
     <!-- テスト対象のソース（D3D12に依存しない、CPUだけで動くもの） -->
     <ClCompile Include="..\Source\Engine\Math\Matrix4x4.cpp" />
     <ClCompile Include="..\Source\Engine\Math\Quaternion.cpp" />
@@ -97,12 +99,16 @@
     <ClCompile Include="..\Source\Engine\DebugTools\DebugShapes.cpp" />
     <ClCompile Include="..\Source\Engine\Collision\Collision2D.cpp" />
     <ClCompile Include="..\Source\Engine\Collision\Collision3D.cpp" />
+    <ClCompile Include="..\Source\Engine\3D\ParticleEffectMath.cpp" />
     <ClCompile Include="..\Source\Application\Game\PlayerMath.cpp" />
     <ClCompile Include="..\Source\Application\Game\ShootingMath.cpp" />
     <ClCompile Include="..\Source\Application\Game\EnemyMath.cpp" />
     <ClCompile Include="..\Source\Application\Game\CombatMath.cpp" />
     <ClCompile Include="..\Source\Application\Game\ScreenFade.cpp" />
     <ClCompile Include="..\Source\Application\Game\GameSession.cpp" />
+    <ClCompile Include="..\Source\Application\Game\AudioTable.cpp" />
+    <ClCompile Include="..\Source\Application\Game\FeedbackEvent.cpp" />
+    <ClCompile Include="..\Source\Application\Game\FeedbackSpec.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestFramework.h" />

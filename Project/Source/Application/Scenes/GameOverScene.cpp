@@ -7,6 +7,7 @@
 #include "../../Engine/Core/WinApp.h"
 #include "../../Engine/3D/CameraManager.h"
 #include "../../Engine/Input/Input.h"
+#include "../Game/GameAudio.h"
 #include "../Game/GameInput.h"
 #include "../Game/GameSession.h"
 #include "../Game/ShooterConfig.h"
@@ -59,11 +60,13 @@ void GameOverScene::Initialize() {
 	retryPrompt_ = Shooter::CreateColorBox(assetFactory, w * 0.5f - 300.0f, 530.0f, 280.0f, 54.0f, Vector4{ 0.3f, 0.9f, 0.4f, 1.0f });
 	titlePrompt_ = Shooter::CreateColorBox(assetFactory, w * 0.5f + 40.0f, 530.0f, 260.0f, 54.0f, Vector4{ 0.45f, 0.45f, 0.5f, 1.0f });
 
+	Shooter::GameAudio::Get().PlayBgm(Shooter::BgmId::kResult);
 	fade_.Initialize(assetFactory);
 }
 
 void GameOverScene::Leave(const char* nextScene) {
 	nextScene_ = nextScene;
+	Shooter::GameAudio::Get().PlaySe(Shooter::SeId::kConfirm);
 	fade_.StartFadeOut();
 }
 

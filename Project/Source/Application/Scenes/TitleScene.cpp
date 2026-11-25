@@ -6,6 +6,7 @@
 #include "../../Engine/Core/WinApp.h"
 #include "../../Engine/3D/CameraManager.h"
 #include "../../Engine/Input/Input.h"
+#include "../Game/GameAudio.h"
 #include "../Game/GameInput.h"
 #include "../Game/ShooterConfig.h"
 
@@ -36,6 +37,7 @@ void TitleScene::Initialize() {
 	// 「決定で始める」（仮）: 脈打つ緑の板
 	startPrompt_ = Shooter::CreateColorBox(assetFactory, w * 0.5f - 160.0f, 470.0f, 320.0f, 54.0f, Vector4{ 0.3f, 0.9f, 0.4f, 1.0f });
 
+	Shooter::GameAudio::Get().PlayBgm(Shooter::BgmId::kTitle);
 	fade_.Initialize(assetFactory);
 }
 
@@ -54,8 +56,9 @@ void TitleScene::Update() {
 #endif
 
 	// 「決定」で、ゲームへ（シーンの開始直後は、前のシーンのクリックが効かないよう、受け付けない）
-	if (!leaving_ && elapsed_ > Shooter::Config::kSceneInputLockTime && Shooter::IsConfirmPressed(framework->GetInput())) {
+	if (!leaving_ && elapsed_ > Shooter::Config::kSceneInputLockTime && (Shooter::IsConfirmPressed(framework->GetInput()))) {
 		leaving_ = true;
+		Shooter::GameAudio::Get().PlaySe(Shooter::SeId::kConfirm);
 		fade_.StartFadeOut();
 	}
 	fade_.Update(deltaTime);

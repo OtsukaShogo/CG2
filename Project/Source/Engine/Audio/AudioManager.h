@@ -78,6 +78,14 @@ public:
 	[[nodiscard]] Sound LoadWave(const std::string& filePath);
 
 	/// <summary>
+	/// 音声ファイルを読み込み、音声データとして返す。拡張子で形式を判断する（.wav は LoadWave、mp3 などは Media Foundation で展開する）。
+	/// ファイルが存在しない・対応していない形式の場合はログを出して nullptr を返す。
+	/// 長い曲（BGM）は、展開すると、数十MBになることがある（読み込みに、数百ミリ秒かかる場合がある）
+	/// </summary>
+	/// <param name="filePath">読み込むファイルのパス（UTF-8）</param>
+	[[nodiscard]] Sound Load(const std::string& filePath);
+
+	/// <summary>
 	/// 音声データを再生する。sound が nullptr の場合は何もしない
 	/// </summary>
 	/// <param name="sound">再生する音声データ</param>
@@ -144,6 +152,7 @@ private:
 	IXAudio2MasteringVoice* masterVoice_ = nullptr;
 	std::vector<ActiveVoice> activeVoices_;
 	VoiceId nextVoiceId_ = 1;
+	bool mediaFoundationStarted_ = false;
 };
 
 } // namespace Engine

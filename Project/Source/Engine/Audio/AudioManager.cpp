@@ -6,10 +6,18 @@
 #include <filesystem>
 #include <fstream>
 
+#include <mfapi.h>
+#include <mferror.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+
 #include "../Core/ConvertString.h"
 #include "../Core/DebugUtil.h"
 
 #pragma comment(lib,"xaudio2.lib")
+#pragma comment(lib,"mfplat.lib")
+#pragma comment(lib,"mfreadwrite.lib")
+#pragma comment(lib,"mfuuid.lib")
 
 namespace Engine {
 
@@ -93,6 +101,103 @@ namespace {
 		return false;
 	}
 
+	/// <summary>
+	/// Media Foundation で、mp3 などの圧縮音声を、PCM に展開して読み込む。
+	/// 失敗した場合は false を返し、理由を errorMessage に入れる
+	/// </summary>
+	bool ReadWithMediaFoundation(const std::string& filePath, SoundData& out, std::string& errorMessage) {
+		using Microsoft::WRL::ComPtr;
+
+		const std::wstring widePath = ConvertString(filePath);
+		if (!std::filesystem::exists(std::filesystem::path(widePath))) {
+			errorMessage = "ファイルを開けません";
+			return false;
+		}
+
+		ComPtr<IMFSourceReader> reader;
+		HRESULT hr = MFCreateSourceReaderFromURL(widePath.c_str(), nullptr, &reader);
+		if (FAILED(hr)) {
+			errorMessage = "音声ファイルを開けません（非対応の形式の可能性があります）";
+			return false;
+		}
+
+		// 出力を、PCM に指定する（圧縮形式は、デコーダーが展開してくれる）
+		ComPtr<IMFMediaType> requested;
+		MFCreateMediaType(&requested);
+		requested->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+		requested->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
+		hr = reader->SetCurrentMediaType(static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM), nullptr, requested.Get());
+		if (FAILED(hr)) {
+			errorMessage = "PCMへの変換を設定できません";
+			return false;
+		}
+
+		// 実際に決まった出力形式（サンプリング周波数・チャンネル数など）を取得する
+		ComPtr<IMFMediaType> actual;
+		hr = reader->GetCurrentMediaType(static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM), &actual);
+		if (FAILED(hr)) {
+			errorMessage = "出力形式を取得できません";
+			return false;
+		}
+		WAVEFORMATEX* format = nullptr;
+		UINT32 formatSize = 0;
+		hr = MFCreateWaveFormatExFromMFMediaType(actual.Get(), &format, &formatSize);
+		if (FAILED(hr) || !format) {
+			errorMessage = "波形フォーマットを取得できません";
+			return false;
+		}
+		out.wfex = {};
+		std::memcpy(&out.wfex, format, (std::min)(static_cast<size_t>(formatSize), sizeof(WAVEFORMATEX)));
+		CoTaskMemFree(format);
+		if (out.wfex.wFormatTag != WAVE_FORMAT_PCM && out.wfex.wFormatTag != WAVE_FORMAT_IEEE_FLOAT) {
+			errorMessage = "非対応の出力形式です";
+			return false;
+		}
+
+		// 末尾まで、サンプルを順に読んで、つなげる
+		out.buffer.clear();
+		for (;;) {
+			DWORD flags = 0;
+			ComPtr<IMFSample> sample;
+			hr = reader->ReadSample(static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM), 0, nullptr, &flags, nullptr, &sample);
+			if (FAILED(hr)) {
+				errorMessage = "音声データの読み込みに失敗しました";
+				return false;
+			}
+			if (flags & MF_SOURCE_READERF_ENDOFSTREAM) {
+				break;
+			}
+			if (!sample) {
+				continue; // ストリームの切れ目など。次を読む
+			}
+			ComPtr<IMFMediaBuffer> buffer;
+			if (FAILED(sample->ConvertToContiguousBuffer(&buffer))) {
+				continue;
+			}
+			BYTE* data = nullptr;
+			DWORD length = 0;
+			if (SUCCEEDED(buffer->Lock(&data, nullptr, &length))) {
+				out.buffer.insert(out.buffer.end(), data, data + length);
+				buffer->Unlock();
+			}
+		}
+
+		if (out.buffer.empty()) {
+			errorMessage = "音声データが空です";
+			return false;
+		}
+		return true;
+	}
+
+	/// <summary>
+	/// 拡張子（小文字、ドット付き）を求める
+	/// </summary>
+	std::string GetLowerExtension(const std::string& filePath) {
+		std::string extension = std::filesystem::path(ConvertString(filePath)).extension().string();
+		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		return extension;
+	}
+
 } // namespace
 
 AudioManager* AudioManager::GetInstance() {
@@ -113,6 +218,12 @@ void AudioManager::Initialize() {
 	assert(SUCCEEDED(result));
 
 	nextVoiceId_ = 1;
+
+	// mp3 などの圧縮音声を読み込むための、Media Foundation を使えるようにする（失敗しても、wavは使える）
+	mediaFoundationStarted_ = SUCCEEDED(MFStartup(MF_VERSION, MFSTARTUP_LITE));
+	if (!mediaFoundationStarted_) {
+		DebugUtil::Log("[AudioManager] Media Foundationを初期化できません。mp3は読み込めません\n");
+	}
 }
 
 void AudioManager::Finalize() {
@@ -121,6 +232,11 @@ void AudioManager::Finalize() {
 
 	xAudio2_.Reset();
 	masterVoice_ = nullptr;
+
+	if (mediaFoundationStarted_) {
+		MFShutdown();
+		mediaFoundationStarted_ = false;
+	}
 }
 
 void AudioManager::Update() {
@@ -136,6 +252,26 @@ Sound AudioManager::LoadWave(const std::string& filePath) {
 		return nullptr;
 	}
 
+	return soundData;
+}
+
+Sound AudioManager::Load(const std::string& filePath) {
+	// wav は自前で読む。それ以外（mp3 など）は、Media Foundation で PCM に展開する
+	if (GetLowerExtension(filePath) == ".wav") {
+		return LoadWave(filePath);
+	}
+
+	if (!mediaFoundationStarted_) {
+		DebugUtil::Log("[AudioManager] Media Foundationが使えないため、読み込めません: " + filePath + "\n");
+		return nullptr;
+	}
+
+	auto soundData = std::make_shared<SoundData>();
+	std::string errorMessage;
+	if (!ReadWithMediaFoundation(filePath, *soundData, errorMessage)) {
+		DebugUtil::Log("[AudioManager] 音声の読み込みに失敗しました (" + errorMessage + "): " + filePath + "\n");
+		return nullptr;
+	}
 	return soundData;
 }
 

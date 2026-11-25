@@ -8,6 +8,8 @@
 #include "../../Engine/Core/WinApp.h"
 #include "../../Engine/DebugTools/DebugDraw.h"
 #include "../../Engine/Input/Input.h"
+#include "../Game/FeedbackSpec.h"
+#include "../Game/GameAudio.h"
 #include "../Game/GameInput.h"
 #include "../Game/GameSession.h"
 #include "../Game/PlayerMath.h"
@@ -26,6 +28,7 @@ void GameScene::Initialize() {
 	arena_.Initialize(assetFactory);
 	player_.Initialize(assetFactory, Vector3{ 0.0f, 0.0f, 0.0f });
 	bullets_.Initialize(assetFactory, Shooter::Config::kBulletPoolCapacity);
+	effects_.Initialize(framework);
 	enemies_.Initialize(assetFactory, Shooter::Config::kEnemyPoolCapacity);
 
 	// 照準: 地面に置く、薄い円盤（光を受けず、常に見えるようにする）
@@ -56,6 +59,7 @@ void GameScene::Initialize() {
 
 	// ゲームの流れ: 新しいプレイの開始（直近の結果を消し、ベストは残す）。暗転から明るくしながら始める
 	Shooter::GameSession::Get().BeginPlay();
+	Shooter::GameAudio::Get().PlayBgm(Shooter::BgmId::kGame);
 	fade_.Initialize(assetFactory);
 }
 
@@ -223,14 +227,18 @@ void GameScene::Update() {
 		// 弾は、自機の位置から、少し前に出た高さ（弾の高さ）で発射する
 		const Vector3 muzzle = player_.GetPosition() + fireDirection * Shooter::Config::kMuzzleDistance + Vector3{ 0.0f, Shooter::Config::kBulletHeight, 0.0f };
 		for (int i = 0; i < shots; ++i) {
-			bullets_.Fire(muzzle, fireDirection);
+			bullets_.Fire(muzzle, fireDirection, feedback_);
 		}
 	}
 	// 戦闘: 敵が動いてから、弾の命中を調べる（最新の敵の位置に対して）。そのあと、敵が自機に触れていたらダメージ
 	enemies_.Update(deltaTime, player_.GetPosition(), Shooter::Config::kPlayerRadius, arena_);
-	bullets_.Update(deltaTime, arena_.GetWalls(), enemies_);
+	bullets_.Update(deltaTime, arena_.GetWalls(), enemies_, feedback_);
 	if (!player_.IsDead() && enemies_.IsTouchingPlayer(player_.GetPosition(), Shooter::Config::kPlayerRadius)) {
-		player_.TakeDamage(Shooter::Config::kContactDamage); // 無敵中は、何も起きない
+		// 無敵中は、ダメージを受けないので、何も起きない。受けたら、被弾の演出と音（倒れたなら、倒れた演出）
+		if (player_.TakeDamage(Shooter::Config::kContactDamage)) {
+			const Vector3 chest = player_.GetPosition() + Vector3{ 0.0f, Shooter::Config::kPlayerChestHeight, 0.0f };
+			feedback_.Push(player_.IsDead() ? Shooter::FeedbackType::kPlayerDied : Shooter::FeedbackType::kPlayerHit, chest);
+		}
 	}
 
 	// ゲームの流れ: 生きている間は、生存時間を進める。倒れたら、少し待って（または決定の操作で）、暗転してゲームオーバーへ
@@ -240,6 +248,9 @@ void GameScene::Update() {
 		deathTimer_ += deltaTime;
 		const bool skip = deathTimer_ > Shooter::Config::kDeathSkipLockTime && Shooter::IsConfirmPressed(framework->GetInput());
 		if (!leaving_ && (deathTimer_ >= Shooter::Config::kDeathToResultDelay || skip)) {
+			if (skip) {
+				Shooter::GameAudio::Get().PlaySe(Shooter::SeId::kConfirm);
+			}
 			leaving_ = true;
 			Shooter::GameResult result;
 			result.kills = enemies_.GetKillCount();
@@ -259,6 +270,17 @@ void GameScene::Update() {
 
 	// 追従カメラは、自機の更新後に動かす
 	cameraMgr->GetController()->Update(deltaTime);
+
+	// 演出と効果音: このフレームに起きた出来事を、まとめて処理する。そのあと、パーティクルを進める（カメラが動いたあとに）
+	for (const Shooter::FeedbackEvent& event : feedback_.GetEvents()) {
+		const Shooter::SeId se = Shooter::GetFeedbackSpec(event.type).se;
+		if (se != Shooter::SeId::kNone) {
+			Shooter::GameAudio::Get().PlaySe(se);
+		}
+		effects_.Handle(event);
+	}
+	feedback_.Clear();
+	effects_.Update(framework, deltaTime);
 
 	if (showColliders_) {
 		DebugDraw* debugDraw = framework->GetDebugDraw();
@@ -295,6 +317,7 @@ void GameScene::Draw(ID3D12GraphicsCommandList* commandList) {
 	player_.Draw(viewProjection);
 	bullets_.Draw(viewProjection);
 	enemies_.Draw(viewProjection);
+	effects_.Draw(framework, commandList, constantBuffers, light_.GetDirectionalLightAddress(constantBuffers)); // 火花・爆発（加算ブレンド）
 
 	// HUD: 半透明に重ねるので、通常のブレンドで描く
 	framework->GetPipelineStateManager()->SetPipeline(commandList, PipelineStateManager::kSprite, BlendMode::kNormal);
@@ -322,5 +345,6 @@ void GameScene::Finalize() {
 	camera->Update();
 
 	bullets_.Clear();
+	effects_.Clear();
 	enemies_.Clear();
 }

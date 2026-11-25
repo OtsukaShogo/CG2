@@ -72,4 +72,8 @@ inline constexpr float kSceneInputLockTime = 0.45f; //!< シーンの開始直�
 inline constexpr float kDeathToResultDelay = 1.6f;  //!< 倒れてから、ゲームオーバー画面へ進むまでの時間（秒）
 inline constexpr float kDeathSkipLockTime = 0.5f;   //!< 倒れた直後に、決定ボタンで先へ進めない時間（連射のクリックで、飛ばしてしまわないように）
 
+// ---- 演出・音 ----
+inline constexpr float kBulletTrailInterval = 0.03f; //!< 弾が、軌跡のパーティクルを残す間隔（秒）
+inline constexpr float kPlayerChestHeight = 1.0f;    //!< 自機の被弾の演出を出す高さ（胸の高さ）
+
 } // namespace Shooter::Config

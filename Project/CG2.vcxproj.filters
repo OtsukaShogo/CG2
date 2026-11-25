@@ -166,6 +166,21 @@
     <ClCompile Include="Source\Application\Scenes\GameOverScene.cpp">
       <Filter>Source\Application\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application\Game\AudioTable.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\EffectManager.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\FeedbackEvent.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\FeedbackSpec.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Game\GameAudio.cpp">
+      <Filter>Source\Application\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Application\Game\CombatMath.cpp">
       <Filter>Source\Application\Game</Filter>
     </ClCompile>
@@ -213,6 +228,12 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Graphics\PrimitiveMesh.cpp">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\ParticleEffectMath.cpp">
+      <Filter>Source\Engine\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\3D\ParticleEffectSystem.cpp">
+      <Filter>Source\Engine\3D</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Collision\Collision2D.cpp">
       <Filter>Source\Engine\Collision</Filter>
@@ -381,6 +402,21 @@
     <ClInclude Include="Source\Application\Scenes\GameOverScene.h">
       <Filter>Source\Application\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Application\Game\AudioTable.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\EffectManager.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\FeedbackEvent.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\FeedbackSpec.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Application\Game\GameAudio.h">
+      <Filter>Source\Application\Game</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Application\Game\CombatMath.h">
       <Filter>Source\Application\Game</Filter>
     </ClInclude>
@@ -464,6 +500,12 @@
     </ClInclude>
     <ClInclude Include="Source\Engine\Graphics\PrimitiveMesh.h">
       <Filter>Source\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\ParticleEffectMath.h">
+      <Filter>Source\Engine\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\3D\ParticleEffectSystem.h">
+      <Filter>Source\Engine\3D</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Collision\Collision2D.h">
       <Filter>Source\Engine\Collision</Filter>

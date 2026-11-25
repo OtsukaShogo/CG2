@@ -7,4 +7,6 @@
 class Game : public Engine::Framework {
 protected:
 	void OnInitialize() override;
+	void OnUpdate() override;
+	void OnFinalize() override;
 };

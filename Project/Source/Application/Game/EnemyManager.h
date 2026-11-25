@@ -47,7 +47,8 @@ public:
 	/// <param name="outHitPoint">当たった位置（当たった場合のみ書き込まれる。不要なら nullptr）</param>
 	/// <param name="outKilled">倒した場合は true（不要なら nullptr）</param>
 	/// <returns>どれかの敵に当たったか</returns>
-	bool TryHitByBullet(const Engine::Segment3D& path, float bulletRadius, int damage, Engine::Vector3* outHitPoint = nullptr, bool* outKilled = nullptr);
+	/// <param name="outEnemyPosition">当たった敵の足元の位置（倒した敵の位置を、演出に使うため。不要なら nullptr）</param>
+	bool TryHitByBullet(const Engine::Segment3D& path, float bulletRadius, int damage, Engine::Vector3* outHitPoint = nullptr, bool* outKilled = nullptr, Engine::Vector3* outEnemyPosition = nullptr);
 
 	/// <summary>
 	/// 自機に触れている敵がいるか（出現演出の終わった敵だけが対象）
